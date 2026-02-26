@@ -12,10 +12,14 @@ const { register, login } = require("../controllers/authController");
 // ---------------------------------------------------------
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: {
         user: process.env.GMAIL_USER,
         pass: process.env.GMAIL_PASS,
     },
+    debug: true, // This will show every step of the "Handshake"
+    logger: true // This will print the full conversation to Render Logs
 });
 
 // Helper function for sending emails
