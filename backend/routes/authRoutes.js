@@ -8,17 +8,21 @@ const User = require("../models/User");
 const { register, login } = require("../controllers/authController");
 
 // ---------------------------------------------------------
-// 1. Nodemailer Transporter Configuration
+// 1. Nodemailer Transporter Configuration (Optimized for Render)
 // ---------------------------------------------------------
 const transporter = nodemailer.createTransport({
     service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,            // Secure port for Render/Cloud environments
+    secure: true,          // Use SSL for port 465
     auth: {
         user: process.env.GMAIL_USER,
         pass: process.env.GMAIL_PASS,
-        tls: {
-        rejectUnauthorized: false // This helps bypass local certificate errors
-    }
     },
+    tls: {
+        // This ensures the connection doesn't fail on certain cloud certificate issues
+        rejectUnauthorized: false 
+    }
 });
 
 // Helper function for sending emails
@@ -28,18 +32,24 @@ const sendOTPEmail = async (recipientEmail, otp) => {
         to: recipientEmail,
         subject: "Verification Code - PiMentor",
         html: `
-            <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee;">
+            <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
                 <h2 style="color: #4CAF50;">PiMentor Verification</h2>
-                <p>Your One-Time Password (OTP) is:</p>
-                <h1 style="letter-spacing: 5px;">${otp}</h1>
+                <p>Hello,</p>
+                <p>Your One-Time Password (OTP) for PiMentor is:</p>
+                <h1 style="letter-spacing: 5px; color: #333; background: #f4f4f4; padding: 10px; display: inline-block;">${otp}</h1>
                 <p>This code is valid for 5 minutes. Do not share this with anyone.</p>
+                <hr style="border: none; border-top: 1px solid #eee;" />
+                <p style="font-size: 12px; color: #888;">If you did not request this, please ignore this email.</p>
             </div>
         `
     };
-    await transporter.sendMail(mailOptions);
+    
+    // Using a promise-based approach for cloud reliability
+    return transporter.sendMail(mailOptions);
 };
 
 // Temporary in-memory store for OTPs
+// Note: In production, consider using Redis if you scale beyond one server
 let otpStore = {}; 
 
 // ---------------------------------------------------------
@@ -55,7 +65,7 @@ router.post("/send-otp", async (req, res) => {
     try {
         const userExists = await User.findOne({ email });
 
-        // Logical Gating based on Purpose
+        // Logical Gating
         if (type === 'register' && userExists) {
             return res.status(400).json({ message: "Email already registered. Please login." });
         }
@@ -78,7 +88,7 @@ router.post("/send-otp", async (req, res) => {
 
     } catch (error) {
         console.error("Email Error:", error);
-        res.status(500).json({ message: "Error sending email" });
+        res.status(500).json({ message: "Error sending email. Please try again later." });
     }
 });
 
@@ -97,7 +107,7 @@ router.post("/verify-otp", (req, res) => {
     }
 
     if (record.otp === otp) {
-        delete otpStore[email]; // Clear after use
+        delete otpStore[email]; // Clear after successful use
         res.status(200).json({ success: true, message: "Email verified!" });
     } else {
         res.status(400).json({ message: "Invalid OTP. Please try again." });
