@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
-const Course = require("../models/Course"); // Ensure you have this model
+const Course = require("../models/Course");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
@@ -16,7 +16,7 @@ const sendOTPEmail = async (email, otp) => {
         sender: { name: "PiMentor", email: process.env.GMAIL_USER },
         to: [{ email: email }],
         subject: "PiMentor: Your Verification Code",
-        htmlContent: `<html><body><h2 style="color: #4CAF50;">PiMentor</h2><p>Your verification code is: <strong>${otp}</strong></p></body></html>`
+        htmlContent: `<html><body style="font-family: Arial;"><h2>PiMentor Verification</h2><p>Your code is: <strong style="font-size: 20px;">${otp}</strong></p></body></html>`
     };
 
     try {
@@ -30,37 +30,57 @@ const sendOTPEmail = async (email, otp) => {
     }
 };
 
-// --- 1. OTP ROUTES ---
+// --- 1. SMART OTP ROUTE (WITH VALIDATION) ---
 router.post("/send-otp", async (req, res) => {
-    const { email } = req.body;
+    const { email, type } = req.body; // 'type' should be 'register' or 'forgot'
+    
     if (!email) return res.status(400).json({ success: false, message: "Email is required" });
+
     try {
+        const userExists = await User.findOne({ email });
+
+        // Logic Gate for Registration
+        if (type === "register" && userExists) {
+            return res.status(400).json({ success: false, message: "Email already registered. Please login." });
+        }
+
+        // Logic Gate for Forgot Password
+        if (type === "forgot" && !userExists) {
+            return res.status(400).json({ success: false, message: "No account found with this email." });
+        }
+
+        // If validation passes, generate and send OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         otpStore[email] = { otp, expires: Date.now() + 10 * 60 * 1000 };
+        
         await sendOTPEmail(email, otp);
-        res.status(200).json({ success: true, message: "OTP sent!" });
+        res.status(200).json({ success: true, message: "OTP sent successfully!" });
     } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
+        res.status(500).json({ success: false, message: "Internal server error" });
     }
 });
 
+// --- 2. VERIFY OTP ROUTE ---
 router.post("/verify-otp", async (req, res) => {
     const { email, otp } = req.body;
     const record = otpStore[email];
     if (!record || Date.now() > record.expires) return res.status(400).json({ success: false, message: "OTP expired." });
     if (record.otp !== otp) return res.status(400).json({ success: false, message: "Invalid OTP." });
+    
     delete otpStore[email];
     res.status(200).json({ success: true, message: "OTP verified!" });
 });
 
-// --- 2. AUTHENTICATION (REGISTER & LOGIN) ---
+// --- 3. REGISTER ROUTE ---
 router.post("/register", async (req, res) => {
     try {
         const { name, email, password, studentClass } = req.body;
+        
+        // Double check even at registration
         let user = await User.findOne({ email });
         if (user) return res.status(400).json({ success: false, message: "User already exists." });
 
-        const salt = await bcrypt.genSalt(10);
+        const salt = await bcrypt.getSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
         user = new User({ name, email, password: hashedPassword, studentClass });
@@ -71,6 +91,7 @@ router.post("/register", async (req, res) => {
     }
 });
 
+// --- 4. LOGIN ROUTE ---
 router.post("/login", async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -92,9 +113,21 @@ router.post("/login", async (req, res) => {
     }
 });
 
-// --- 3. COURSE & LECTURE LOGIC (RESTORED) ---
+// --- 5. FORGOT PASSWORD (RESET) ROUTE ---
+router.post("/reset-password", async (req, res) => {
+    const { email, newPassword } = req.body;
+    try {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        
+        await User.findOneAndUpdate({ email }, { password: hashedPassword });
+        res.status(200).json({ success: true, message: "Password updated successfully!" });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Error resetting password." });
+    }
+});
 
-// Get all courses for the dashboard
+// --- 6. COURSE & LECTURE LOGIC ---
 router.get("/courses", async (req, res) => {
     try {
         const courses = await Course.find();
@@ -104,12 +137,10 @@ router.get("/courses", async (req, res) => {
     }
 });
 
-// Get lectures for a specific course
 router.get("/courses/:courseId/lectures", async (req, res) => {
     try {
         const course = await Course.findById(req.params.courseId);
         if (!course) return res.status(404).json({ success: false, message: "Course not found" });
-        
         res.status(200).json({ success: true, lectures: course.lectures });
     } catch (err) {
         res.status(500).json({ success: false, message: "Error fetching lectures" });
