@@ -175,7 +175,7 @@
                 localStorage.setItem("token", data.token);
                 localStorage.setItem("user", JSON.stringify(data.user));
                 // We use a custom alert style or a simple one
-                window.location.href = "dashboard.html";
+                window.location.href = "/dashboard.html";
             } else {
                 alert(data.message || "Invalid credentials. Please try again.");
             }
