@@ -1,138 +1,121 @@
 const express = require("express");
-const nodemailer = require('nodemailer');
-const bcrypt = require("bcryptjs");
 const router = express.Router();
+const SibApiV3Sdk = require("@getbrevo/brevo"); // Ensure you ran 'npm install @getbrevo/brevo'
+const User = require("../models/User");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
-// Imports
-const User = require("../models/User"); 
-const { register, login } = require("../controllers/authController");
+// --- BREVO CONFIGURATION ---
+let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+let apiKey = apiInstance.authentications["apiKey"];
+apiKey.apiKey = process.env.BREVO_API_KEY;
 
-// ---------------------------------------------------------
-// 1. Nodemailer Transporter Configuration (Optimized for Render)
-// ---------------------------------------------------------
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_PASS,
-    },
-    debug: true, // This will show every step of the "Handshake"
-    logger: true // This will print the full conversation to Render Logs
-});
+// Temporary store for OTPs (In-memory)
+// Note: For production, consider Redis, but this works for your current scale.
+const otpStore = {};
 
-// Helper function for sending emails
-const sendOTPEmail = async (recipientEmail, otp) => {
-    const mailOptions = {
-        from: `"PiMentor Support" <${process.env.GMAIL_USER}>`,
-        to: recipientEmail,
-        subject: "Verification Code - PiMentor",
-        html: `
-            <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-                <h2 style="color: #4CAF50;">PiMentor Verification</h2>
-                <p>Hello,</p>
-                <p>Your One-Time Password (OTP) for PiMentor is:</p>
-                <h1 style="letter-spacing: 5px; color: #333; background: #f4f4f4; padding: 10px; display: inline-block;">${otp}</h1>
-                <p>This code is valid for 5 minutes. Do not share this with anyone.</p>
-                <hr style="border: none; border-top: 1px solid #eee;" />
-                <p style="font-size: 12px; color: #888;">If you did not request this, please ignore this email.</p>
-            </div>
-        `
-    };
-    
-    // Using a promise-based approach for cloud reliability
-    return transporter.sendMail(mailOptions);
+// --- HELPER: SEND OTP VIA BREVO ---
+const sendOTPEmail = async (email, otp) => {
+  let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+
+  sendSmtpEmail.subject = "PiMentor: Your Verification Code";
+  sendSmtpEmail.htmlContent = `
+    <html>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6;">
+        <h2 style="color: #4CAF50;">Welcome to PiMentor</h2>
+        <p>Your OTP for account verification is:</p>
+        <h1 style="letter-spacing: 5px; color: #333;">${otp}</h1>
+        <p>This code is valid for <strong>10 minutes</strong>. If you did not request this, please ignore this email.</p>
+        <hr/>
+        <p style="font-size: 0.8rem; color: #777;">PiMentor Educational Services, Gorakhpur</p>
+      </body>
+    </html>`;
+  
+  // CRITICAL: The "email" here must be the one you verified in your Brevo dashboard
+  sendSmtpEmail.sender = { name: "PiMentor", email: process.env.GMAIL_USER }; 
+  sendSmtpEmail.to = [{ email: email }];
+
+  try {
+    await apiInstance.sendTransacEmail(sendSmtpEmail);
+    console.log(`OTP sent successfully to ${email}`);
+    return true;
+  } catch (error) {
+    console.error("Brevo API Error:", error.response ? error.response.body : error.message);
+    throw new Error("Failed to send email via Brevo");
+  }
 };
 
-// Temporary in-memory store for OTPs
-// Note: In production, consider using Redis if you scale beyond one server
-let otpStore = {}; 
-
-// ---------------------------------------------------------
-// 2. Authentication Routes
-// ---------------------------------------------------------
-
-// ROUTE: Send OTP (Handles both Register & Forgot Password)
+// --- ROUTE: SEND OTP ---
 router.post("/send-otp", async (req, res) => {
-    const { email, type } = req.body; // type should be 'register' or 'forgot'
-    
+  const { email, type } = req.body;
+
+  try {
+    // Basic validation
     if (!email) return res.status(400).json({ message: "Email is required" });
 
-    try {
-        const userExists = await User.findOne({ email });
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Store OTP with 10-minute expiry
+    otpStore[email] = {
+      otp,
+      expires: Date.now() + 10 * 60 * 1000,
+    };
 
-        // Logical Gating
-        if (type === 'register' && userExists) {
-            return res.status(400).json({ message: "Email already registered. Please login." });
-        }
-        
-        if (type === 'forgot' && !userExists) {
-            return res.status(404).json({ message: "No account found with this email." });
-        }
-
-        // Generate 6-digit OTP
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-        // Store with 5-minute expiry
-        otpStore[email] = { 
-            otp: otp, 
-            expires: Date.now() + 300000 
-        };
-
-        await sendOTPEmail(email, otp);
-        res.status(200).json({ message: "OTP sent successfully to " + email });
-
-    } catch (error) {
-        console.error("Email Error:", error);
-        res.status(500).json({ message: "Error sending email. Please try again later." });
-    }
+    await sendOTPEmail(email, otp);
+    res.status(200).json({ success: true, message: "OTP sent to your email!" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
-// ROUTE: Verify OTP
-router.post("/verify-otp", (req, res) => {
-    const { email, otp } = req.body;
-    const record = otpStore[email];
+// --- ROUTE: VERIFY OTP ---
+router.post("/verify-otp", async (req, res) => {
+  const { email, otp } = req.body;
 
-    if (!record) {
-        return res.status(400).json({ message: "Please request an OTP first" });
-    }
+  const record = otpStore[email];
+  if (!record) return res.status(400).json({ success: false, message: "OTP not found. Please resend." });
 
-    if (record.expires < Date.now()) {
-        delete otpStore[email];
-        return res.status(400).json({ message: "OTP has expired" });
-    }
+  if (Date.now() > record.expires) {
+    delete otpStore[email];
+    return res.status(400).json({ success: false, message: "OTP expired." });
+  }
 
-    if (record.otp === otp) {
-        delete otpStore[email]; // Clear after successful use
-        res.status(200).json({ success: true, message: "Email verified!" });
-    } else {
-        res.status(400).json({ message: "Invalid OTP. Please try again." });
-    }
+  if (record.otp !== otp) {
+    return res.status(400).json({ success: false, message: "Invalid OTP code." });
+  }
+
+  // Success: Clear OTP and allow registration/login
+  delete otpStore[email];
+  res.status(200).json({ success: true, message: "OTP verified!" });
 });
 
-// ROUTE: Final Password Reset
-router.post("/reset-password", async (req, res) => {
-    const { email, newPassword } = req.body;
+// --- ROUTE: REGISTER ---
+router.post("/register", async (req, res) => {
+  try {
+    const { name, email, password, studentClass } = req.body;
 
-    try {
-        const user = await User.findOne({ email });
-        if (!user) return res.status(404).json({ message: "User not found" });
+    // Check if user exists
+    let user = await User.findOne({ email });
+    if (user) return res.status(400).json({ message: "User already registered" });
 
-        // Hash the new password
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(newPassword, salt);
-        
-        await user.save();
-        res.json({ success: true, message: "Password updated successfully!" });
-    } catch (err) {
-        console.error("Reset Error:", err);
-        res.status(500).json({ message: "Server error during password reset" });
-    }
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      studentClass,
+    });
+
+    await user.save();
+    res.status(201).json({ success: true, message: "Registration successful!" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error during registration" });
+  }
 });
-
-// Standard Auth Routes
-router.post("/register", register);
-router.post("/login", login);
 
 module.exports = router;
