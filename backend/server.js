@@ -19,10 +19,9 @@ const app = express();
 // --- CORS CONFIGURATION ---
 // Replace the Netlify URL with your actual one once you deploy the frontend.
 const allowedOrigins = [
-    'http://localhost:3000', // React default
-    'http://localhost:5500', // VS Code Live Server default
-    'http://localhost:5000',
-    'http://127.0.0.1:5500'  // Sometimes browsers use the IP instead of 'localhost'
+    'https://pimentor.netlify.app', // YOUR ACTUAL LIVE URL
+    'http://localhost:3000',
+    'http://localhost:5000'
 ];
 app.use(cors({
     origin: function (origin, callback) {
