@@ -49,7 +49,7 @@ const register = async (req, res) => {
   try {
     const { name, email, password, studentClass, otp } = req.body;
 
-    if (!name || !email || !password || !otp) {
+    if (!name || !email || !password || !studenclass || !otp) {
       return res.status(400).json({ message: "All fields and OTP are required" });
     }
 
