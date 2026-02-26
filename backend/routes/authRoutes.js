@@ -4,16 +4,16 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-// --- BREVO INITIALIZATION ---
+// --- BREVO INITIALIZATION (ROBUST VERSION) ---
 const SibApiV3Sdk = require("@getbrevo/brevo");
 
-// We access the TransactionalEmailsApi via the SDK object
+// We initialize the API instance directly from the required module
 const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 
-// Correct way to set API Key in Node.js
+// Configure API Key
 apiInstance.setApiKey(SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
 
-// In-memory OTP store (expires in 10 mins)
+// In-memory OTP store (10-minute expiry)
 const otpStore = {};
 
 // --- HELPER: SEND OTP ---
@@ -23,17 +23,17 @@ const sendOTPEmail = async (email, otp) => {
   sendSmtpEmail.subject = "PiMentor: Your Verification Code";
   sendSmtpEmail.htmlContent = `
     <html>
-      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-        <div style="max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
-          <h2 style="color: #4CAF50; text-align: center;">Join PiMentor</h2>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f9f9f9; padding: 20px;">
+        <div style="max-width: 600px; margin: auto; background: #fff; padding: 30px; border-radius: 12px; border: 1px solid #ddd;">
+          <h2 style="color: #4CAF50; text-align: center;">Welcome to PiMentor</h2>
           <p>Hello,</p>
           <p>Your OTP for account verification is:</p>
-          <div style="text-align: center; font-size: 2.5rem; font-weight: bold; letter-spacing: 5px; margin: 20px 0; color: #333;">
+          <div style="text-align: center; font-size: 2.8rem; font-weight: bold; letter-spacing: 8px; margin: 25px 0; color: #222;">
             ${otp}
           </div>
           <p>This code is valid for <strong>10 minutes</strong>. If you did not request this, please ignore this email.</p>
-          <hr style="border: 0; border-top: 1px solid #eee;" />
-          <p style="font-size: 0.8rem; color: #777; text-align: center;">PiMentor Educational Services, Gorakhpur</p>
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+          <p style="font-size: 0.85rem; color: #888; text-align: center;">PiMentor Educational Services, Gorakhpur</p>
         </div>
       </body>
     </html>`;
@@ -47,9 +47,9 @@ const sendOTPEmail = async (email, otp) => {
     console.log(`[Brevo]: OTP sent successfully to ${email}`);
     return true;
   } catch (error) {
-    // This will print the exact reason if it fails (e.g., "invalid sender")
+    // Detailed logging for Render terminal
     console.error("Brevo API Error Detail:", error.response ? error.response.body : error.message);
-    throw new Error("Email service failed. Check your Brevo Dashboard.");
+    throw new Error("Email delivery failed. Please check backend logs.");
   }
 };
 
@@ -96,7 +96,7 @@ router.post("/register", async (req, res) => {
     const { name, email, password, studentClass } = req.body;
 
     let user = await User.findOne({ email });
-    if (user) return res.status(400).json({ message: "User already exists." });
+    if (user) return res.status(400).json({ success: false, message: "User already registered." });
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -112,7 +112,7 @@ router.post("/register", async (req, res) => {
     res.status(201).json({ success: true, message: "Registration successful!" });
   } catch (err) {
     console.error("Registration Error:", err);
-    res.status(500).json({ message: "Server error during registration" });
+    res.status(500).json({ success: false, message: "Server error during registration" });
   }
 });
 
