@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
+const Course = require("../models/Course"); // Ensure you have this model
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
@@ -15,7 +16,7 @@ const sendOTPEmail = async (email, otp) => {
         sender: { name: "PiMentor", email: process.env.GMAIL_USER },
         to: [{ email: email }],
         subject: "PiMentor: Your Verification Code",
-        htmlContent: `<html><body><h1>PiMentor OTP</h1><p>Your code is <strong>${otp}</strong></p></body></html>`
+        htmlContent: `<html><body><h2 style="color: #4CAF50;">PiMentor</h2><p>Your verification code is: <strong>${otp}</strong></p></body></html>`
     };
 
     try {
@@ -29,7 +30,7 @@ const sendOTPEmail = async (email, otp) => {
     }
 };
 
-// --- 1. SEND OTP ROUTE ---
+// --- 1. OTP ROUTES ---
 router.post("/send-otp", async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ success: false, message: "Email is required" });
@@ -43,7 +44,6 @@ router.post("/send-otp", async (req, res) => {
     }
 });
 
-// --- 2. VERIFY OTP ROUTE ---
 router.post("/verify-otp", async (req, res) => {
     const { email, otp } = req.body;
     const record = otpStore[email];
@@ -53,47 +53,66 @@ router.post("/verify-otp", async (req, res) => {
     res.status(200).json({ success: true, message: "OTP verified!" });
 });
 
-// --- 3. REGISTER ROUTE ---
+// --- 2. AUTHENTICATION (REGISTER & LOGIN) ---
 router.post("/register", async (req, res) => {
     try {
         const { name, email, password, studentClass } = req.body;
         let user = await User.findOne({ email });
-        if (user) return res.status(400).json({ success: false, message: "Already exists." });
+        if (user) return res.status(400).json({ success: false, message: "User already exists." });
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
         user = new User({ name, email, password: hashedPassword, studentClass });
         await user.save();
-        res.status(201).json({ success: true, message: "Registered!" });
+        res.status(201).json({ success: true, message: "Registration successful!" });
     } catch (err) {
         res.status(500).json({ success: false, message: "Server error during registration." });
     }
 });
 
-// --- 4. LOGIN ROUTE (RESTORED) ---
 router.post("/login", async (req, res) => {
     const { email, password } = req.body;
     try {
-        // Find user in database
         const user = await User.findOne({ email });
-        if (!user) return res.status(400).json({ success: false, message: "Invalid Email or Password" });
+        if (!user) return res.status(400).json({ success: false, message: "Invalid Credentials" });
 
-        // Compare hashed password
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ success: false, message: "Invalid Email or Password" });
+        if (!isMatch) return res.status(400).json({ success: false, message: "Invalid Credentials" });
 
-        // Generate JWT Token
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
         res.status(200).json({
             success: true,
             token,
-            user: { id: user._id, name: user.name, email: user.email }
+            user: { id: user._id, name: user.name, email: user.email, studentClass: user.studentClass }
         });
     } catch (err) {
-        console.error("Login Error:", err);
         res.status(500).json({ success: false, message: "Server error during login" });
+    }
+});
+
+// --- 3. COURSE & LECTURE LOGIC (RESTORED) ---
+
+// Get all courses for the dashboard
+router.get("/courses", async (req, res) => {
+    try {
+        const courses = await Course.find();
+        res.status(200).json({ success: true, courses });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Error fetching courses" });
+    }
+});
+
+// Get lectures for a specific course
+router.get("/courses/:courseId/lectures", async (req, res) => {
+    try {
+        const course = await Course.findById(req.params.courseId);
+        if (!course) return res.status(404).json({ success: false, message: "Course not found" });
+        
+        res.status(200).json({ success: true, lectures: course.lectures });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Error fetching lectures" });
     }
 });
 
