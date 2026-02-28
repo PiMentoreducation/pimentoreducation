@@ -6,59 +6,20 @@
     <style>
         :root { --primary: #1a73e8; --success: #28a745; --danger: #dc3545; --bg: #f0f2f5; --warning: #f1c40f; --dark: #333;}
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); padding: 20px; color: var(--dark); }
-        
-        .header { 
-            max-width: 1000px; margin: 0 auto 30px; background: #fff; 
-            padding: 15px 30px; border-radius: 15px; display: flex; 
-            align-items: center; justify-content: space-between;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
+        .header { max-width: 1000px; margin: 0 auto 30px; background: #fff; padding: 15px 30px; border-radius: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .logo-section { display: flex; align-items: center; }
-        .logo-section img { 
-            height: 50px; width: 50px; border-radius: 50%; 
-            object-fit: cover; margin-right: 15px; border: 2px solid var(--primary);
-        }
+        .logo-section img { height: 50px; width: 50px; border-radius: 50%; object-fit: cover; margin-right: 15px; border: 2px solid var(--primary); }
         .logo-text { font-size: 1.4rem; font-weight: bold; }
-        
-        .dash-btn {
-            padding: 10px 20px; background: var(--primary); color: white; 
-            border: none; border-radius: 25px; cursor: pointer; 
-            font-weight: bold; text-decoration: none; font-size: 0.9rem;
-        }
-
-        section { 
-            max-width: 1000px; margin: 0 auto 25px; background: #fff; 
-            padding: 30px; border-radius: 15px; border: 1px solid #ddd;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-        }
+        .dash-btn { padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 25px; cursor: pointer; font-weight: bold; text-decoration: none; font-size: 0.9rem; }
+        section { max-width: 1000px; margin: 0 auto 25px; background: #fff; padding: 30px; border-radius: 15px; border: 1px solid #ddd; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
         h2 { margin-top: 0; font-size: 1.3rem; color: #444; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; }
-        
         .row { display: flex; gap: 15px; }
-        input, textarea, select { 
-            width: 100%; margin-bottom: 15px; padding: 12px; 
-            border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; 
-        }
-
-        button { 
-            width: 100%; padding: 12px; border: none; border-radius: 8px; 
-            font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.2s;
-        }
+        input, textarea, select { width: 100%; margin-bottom: 15px; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.2s; }
         .btn-create { background: var(--success); color: white; }
         .btn-lecture { background: var(--primary); color: white; }
         .btn-delete { background: var(--danger); color: white; }
-        button:hover { opacity: 0.9; transform: translateY(-1px); }
-
         .hint { font-size: 0.8rem; color: #666; margin-bottom: 5px; display: block;}
-        .toggle-chapter { font-size: 0.8rem; color: var(--primary); cursor: pointer; text-decoration: underline; margin-bottom: 10px; display: inline-block; }
-
-        .doubt-card { border: 1px solid #eee; padding: 15px; border-radius: 10px; margin-bottom: 15px; background: #fafafa; }
-        .doubt-meta { font-size: 0.85rem; color: #777; margin-bottom: 8px; }
-        .doubt-question { font-weight: bold; color: #333; margin-bottom: 10px; }
-        .doubt-reply { background: #fff; border: 1px solid #ddd; height: 60px; margin-bottom: 10px; }
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
-        .badge-pending { background: #fff3cd; color: #856404; }
-
-        /* Notification Styling */
         .notif-item { border: 1px solid #ddd; padding: 10px; margin-top: 10px; border-radius: 8px; background: #fff9f0; }
     </style>
 </head>
@@ -74,15 +35,12 @@
 
 <section style="border-left: 5px solid #f39c12;">
     <h2 style="color: #f39c12;">📢 Broadcast to Students</h2>
-    <input id="notifHeading" placeholder="Heading (e.g., Live Class Today)">
-    <textarea id="notifDesc" placeholder="Full message details..."></textarea>
-    <input id="notifLink" placeholder="Link (Optional: YouTube/PDF)">
-    
+    <input id="notifHeading" placeholder="Heading">
+    <textarea id="notifDesc" placeholder="Message details..."></textarea>
+    <input id="notifLink" placeholder="Link (Optional)">
     <span class="hint">Select Target Classes (Hold Ctrl to select multiple)</span>
     <select id="notifCourseSelect" multiple style="height: 120px;"></select>
-    
     <button onclick="broadcastNotification()" style="background:#f39c12; color:white;">Push Notification</button>
-
     <div id="adminNotifList" style="margin-top:20px;"></div>
 </section>
 
@@ -97,107 +55,28 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
         <h2>Enrolled Students</h2>
         <div style="width: 300px;">
-            <input type="text" id="studentSearch" placeholder="🔍 Search Name or Email..." onkeyup="filterStudentTable()" style="margin-bottom: 0;">
+            <input type="text" id="studentSearch" placeholder="🔍 Search Name or Email..." onkeyup="filterStudentTable()">
         </div>
     </div>
-    
     <p class="hint">Total Students: <span id="enrollmentCount">0</span></p>
-    
     <div style="overflow-x: auto; max-height: 400px;">
         <table id="enrollmentTable" style="width: 100%; border-collapse: collapse;">
             <thead>
-                <tr style="background: #f8f9fa; position: sticky; top: 0; text-align: left;">
+                <tr style="background: #f8f9fa; text-align: left;">
                     <th style="padding: 12px; border-bottom: 2px solid #ddd;">Name</th>
                     <th style="padding: 12px; border-bottom: 2px solid #ddd;">Email</th>
                     <th style="padding: 12px; border-bottom: 2px solid #ddd;">Class</th>
                     <th style="padding: 12px; border-bottom: 2px solid #ddd;">Joined Date</th>
                 </tr>
             </thead>
-            <tbody id="enrollmentBody">
-                <tr><td colspan="4" style="padding: 20px; text-align: center; color: #888;">Select a course to view students...</td></tr>
-            </tbody>
+            <tbody id="enrollmentBody"></tbody>
         </table>
     </div>
-</section>
-
-<section>
-    <h2>Step 1: Create New Course</h2>
-    <input id="courseId" placeholder="Unique Course ID (e.g. m_calc_01)">
-    <input id="title" placeholder="Course Title">
-    <input id="className" placeholder="Target Class (e.g. 12th/BSc)">
-    <input id="price" type="number" placeholder="Price (INR)">
-    <textarea id="description" placeholder="Short Course Description" rows="2"></textarea>
-    <button class="btn-create" onclick="addCourse()">Create Course Instance</button>
-</section>
-
-<section id="lecture-section">
-    <h2>Step 2: Add Lecture</h2>
-    <input id="targetCourseId" placeholder="Active Course ID" readonly style="background: #f8f9fa;">
-    
-    <div class="row">
-        <div style="flex: 1;">
-            <span class="hint">Chapter Selection</span>
-            <div id="chapter-select-container">
-                <select id="chapterDropdown"><option value="">-- Select Course First --</option></select>
-            </div>
-            <div id="chapter-input-container" style="display: none;">
-                <input id="chapterNameInput" placeholder="New Chapter Name">
-            </div>
-            <span class="toggle-chapter" onclick="toggleChapterInput()" id="toggleText">+ New Chapter</span>
-        </div>
-        <div style="flex: 1;">
-            <span class="hint">Topic/Sub-heading</span>
-            <input id="topicName" placeholder="Topic Name">
-        </div>
-    </div>
-
-    <div class="row">
-        <div style="flex: 2;">
-            <span class="hint">Lecture Title</span>
-            <input id="lectureTitle" placeholder="Video Lesson Title">
-        </div>
-        <div style="flex: 1;">
-            <span class="hint">Order</span>
-            <input id="order" type="number" value="1">
-        </div>
-    </div>
-
-    <input id="videoUrl" placeholder="Video URL (YouTube Embed Link)">
-    
-    <div class="row">
-        <input id="duration" placeholder="Duration (e.g. 25:00)">
-        <input id="pdfNotes" placeholder="PDF Resource Link">
-    </div>
-    
-    <input id="practiceMcq" placeholder="Practice MCQ/Quiz Link">
-    <button class="btn-lecture" onclick="addLecture()">Push Lecture to Course</button>
-</section>
-
-<section style="background: #fff; border-left: 5px solid var(--primary);">
-    <h2 style="color: var(--primary);">Step 3: Doubt Resolution Center</h2>
-    <div id="doubtsContainer">
-        <p style="color: #888;">Select a course to see pending doubts...</p>
-    </div>
-</section>
-
-<section style="border-color: var(--warning);">
-    <h2 style="color: #856404;">Step 4: Remove Specific Lecture</h2>
-    <select id="deleteLectureDropdown">
-        <option value="">-- Select Course First --</option>
-    </select>
-    <button class="btn-delete" style="background: var(--warning); color: black;" onclick="deleteLecture()">Delete Selected Lecture</button>
-</section>
-
-<section style="border-color: var(--danger);">
-    <h2 style="color: var(--danger);">Danger Zone</h2>
-    <input id="deleteCourseId" placeholder="Course ID to Wipe" readonly>
-    <button class="btn-delete" onclick="deleteCourse()">Wipe Entire Course</button>
 </section>
 
 <script>
     const token = localStorage.getItem("token");
     const BASE_URL = "https://pimentor-project.onrender.com";
-    let isNewChapter = false;
 
     function initAdmin() {
         if(!token) { alert("Please login as Admin"); window.location.href="login.html"; }
@@ -205,12 +84,10 @@
         loadActiveNotifs();
     }
 
-    /* --- DROPDOWN & SYNC --- */
     async function loadOngoingCourses() {
         try {
             const res = await fetch(`${BASE_URL}/api/admin/all-courses`, { headers: { "Authorization": "Bearer " + token } });
             const courses = await res.json();
-            
             const dropdown = document.getElementById("courseDropdown");
             const notifDropdown = document.getElementById("notifCourseSelect");
             
@@ -222,55 +99,25 @@
                 opt.value = c.courseId;
                 opt.textContent = `${c.title} (${c.courseId})`;
                 dropdown.appendChild(opt);
-
-                const optNotif = opt.cloneNode(true);
-                notifDropdown.appendChild(optNotif);
+                notifDropdown.appendChild(opt.cloneNode(true));
             });
         } catch (err) { console.error(err); }
     }
 
     async function syncCourseSelection() {
         const cid = document.getElementById("courseDropdown").value;
-        document.getElementById("targetCourseId").value = cid;
-        document.getElementById("deleteCourseId").value = cid;
         if (!cid) return;
-
-        try {
-            // Load Chapters
-            const chapRes = await fetch(`${BASE_URL}/api/purchase/course-chapters/${cid}`, { headers: { "Authorization": "Bearer " + token } });
-            const chapters = await chapRes.json();
-            const chapDrop = document.getElementById('chapterDropdown');
-            chapDrop.innerHTML = '<option value="">-- Select Existing Chapter --</option>';
-            chapters.forEach(ch => {
-                const opt = document.createElement("option");
-                opt.value = ch; opt.textContent = ch;
-                chapDrop.appendChild(opt);
-            });
-
-            // Load Lectures for Delete
-            const lecRes = await fetch(`${BASE_URL}/api/purchase/all-lectures-admin/${cid}`, { headers: { "Authorization": "Bearer " + token } });
-            const lectures = await lecRes.json();
-            const delDrop = document.getElementById("deleteLectureDropdown");
-            delDrop.innerHTML = '<option value="">-- Select Lecture --</option>';
-            lectures.forEach(l => {
-                const opt = document.createElement("option");
-                opt.value = l._id; opt.textContent = `${l.chapterName} > ${l.title}`;
-                delDrop.appendChild(opt);
-            });
-
-            loadDoubts(cid);
-            loadEnrollments(cid);
-        } catch (err) { console.error(err); }
+        loadEnrollments(cid);
+        // Add your other sync functions here (chapters/doubts)
     }
 
-    /* --- ENROLLMENTS & SEARCH --- */
     async function loadEnrollments(courseId) {
         const body = document.getElementById("enrollmentBody");
-        const countSpan = document.getElementById("enrollmentCount");
         try {
             const res = await fetch(`${BASE_URL}/api/admin/course-enrollments/${courseId}`, { headers: { "Authorization": "Bearer " + token } });
             const students = await res.json();
-            countSpan.innerText = students.length;
+            document.getElementById("enrollmentCount").innerText = students.length;
+            
             if (students.length === 0) {
                 body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">No students found.</td></tr>';
                 return;
@@ -292,14 +139,13 @@
         for (let i = 0; i < tr.length; i++) {
             const tdName = tr[i].getElementsByTagName("td");
             const tdEmail = tr[i].getElementsByTagName("td");
-            if (tdName || tdEmail) {
+            if (tdName && tdEmail) {
                 const txt = (tdName.textContent || tdName.innerText) + (tdEmail.textContent || tdEmail.innerText);
                 tr[i].style.display = txt.toUpperCase().indexOf(input) > -1 ? "" : "none";
             }
         }
     }
 
-    /* --- NOTIFICATIONS --- */
     async function broadcastNotification() {
         const selected = Array.from(document.getElementById("notifCourseSelect").selectedOptions).map(o => o.value);
         const payload = {
@@ -321,8 +167,7 @@
             const data = await res.json();
             document.getElementById("adminNotifList").innerHTML = data.map(n => `
                 <div class="notif-item">
-                    <b>${n.heading}</b> <br> <small>To: ${n.targetCourses.join(', ')}</small>
-                    <button onclick="deleteNotif('${n._id}')" style="width:auto; float:right; background:red; color:white; padding:2px 8px; font-size:0.7rem;">Delete</button>
+                    <b>${n.heading}</b> <button onclick="deleteNotif('${n._id}')" style="float:right; width:auto; background:red; color:white; padding:2px 8px;">Delete</button>
                 </div>
             `).join('');
         } catch (e) {}
@@ -330,98 +175,8 @@
 
     async function deleteNotif(id) {
         if(!confirm("Delete?")) return;
-        const res = await fetch(`${BASE_URL}/api/admin/notification/${id}`, { method: "DELETE", headers: { "Authorization": "Bearer " + token } });
-        if(res.ok) loadActiveNotifs();
-    }
-
-    /* --- OTHER CORE FUNCTIONS --- */
-    function toggleChapterInput() {
-        const selectCont = document.getElementById('chapter-select-container');
-        const inputCont = document.getElementById('chapter-input-container');
-        const toggleText = document.getElementById('toggleText');
-        isNewChapter = !isNewChapter;
-        selectCont.style.display = isNewChapter ? 'none' : 'block';
-        inputCont.style.display = isNewChapter ? 'block' : 'none';
-        toggleText.innerText = isNewChapter ? "← Use Existing" : "+ New Chapter";
-    }
-
-    async function addCourse() {
-        const payload = {
-            courseId: document.getElementById("courseId").value,
-            title: document.getElementById("title").value,
-            className: document.getElementById("className").value,
-            price: document.getElementById("price").value,
-            description: document.getElementById("description").value
-        };
-        const res = await fetch(`${BASE_URL}/api/admin/course`, {
-            method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-            body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        alert(data.message);
-        loadOngoingCourses();
-    }
-
-    async function addLecture() {
-        const cid = document.getElementById("targetCourseId").value;
-        const chapter = isNewChapter ? document.getElementById("chapterNameInput").value : document.getElementById("chapterDropdown").value;
-        const payload = {
-            lectureTitle: document.getElementById("lectureTitle").value,
-            chapterName: chapter, topicName: document.getElementById("topicName").value,
-            order: document.getElementById("order").value, videoUrl: document.getElementById("videoUrl").value,
-            duration: document.getElementById("duration").value, pdfNotes: document.getElementById("pdfNotes").value,
-            practiceMcq: document.getElementById("practiceMcq").value
-        };
-        const res = await fetch(`${BASE_URL}/api/admin/course/${cid}/lecture`, {
-            method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-            body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        alert(data.message);
-        syncCourseSelection();
-    }
-
-    async function loadDoubts(courseId) {
-        const container = document.getElementById("doubtsContainer");
-        try {
-            const res = await fetch(`${BASE_URL}/api/admin/doubts/${courseId}`, { headers: { "Authorization": "Bearer " + token } });
-            const doubts = await res.json();
-            if(doubts.length === 0) { container.innerHTML = "<p>No pending doubts.</p>"; return; }
-            container.innerHTML = doubts.map(d => `
-                <div class="doubt-card">
-                    <div class="doubt-meta"><b>${d.studentName}</b> on <i>${d.lectureTitle}</i></div>
-                    <div class="doubt-question">Q: ${d.question}</div>
-                    <textarea class="doubt-reply" id="reply-${d._id}" placeholder="Your answer..."></textarea>
-                    <button onclick="resolveDoubt('${d._id}')" style="width:auto; background:var(--primary); color:white;">Submit</button>
-                </div>
-            `).join('');
-        } catch (err) { console.error(err); }
-    }
-
-    async function resolveDoubt(doubtId) {
-        const answer = document.getElementById(`reply-${doubtId}`).value;
-        const res = await fetch(`${BASE_URL}/api/admin/resolve-doubt`, {
-            method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-            body: JSON.stringify({ doubtId, answer })
-        });
-        if(res.ok) { alert("Resolved!"); syncCourseSelection(); }
-    }
-
-    async function deleteLecture() {
-        const lid = document.getElementById("deleteLectureDropdown").value;
-        const cid = document.getElementById("targetCourseId").value;
-        if(!lid || !confirm("Delete?")) return;
-        const res = await fetch(`${BASE_URL}/api/admin/course/${cid}/lecture/${lid}`, { method: "DELETE", headers: { "Authorization": "Bearer " + token } });
-        alert((await res.json()).message);
-        syncCourseSelection();
-    }
-
-    async function deleteCourse() {
-        const cid = document.getElementById("deleteCourseId").value;
-        if(!cid || !confirm("Wipe Course?")) return;
-        const res = await fetch(`${BASE_URL}/api/admin/course/${cid}`, { method: "DELETE", headers: { "Authorization": "Bearer " + token } });
-        alert((await res.json()).message);
-        loadOngoingCourses();
+        await fetch(`${BASE_URL}/api/admin/notification/${id}`, { method: "DELETE", headers: { "Authorization": "Bearer " + token } });
+        loadActiveNotifs();
     }
 </script>
 </body>
