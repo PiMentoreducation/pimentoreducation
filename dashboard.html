@@ -172,37 +172,45 @@
     }
 
     async function fetchNotifications() {
-        const wrapper = document.getElementById("notif-wrapper");
-        const container = document.getElementById("notif-container");
-        let dismissed = JSON.parse(localStorage.getItem("dismissedNotifs") || "[]");
+    const wrapper = document.getElementById("notif-wrapper");
+    const container = document.getElementById("notif-container");
+    let dismissed = JSON.parse(localStorage.getItem("dismissedNotifs") || "[]");
 
-        try {
-            const res = await fetch(`${BASE_URL}/api/admin/active-notifications`, {
-                headers: { "Authorization": "Bearer " + token }
-            });
-            const all = await res.json();
+    try {
+        const res = await fetch(`${BASE_URL}/api/admin/active-notifications`, {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        const all = await res.json();
+        
+        // --- NORMALIZED LOGIC ---
+        const studentClass = (user.studentClass || "").trim().toLowerCase();
+
+        const myNotifs = all.filter(n => {
+            const isNotDismissed = !dismissed.includes(n._id);
             
-            const myNotifs = all.filter(n => {
-                const matchesClass = n.targetCourses.includes(user.studentClass);
-                const isGlobal = n.targetCourses.includes("all") || n.targetCourses.length === 0;
-                const notDismissed = !dismissed.includes(n._id);
-                return (matchesClass || isGlobal) && notDismissed;
-            });
+            // Check targets by converting everything to lowercase and trimming
+            const matchesClass = n.targetCourses.some(target => 
+                target.trim().toLowerCase() === studentClass
+            );
 
-            if (myNotifs.length > 0) {
-                wrapper.style.display = "block";
-                container.innerHTML = myNotifs.map(n => `
-                    <div class="notif-card" id="notif-${n._id}">
-                        <span class="close-notif" onclick="dismissNotif('${n._id}')">×</span>
-                        <h3>📢 ${n.heading}</h3>
-                        <p>${n.description}</p>
-                        ${n.link ? `<a href="${n.link}" target="_blank" class="notif-link">View Details →</a>` : ''}
-                    </div>
-                `).join('');
-            }
-        } catch (err) { console.error("Notif fetch failed"); }
-    }
+            const isGlobal = n.targetCourses.includes("all") || n.targetCourses.length === 0;
+            
+            return (matchesClass || isGlobal) && isNotDismissed;
+        });
 
+        if (myNotifs.length > 0) {
+            wrapper.style.display = "block";
+            container.innerHTML = myNotifs.map(n => `
+                <div class="notif-card" id="notif-${n._id}">
+                    <span class="close-notif" onclick="dismissNotif('${n._id}')">×</span>
+                    <h3>📢 ${n.heading}</h3>
+                    <p>${n.description}</p>
+                    ${n.link ? `<a href="${n.link}" target="_blank" class="notif-link">View Details →</a>` : ''}
+                </div>
+            `).join('');
+        }
+    } catch (err) { console.error("Notif fetch failed", err); }
+}
     async function loadStudentCourses() {
         const container = document.getElementById("courseList");
         const visited = JSON.parse(localStorage.getItem("visited_courses") || "[]");
