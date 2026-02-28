@@ -155,9 +155,27 @@ async function fetchNotifications() {
             headers: { "Authorization": "Bearer " + token }
         });
         const all = await res.json();
-        const myNotifs = all.filter(n => n.targetCourses.includes(user.studentClass) && !dismissed.includes(n._id));
+        
+        // --- DEBUG LOGS ---
+        console.log("Your Class:", user.studentClass);
+        console.log("All Active Notifs from Server:", all);
+
+        const myNotifs = all.filter(n => {
+            const isTarget = n.targetCourses.includes(user.studentClass);
+            const isNotDismissed = !dismissed.includes(n._id);
+            return isTarget && isNotDismissed;
+        });
+
+        console.log("Filtered Notifs for You:", myNotifs);
 
         const container = document.getElementById("notif-container");
+        if (myNotifs.length === 0) {
+            // This helps us see if the container is even working
+            console.log("No notifications matched your class ID.");
+            container.innerHTML = ""; 
+            return;
+        }
+
         container.innerHTML = myNotifs.map(n => `
             <div class="notif-card" id="notif-${n._id}">
                 <span class="close-notif" onclick="dismissNotif('${n._id}')">×</span>
@@ -166,9 +184,10 @@ async function fetchNotifications() {
                 ${n.link ? `<a href="${n.link}" target="_blank" class="notif-link">Join / View Now →</a>` : ''}
             </div>
         `).join('');
-    } catch (err) { console.error("Notification Fetch Error"); }
+    } catch (err) { 
+        console.error("Notification Fetch Error:", err); 
+    }
 }
-
 function dismissNotif(id) {
     let dismissed = JSON.parse(localStorage.getItem("dismissedNotifs") || "[]");
     dismissed.push(id);
