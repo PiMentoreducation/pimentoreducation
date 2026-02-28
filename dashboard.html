@@ -224,7 +224,7 @@ async function fetchNotifications() {
         console.error("Dashboard Notif Error:", err); 
     }
 }
- async function loadStudentCourses() {
+async function loadStudentCourses() {
     const container = document.getElementById("courseList");
     try {
         const res = await fetch(`${BASE_URL}/api/purchase/my-courses`, { 
@@ -232,29 +232,24 @@ async function fetchNotifications() {
         });
         const courses = await res.json();
         
-        const now = new Date();
+        container.innerHTML = courses.map(c => {
+            // Logic to prevent "Invalid Date"
+            const purchaseDate = c.createdAt ? new Date(c.createdAt) : null;
+            const dateString = (purchaseDate && !isNaN(purchaseDate)) 
+                               ? purchaseDate.toLocaleDateString() 
+                               : "Date Pending";
 
-        // FILTER: Only show courses where now < expiryDate
-        const activeCourses = courses.filter(c => {
-            if (!c.expiryDate) return true; // Fallback for old purchases
-            return new Date(c.expiryDate) > now;
-        });
-
-        if(!activeCourses.length) { 
-            container.innerHTML = "<p>No active courses. They may have expired.</p>"; 
-            return; 
-        }
-
-        container.innerHTML = activeCourses.map(c => `
-            <div class="course-card">
-                <h3>${c.title}</h3>
-                <p style="font-size:0.75rem; color:var(--danger);">
-                   Valid till: ${new Date(c.expiryDate).toLocaleDateString()}
-                </p>
-                <button onclick="goToCourse('${c.courseId}')">Start Learning →</button>
-            </div>
-        `).join('');
-    } catch (e) { container.innerHTML = "<p>Error loading path.</p>"; }
+            return `
+                <div class="course-card">
+                    <h3>${c.title}</h3>
+                    <p style="font-size:0.8rem; opacity:0.7;">Enrolled: ${dateString}</p>
+                    <button onclick="goToCourse('${c.courseId}')">Continue Learning →</button>
+                </div>
+            `;
+        }).join('');
+    } catch (e) { 
+        container.innerHTML = "<p>Error loading courses.</p>"; 
+    }
 }
 
     async function loadDashboardDoubts() {
