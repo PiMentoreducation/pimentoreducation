@@ -50,7 +50,7 @@ exports.buyCourse = async (req, res) => {
             title,
             className,
             price,
-            paymentId
+            paymentId,
             createdAt: new Date(),
         });
 
