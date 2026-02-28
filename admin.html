@@ -301,11 +301,11 @@
 
     /* --- NOTIFICATIONS --- */
    async function broadcastNotification() {
-    console.log("Attempting broadcast...");
+    const token = localStorage.getItem("token"); // Double check token exists
     const select = document.getElementById("notifCourseSelect");
     const selected = Array.from(select.selectedOptions).map(o => o.value);
     
-    if (selected.length === 0) return alert("Please select at least one course target!");
+    if (selected.length === 0) return alert("Please select a target course!");
 
     const payload = {
         heading: document.getElementById("notifHeading").value,
@@ -314,21 +314,35 @@
         targetCourses: selected
     };
 
+    console.log("Sending Payload:", payload);
+
     try {
         const res = await fetch(`${BASE_URL}/api/admin/send-notification`, {
             method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+            headers: { 
+                "Content-Type": "application/json", 
+                "Authorization": "Bearer " + token 
+            },
             body: JSON.stringify(payload)
         });
-        const data = await res.json();
-        if(res.ok) { 
-            alert("Broadcast Success!"); 
-            loadActiveNotifs(); 
+
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+            const data = await res.json();
+            if(res.ok) {
+                alert("Broadcast Sent Successfully!");
+                loadActiveNotifs();
+            } else {
+                alert("Server Error: " + data.message);
+            }
         } else {
-            alert("Server Rejected: " + data.message);
+            // This is where your "!doctype" error is caught
+            const text = await res.text();
+            console.error("Received HTML instead of JSON:", text);
+            alert("Auth Error: You might not have Admin permissions. Check your MongoDB role.");
         }
     } catch (err) {
-        alert("Network Error: " + err.message);
+        alert("Network Error: Check console.");
     }
 }
 

@@ -7,7 +7,7 @@ const Course = require("../models/Course");
 const Purchase = require("../models/Purchase");
 const Lecture = require("../models/Lecture"); 
 const Doubt = require("../models/Doubt");
-
+const Notification = require("../models/Notification");
 // Middlewares
 const auth = require("../middleware/authMiddleware");
 const admin = require("../middleware/admin");
