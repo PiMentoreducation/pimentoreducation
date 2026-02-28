@@ -111,17 +111,31 @@ router.post("/resolve-doubt", auth, admin, async (req, res) => {
 /* ================= NOTIFICATION PUSH ================= */
 
 // Matches: POST /api/admin/send-notification
+// 2. THE ROUTE
 router.post("/send-notification", auth, admin, async (req, res) => {
+    console.log("--- DEBUG: Notification Route Hit ---");
+    console.log("Payload:", req.body);
+    
     try {
         const { heading, description, link, targetCourses } = req.body;
-        if(!heading || !description) return res.status(400).json({ message: "Heading and Description required" });
+        
+        if (!heading || !description) {
+            return res.status(400).json({ message: "Heading and description are required." });
+        }
 
-        const newNotif = new Notification({ heading, description, link, targetCourses });
+        const newNotif = new Notification({
+            heading,
+            description,
+            link: link || "",
+            targetCourses: targetCourses || []
+        });
+
         await newNotif.save();
+        console.log("--- DEBUG: Notification Saved Successfully ---");
         res.status(201).json({ success: true, message: "Broadcast Sent!" });
     } catch (err) {
-        console.error("Broadcast Error:", err);
-        res.status(500).json({ message: "Failed to broadcast." });
+        console.error("--- DEBUG: Notification Error ---", err);
+        res.status(500).json({ message: "Server error during broadcast." });
     }
 });
 
