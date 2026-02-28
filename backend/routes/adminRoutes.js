@@ -1,26 +1,25 @@
 const express = require("express");
 const router = express.Router(); 
 
-// Models - Ensure these match your file names in /models exactly
+// Models
 const User = require("../models/User");
 const Course = require("../models/Course");
 const Purchase = require("../models/Purchase");
 const Lecture = require("../models/Lecture"); 
 const Doubt = require("../models/Doubt");
 const Notification = require("../models/Notification");
+
 // Middlewares
 const auth = require("../middleware/authMiddleware");
 const admin = require("../middleware/admin");
 
 /* ================= COURSE MANAGEMENT ================= */
 
-// This matches the fetch in your admin.html: /api/admin/all-courses
 router.get("/all-courses", auth, admin, async (req, res) => {
   try {
     const courses = await Course.find({}, "courseId title");
     res.json(courses);
   } catch (err) {
-    console.error("Fetch Courses Error:", err);
     res.status(500).json({ message: "Error fetching courses" });
   }
 });
@@ -31,26 +30,16 @@ router.post("/course", auth, admin, async (req, res) => {
     if (!courseId || !title || !className || !price) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-    
     const exists = await Course.findOne({ courseId });
     if (exists) return res.status(400).json({ message: "Course ID already exists." });
 
-    const course = await Course.create({ 
-      courseId, 
-      title, 
-      className, 
-      price, 
-      description, 
-      notesLink 
-    });
+    const course = await Course.create({ courseId, title, className, price, description, notesLink });
     res.status(201).json({ message: "Course created successfully!", course });
   } catch (error) {
-    console.error("Create Course Error:", error);
     res.status(500).json({ message: "Server error while creating course" });
   }
 });
 
-// Delete an entire course and its associated lectures
 router.delete("/course/:courseId", auth, admin, async (req, res) => {
     try {
         const { courseId } = req.params;
@@ -84,8 +73,7 @@ router.post("/course/:courseId/lecture", auth, admin, async (req, res) => {
     await newLecture.save();
     res.status(201).json({ success: true, message: `Lecture added to ${chapterName}!` });
   } catch (error) {
-    console.error("Lecture Save Error:", error);
-    res.status(500).json({ message: "Error saving lecture to database" });
+    res.status(500).json({ message: "Error saving lecture" });
   }
 });
 
@@ -98,7 +86,7 @@ router.delete("/course/:courseId/lecture/:lectureId", auth, admin, async (req, r
     }
 });
 
-/* ================= DOUBT RESOLUTION CENTER ================= */
+/* ================= DOUBT RESOLUTION ================= */
 
 router.get("/doubts/:courseId", auth, admin, async (req, res) => {
     try {
@@ -106,48 +94,37 @@ router.get("/doubts/:courseId", auth, admin, async (req, res) => {
         const doubts = await Doubt.find({ courseId, status: "Pending" }).sort({ createdAt: -1 });
         res.status(200).json(doubts);
     } catch (error) {
-        res.status(500).json({ message: "Error fetching pending doubts" });
+        res.status(500).json({ message: "Error fetching doubts" });
     }
 });
 
 router.post("/resolve-doubt", auth, admin, async (req, res) => {
     try {
         const { doubtId, answer } = req.body;
-        const updatedDoubt = await Doubt.findByIdAndUpdate(
-            doubtId,
-            { answer, status: "Resolved" },
-            { new: true }
-        );
-        if (!updatedDoubt) return res.status(404).json({ message: "Doubt record not found" });
-        res.status(200).json({ message: "Doubt resolved and answer saved!" });
+        await Doubt.findByIdAndUpdate(doubtId, { answer, status: "Resolved" });
+        res.status(200).json({ message: "Doubt resolved!" });
     } catch (error) {
-        res.status(500).json({ message: "Error updating doubt status" });
+        res.status(500).json({ message: "Error resolving doubt" });
     }
 });
 
-router.delete("/clear-resolved-doubts", auth, admin, async (req, res) => {
-    try {
-        const result = await Doubt.deleteMany({ status: "Resolved" });
-        res.json({ message: `${result.deletedCount} resolved doubts cleared from storage.` });
-    } catch (error) {
-        res.status(500).json({ message: "Cleanup operation failed" });
-    }
-});
+/* ================= NOTIFICATION PUSH ================= */
 
-const Notification = require("../models/Notification");
-// Create Notification
+// Matches: POST /api/admin/send-notification
 router.post("/send-notification", auth, admin, async (req, res) => {
     try {
         const { heading, description, link, targetCourses } = req.body;
+        if(!heading || !description) return res.status(400).json({ message: "Heading and Description required" });
+
         const newNotif = new Notification({ heading, description, link, targetCourses });
         await newNotif.save();
         res.status(201).json({ success: true, message: "Broadcast Sent!" });
     } catch (err) {
+        console.error("Broadcast Error:", err);
         res.status(500).json({ message: "Failed to broadcast." });
     }
 });
 
-// Get all for Admin List
 router.get("/active-notifications", auth, admin, async (req, res) => {
     try {
         const list = await Notification.find().sort({ createdAt: -1 });
@@ -157,7 +134,6 @@ router.get("/active-notifications", auth, admin, async (req, res) => {
     }
 });
 
-// Delete Notification
 router.delete("/notification/:id", auth, admin, async (req, res) => {
     try {
         await Notification.findByIdAndDelete(req.params.id);
@@ -166,48 +142,42 @@ router.delete("/notification/:id", auth, admin, async (req, res) => {
         res.status(500).json({ message: "Delete failed" });
     }
 });
-// GET: Enrolled students for a specific course
+
+/* ================= STUDENT ENROLLMENTS ================= */
+
+// Matches: GET /api/admin/course-enrollments/:courseId
 router.get("/course-enrollments/:courseId", auth, admin, async (req, res) => {
     try {
         const { courseId } = req.params;
-
-        // 1. Find all purchases for this course
+        
+        // 1. Find purchases for THIS specific course
         const purchases = await Purchase.find({ courseId }).select("userId createdAt");
         
-        if (purchases.length === 0) return res.json([]);
+        if (!purchases || purchases.length === 0) {
+            return res.json([]);
+        }
 
-        // 2. Extract User IDs
-        const userIds = purchases.map(p => p.userId);
+        // 2. Map User Details
+        const enrolledList = await Promise.all(purchases.map(async (p) => {
+            const student = await User.findById(p.userId).select("name email studentClass");
+            if(student) {
+                return {
+                    name: student.name,
+                    email: student.email,
+                    studentClass: student.studentClass,
+                    enrolledAt: p.createdAt
+                };
+            }
+            return null;
+        }));
 
-        // 3. Fetch User details (Name, Email, Class) for these IDs
-        const students = await User.find({ _id: { $in: userIds } })
-                                   .select("name email studentClass");
+        // 3. Filter out any nulls (if a user was deleted but purchase remains)
+        res.json(enrolledList.filter(item => item !== null));
 
-        // 4. Merge data to include purchase date
-        const enrolledList = students.map(student => {
-            const pData = purchases.find(p => p.userId.toString() === student._id.toString());
-            return {
-                name: student.name,
-                email: student.email,
-                studentClass: student.studentClass,
-                enrolledAt: pData ? pData.createdAt : null
-            };
-        });
-
-        res.json(enrolledList);
     } catch (err) {
+        console.error("Enrollment Error:", err);
         res.status(500).json({ message: "Error fetching enrollments" });
     }
 });
-// adminRoutes.js
-router.post("/send-notification", auth, admin, async (req, res) => {
-    console.log("Broadcast Route Hit!"); // ADD THIS LOG
-    try {
-        const { heading, description, link, targetCourses } = req.body;
-        // Logic...
-        res.status(201).json({ success: true, message: "Broadcast Sent!" });
-    } catch (err) {
-        res.status(500).json({ message: "Server Error" });
-    }
-});
+
 module.exports = router;
