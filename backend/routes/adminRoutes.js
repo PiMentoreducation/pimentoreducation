@@ -15,26 +15,30 @@ const admin = require("../middleware/admin");
 
 /* ================= COURSE MANAGEMENT ================= */
 
+// Fetch all courses for admin dropdowns/lists
 router.get("/all-courses", auth, admin, async (req, res) => {
   try {
-    const courses = await Course.find({}, "courseId title");
+    const courses = await Course.find({}, "courseId title liveValidityDate recordedDurationDays price");
     res.json(courses);
   } catch (err) {
     res.status(500).json({ message: "Error fetching courses" });
   }
 });
 
-// adminRoutes.js - Update Course Route
+// Create or Update Course (Upsert)
 router.post("/course", auth, admin, async (req, res) => {
     try {
         const { courseId, title, className, price, description, liveValidityDate, recordedDurationDays } = req.body;
         
-        // Use findOneAndUpdate with 'upsert' so you can update prices anytime
         const course = await Course.findOneAndUpdate(
             { courseId },
             { 
-                title, className, price, description, 
-                liveValidityDate: new Date(liveValidityDate), 
+                title, 
+                className, 
+                price, 
+                description, 
+                // Ensure date is properly formatted
+                liveValidityDate: liveValidityDate ? new Date(liveValidityDate) : null, 
                 recordedDurationDays: parseInt(recordedDurationDays) || 365 
             },
             { new: true, upsert: true }
@@ -45,6 +49,7 @@ router.post("/course", auth, admin, async (req, res) => {
     }
 });
 
+// Delete Course and its Lectures
 router.delete("/course/:courseId", auth, admin, async (req, res) => {
     try {
         const { courseId } = req.params;
@@ -58,6 +63,7 @@ router.delete("/course/:courseId", auth, admin, async (req, res) => {
 
 /* ================= LECTURE MANAGEMENT ================= */
 
+// Add Lecture to a Course
 router.post("/course/:courseId/lecture", auth, admin, async (req, res) => {
   try {
     const { courseId } = req.params; 
@@ -82,6 +88,7 @@ router.post("/course/:courseId/lecture", auth, admin, async (req, res) => {
   }
 });
 
+// Delete specific Lecture
 router.delete("/course/:courseId/lecture/:lectureId", auth, admin, async (req, res) => {
     try {
         await Lecture.findByIdAndDelete(req.params.lectureId);
@@ -93,6 +100,7 @@ router.delete("/course/:courseId/lecture/:lectureId", auth, admin, async (req, r
 
 /* ================= DOUBT RESOLUTION ================= */
 
+// Get pending doubts for a specific course
 router.get("/doubts/:courseId", auth, admin, async (req, res) => {
     try {
         const { courseId } = req.params;
@@ -103,6 +111,7 @@ router.get("/doubts/:courseId", auth, admin, async (req, res) => {
     }
 });
 
+// Provide answer to a student doubt
 router.post("/resolve-doubt", auth, admin, async (req, res) => {
     try {
         const { doubtId, answer } = req.body;
@@ -115,12 +124,7 @@ router.post("/resolve-doubt", auth, admin, async (req, res) => {
 
 /* ================= NOTIFICATION PUSH ================= */
 
-// Matches: POST /api/admin/send-notification
-// 2. THE ROUTE
 router.post("/send-notification", auth, admin, async (req, res) => {
-    console.log("--- DEBUG: Notification Route Hit ---");
-    console.log("Payload:", req.body);
-    
     try {
         const { heading, description, link, targetCourses } = req.body;
         
@@ -136,10 +140,8 @@ router.post("/send-notification", auth, admin, async (req, res) => {
         });
 
         await newNotif.save();
-        console.log("--- DEBUG: Notification Saved Successfully ---");
         res.status(201).json({ success: true, message: "Broadcast Sent!" });
     } catch (err) {
-        console.error("--- DEBUG: Notification Error ---", err);
         res.status(500).json({ message: "Server error during broadcast." });
     }
 });
@@ -162,21 +164,15 @@ router.delete("/notification/:id", auth, admin, async (req, res) => {
     }
 });
 
-/* ================= STUDENT ENROLLMENTS ================= */
+/* ================= STUDENT ENROLLMENTS & ANALYTICS ================= */
 
-// Matches: GET /api/admin/course-enrollments/:courseId
 router.get("/course-enrollments/:courseId", auth, admin, async (req, res) => {
     try {
         const { courseId } = req.params;
+        const purchases = await Purchase.find({ courseId }).select("userId createdAt expiryDate");
         
-        // 1. Find purchases for THIS specific course
-        const purchases = await Purchase.find({ courseId }).select("userId createdAt");
-        
-        if (!purchases || purchases.length === 0) {
-            return res.json([]);
-        }
+        if (!purchases || purchases.length === 0) return res.json([]);
 
-        // 2. Map User Details
         const enrolledList = await Promise.all(purchases.map(async (p) => {
             const student = await User.findById(p.userId).select("name email studentClass");
             if(student) {
@@ -184,132 +180,42 @@ router.get("/course-enrollments/:courseId", auth, admin, async (req, res) => {
                     name: student.name,
                     email: student.email,
                     studentClass: student.studentClass,
-                    enrolledAt: p.createdAt
+                    enrolledAt: p.createdAt,
+                    expiryDate: p.expiryDate
                 };
             }
             return null;
         }));
 
-        // 3. Filter out any nulls (if a user was deleted but purchase remains)
         res.json(enrolledList.filter(item => item !== null));
-
     } catch (err) {
-        console.error("Enrollment Error:", err);
         res.status(500).json({ message: "Error fetching enrollments" });
     }
 });
-router.get("/fix-database-dates", auth, admin, async (req, res) => {
-    try {
-        const purchases = await Purchase.find({});
-        for (let p of purchases) {
-            // Set a default enrollment date if missing
-            if (!p.createdAt) p.createdAt = new Date(); 
-            
-            // Set a 1-year expiry if missing
-            if (!p.expiryDate) {
-                const exp = new Date(p.createdAt);
-                exp.setFullYear(exp.getFullYear() + 1);
-                p.expiryDate = exp;
-            }
-            await p.save();
-        }
-        res.json({ message: "All existing purchases updated with dates!" });
-    } catch (e) {
-        res.status(500).send(e.message);
-    }
-});
-router.get("/sync-dates", auth, admin, async (req, res) => {
-    try {
-        const purchases = await Purchase.find({});
-        let count = 0;
-        for (let p of purchases) {
-            // 1. Fix Enrolled Date if missing
-            if (!p.createdAt) p.createdAt = new Date("2026-02-01"); 
-            
-            // 2. Fix Expiry Date if missing (set to 1 year from enrollment)
-            if (!p.expiryDate) {
-                const exp = new Date(p.createdAt);
-                exp.setFullYear(exp.getFullYear() + 1);
-                p.expiryDate = exp;
-            }
-            await p.save();
-            count++;
-        }
-        res.json({ message: `Synchronized ${count} records successfully!` });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-});// adminRoutes.js
-router.get("/sync-old-purchases", auth, admin, async (req, res) => {
-    try {
-        const purchases = await Purchase.find({ expiryDate: { $exists: false } });
-        let count = 0;
 
-        for (let p of purchases) {
-            const start = p.createdAt || new Date();
-            const expiry = new Date(start);
-            expiry.setFullYear(expiry.getFullYear() + 1);
+/* ================= DATABASE MAINTENANCE (THE SYNC) ================= */
 
-            const purge = new Date(expiry);
-            purge.setDate(purge.getDate() + 10);
-
-            p.expiryDate = expiry;
-            p.purgeAt = purge;
-            // p.paymentId remains as it was (if it existed)
-            await p.save();
-            count++;
-        }
-        res.json({ message: `Updated ${count} records with new expiry/purge logic.` });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-// adminRoutes.js
-router.get("/repair-student-dates", auth, admin, async (req, res) => {
-    try {
-        const purchases = await Purchase.find({});
-        let updatedCount = 0;
-
-        for (let p of purchases) {
-            const course = await Course.findOne({ courseId: p.courseId });
-            if (course) {
-                const now = new Date();
-                const liveLimit = course.liveValidityDate ? new Date(course.liveValidityDate) : null;
-                
-                let finalExpiry;
-                // Apply your logic: if enrollment happened before live end, use live end.
-                if (liveLimit && new Date(p.createdAt) <= liveLimit) {
-                    finalExpiry = liveLimit;
-                } else {
-                    finalExpiry = new Date(p.createdAt);
-                    finalExpiry.setDate(finalExpiry.getDate() + (course.recordedDurationDays || 365));
-                }
-
-                p.expiryDate = finalExpiry;
-                p.purgeAt = new Date(finalExpiry.getTime() + 10 * 24 * 60 * 60 * 1000); // +10 days
-                await p.save();
-                updatedCount++;
-            }
-        }
-        res.json({ message: `Successfully synchronized ${updatedCount} student records with Course validity.` });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-// backend/routes/adminRoutes.js
-// Replace your adminRoutes.js sync section with just this one:
+/**
+ * THE MASTER SYNC: This applies your Piecewise Expiry Rule to all purchases.
+ * Use this to fix any records missing 'expiryDate' or 'purgeAt'.
+ */
 router.get("/force-sync-expiries", auth, admin, async (req, res) => {
     try {
+        // We target only records that are missing the expiryDate field
         const purchases = await Purchase.find({ expiryDate: { $exists: false } });
         let updatedCount = 0;
 
         for (let p of purchases) {
             const course = await Course.findOne({ courseId: p.courseId });
             if (course) {
+                // Determine Enrollment Date
                 const enrollDate = new Date(p.createdAt || Date.now());
                 const liveLimit = course.liveValidityDate ? new Date(course.liveValidityDate) : null;
                 
                 let finalExpiry;
+
+                // Agrona's Rule: If bought during Live phase, use Live limit. 
+                // Else, use Enroll Date + Duration.
                 if (liveLimit && enrollDate <= liveLimit) {
                     finalExpiry = liveLimit;
                 } else {
@@ -318,15 +224,18 @@ router.get("/force-sync-expiries", auth, admin, async (req, res) => {
                     finalExpiry.setDate(finalExpiry.getDate() + duration);
                 }
 
+                // Force injection of missing fields
                 p.expiryDate = finalExpiry;
-                p.purgeAt = new Date(finalExpiry.getTime() + 10 * 24 * 60 * 60 * 1000);
+                p.purgeAt = new Date(finalExpiry.getTime() + 10 * 24 * 60 * 60 * 1000); 
+                
                 await p.save();
                 updatedCount++;
             }
         }
-        res.json({ success: true, message: `Synced ${updatedCount} records.` });
+        res.json({ success: true, message: `Successfully synchronized ${updatedCount} records.` });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
+
 module.exports = router;
