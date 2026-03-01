@@ -13,12 +13,12 @@ exports.buyCourse = async (req, res) => {
         
         let finalExpiry;
 
-        // --- THE PIECEWISE LOGIC ---
-        if (liveLimit && now <= liveLimit) {
-            // Priority 1: On or before Course Validity Date
-            finalExpiry = liveLimit;
+        // --- MATH FIX: Compare Timestamps (.getTime()) ---
+        if (liveLimit && now.getTime() <= liveLimit.getTime()) {
+            // Priority 1: If today is BEFORE or ON the live validity date
+            finalExpiry = new Date(liveLimit); 
         } else {
-            // Priority 2: After Course Validity Date (Purchase + Duration)
+            // Priority 2: If today is AFTER (Recorded Phase)
             finalExpiry = new Date();
             const duration = parseInt(course.recordedDurationDays) || 365;
             finalExpiry.setDate(finalExpiry.getDate() + duration);
@@ -27,27 +27,25 @@ exports.buyCourse = async (req, res) => {
         const purgeDate = new Date(finalExpiry);
         purgeDate.setDate(purgeDate.getDate() + 10);
 
-        // --- FORCE SAVE LOGIC ---
+        // --- THE "STRICT" SAVE ---
         const newPurchase = new Purchase({
             userId: req.user.id,
             courseId,
             title: course.title,
             price: course.price,
-            paymentId
+            paymentId,
+            expiryDate: finalExpiry, // Ensure these names match Purchase.js exactly
+            purgeAt: purgeDate
         });
-
-        // Manually injecting fields to bypass any Mongoose strictness
-        newPurchase.expiryDate = finalExpiry;
-        newPurchase.purgeAt = purgeDate;
 
         await newPurchase.save();
         
-        console.log(`✅ [SUCCESS] Saved Purchase for ${courseId}. Expiry: ${finalExpiry.toISOString()}`);
-        res.status(201).json({ success: true, message: "Enrolled successfully!" });
+        console.log(`✅ [DB SYNC] Course: ${courseId} | Expiry set to: ${finalExpiry.toISOString()}`);
+        res.status(201).json({ success: true, message: "Enrolled!" });
 
     } catch (error) {
-        console.error("❌ [FATAL ERROR]:", error);
-        res.status(500).json({ message: "Server error during enrollment" });
+        console.error("❌ [CONTROLLER ERROR]:", error);
+        res.status(500).json({ message: "Server error" });
     }
 };
 

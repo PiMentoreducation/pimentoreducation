@@ -209,20 +209,18 @@ router.get("/force-sync-expiries", auth, admin, async (req, res) => {
             const course = await Course.findOne({ courseId: p.courseId });
             if (course) {
                 // Determine Enrollment Date
-                const enrollDate = new Date(p.createdAt || Date.now());
-                const liveLimit = course.liveValidityDate ? new Date(course.liveValidityDate) : null;
-                
-                let finalExpiry;
+              // Inside adminRoutes.js
+const enrollDate = new Date(p.createdAt || Date.now());
+const liveLimit = course.liveValidityDate ? new Date(course.liveValidityDate) : null;
 
-                // Agrona's Rule: If bought during Live phase, use Live limit. 
-                // Else, use Enroll Date + Duration.
-                if (liveLimit && enrollDate <= liveLimit) {
-                    finalExpiry = liveLimit;
-                } else {
-                    finalExpiry = new Date(enrollDate);
-                    const duration = parseInt(course.recordedDurationDays) || 365;
-                    finalExpiry.setDate(finalExpiry.getDate() + duration);
-                }
+let finalExpiry;
+if (liveLimit && enrollDate.getTime() <= liveLimit.getTime()) {
+    finalExpiry = new Date(liveLimit);
+} else {
+    finalExpiry = new Date(enrollDate);
+    const duration = parseInt(course.recordedDurationDays) || 365;
+    finalExpiry.setDate(finalExpiry.getDate() + duration);
+}
 
                 // Force injection of missing fields
                 p.expiryDate = finalExpiry;
