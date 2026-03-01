@@ -13,12 +13,10 @@ exports.buyCourse = async (req, res) => {
         
         let finalExpiry;
 
-        // --- MATH FIX: Compare Timestamps (.getTime()) ---
+        // Use Timestamps for absolute mathematical accuracy
         if (liveLimit && now.getTime() <= liveLimit.getTime()) {
-            // Priority 1: If today is BEFORE or ON the live validity date
-            finalExpiry = new Date(liveLimit); 
+            finalExpiry = new Date(liveLimit);
         } else {
-            // Priority 2: If today is AFTER (Recorded Phase)
             finalExpiry = new Date();
             const duration = parseInt(course.recordedDurationDays) || 365;
             finalExpiry.setDate(finalExpiry.getDate() + duration);
@@ -27,35 +25,40 @@ exports.buyCourse = async (req, res) => {
         const purgeDate = new Date(finalExpiry);
         purgeDate.setDate(purgeDate.getDate() + 10);
 
-        // --- THE "STRICT" SAVE ---
+        // --- THE "DIRECT WRITE" METHOD ---
         const newPurchase = new Purchase({
             userId: req.user.id,
             courseId,
             title: course.title,
             price: course.price,
-            paymentId,
-            expiryDate: finalExpiry, // Ensure these names match Purchase.js exactly
-            purgeAt: purgeDate
+            paymentId
         });
+
+        // Use .set() to force these fields into the document 
+        // regardless of schema strictness
+        newPurchase.set('expiryDate', finalExpiry);
+        newPurchase.set('purgeAt', purgeDate);
+
+        // Force Mongoose to acknowledge these fields are "dirty" (modified)
+        newPurchase.markModified('expiryDate');
+        newPurchase.markModified('purgeAt');
 
         await newPurchase.save();
         
-        console.log(`✅ [DB SYNC] Course: ${courseId} | Expiry set to: ${finalExpiry.toISOString()}`);
+        console.log(`✅ [FORCE SAVE] Course: ${courseId} | Expiry: ${finalExpiry}`);
         res.status(201).json({ success: true, message: "Enrolled!" });
 
     } catch (error) {
-        console.error("❌ [CONTROLLER ERROR]:", error);
+        console.error("❌ [FATAL SAVE ERROR]:", error);
         res.status(500).json({ message: "Server error" });
     }
 };
 
-// This function MUST be here to prevent the 'argument handler' error in routes
 exports.getMyCourses = async (req, res) => {
     try {
         const courses = await Purchase.find({ userId: req.user.id }).sort({ createdAt: -1 });
         res.status(200).json(courses);
     } catch (error) {
-        console.error("GET_MY_COURSES_ERROR:", error);
-        res.status(500).json({ error: "Failed to fetch your courses" });
+        res.status(500).json({ error: "Failed to fetch" });
     }
 };
