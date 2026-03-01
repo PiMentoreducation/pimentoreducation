@@ -205,51 +205,40 @@ router.get("/course-enrollments/:courseId", auth, admin, async (req, res) => {
  * MASTER SYNC ROUTE
  * Purpose: Fixes all old purchases that are missing expiryDate/purgeAt fields.
  */
+// backend/routes/adminRoutes.js
+
 router.get("/force-sync-expiries", auth, admin, async (req, res) => {
     try {
-        // 1. Find only the 'broken' records
         const purchases = await Purchase.find({ expiryDate: { $exists: false } });
-        let updatedCount = 0;
+        let count = 0;
 
         for (let p of purchases) {
             const course = await Course.findOne({ courseId: p.courseId });
-            
             if (course) {
-                // 2. Mathematical Normalization
-                const enrollDate = new Date(p.createdAt || Date.now());
-                const liveLimit = course.liveValidityDate ? new Date(course.liveValidityDate).getTime() : null;
-                const enrollTime = enrollDate.getTime();
+                const enrollTime = new Date(p.createdAt).getTime();
+                const liveLimitTime = course.liveValidityDate ? new Date(course.liveValidityDate).getTime() : null;
 
-                let finalExpiry;
-
-                // 3. Apply Piecewise Rule
-                if (liveLimit && enrollTime <= liveLimit) {
-                    finalExpiry = new Date(liveLimit);
+                let expiry;
+                if (liveLimitTime && enrollTime <= liveLimitTime) {
+                    expiry = new Date(liveLimitTime);
                 } else {
-                    finalExpiry = new Date(enrollDate);
-                    const duration = parseInt(course.recordedDurationDays) || 365;
-                    finalExpiry.setDate(finalExpiry.getDate() + duration);
+                    expiry = new Date(enrollTime);
+                    expiry.setDate(expiry.getDate() + (course.recordedDurationDays || 365));
                 }
 
-                // 4. Manual injection of missing fields
-                p.expiryDate = finalExpiry;
-                p.purgeAt = new Date(finalExpiry.getTime() + 10 * 24 * 60 * 60 * 1000); // +10 days
-                
-                // We use markModified just in case Mongoose is being stubborn
-                p.markModified('expiryDate');
-                p.markModified('purgeAt');
+                const purge = new Date(expiry);
+                purge.setDate(purge.getDate() + 10);
 
-                await p.save();
-                updatedCount++;
+                // DIRECT UPDATE BYPASS
+                await Purchase.collection.updateOne(
+                    { _id: p._id },
+                    { $set: { expiryDate: expiry, purgeAt: purge } }
+                );
+                count++;
             }
         }
-
-        res.json({ 
-            success: true, 
-            message: `Mathematical sync complete. Updated ${updatedCount} old records.` 
-        });
+        res.json({ success: true, message: `Forced sync on ${count} records.` });
     } catch (err) {
-        console.error("SYNC_ERROR:", err);
         res.status(500).json({ error: err.message });
     }
 });
