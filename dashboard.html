@@ -204,46 +204,44 @@ async function loadStudentCourses() {
         });
         const courses = await res.json();
         
-        if (!courses || courses.length === 0) {
-            container.innerHTML = "<p>No courses found.</p>";
+        const now = new Date();
+
+        // 1. STRICT FILTER: Remove from the array if current time > expiry
+        // This ensures the card vanishes the SECOND it expires.
+        const activeCourses = courses.filter(c => {
+            if (!c.expiryDate) return true; // Show legacy courses
+            return new Date(c.expiryDate) > now; 
+        });
+
+        if (activeCourses.length === 0) {
+            container.innerHTML = "<p style='color:#888;'>No active courses found.</p>";
             return;
         }
 
-        const now = new Date();
+        // 2. RENDER ONLY ACTIVE COURSES
+        container.innerHTML = activeCourses.map(c => {
+            const enrollDate = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : "Pending";
+            const validTill = c.expiryDate ? new Date(c.expiryDate).toLocaleDateString() : "Lifetime";
 
-        container.innerHTML = courses.map(c => {
-            // Priority Logic Check
-// Inside your loadStudentCourses mapping loop
-const now = new Date();
-const expiry = c.expiryDate ? new Date(c.expiryDate) : null;
-const isExpired = expiry && now > expiry;
+            return `
+                <div class="course-card">
+                    <h3>${c.title}</h3>
+                    <p style="font-size: 0.8rem; opacity: 0.7;">📅 Enrolled: ${enrollDate}</p>
+                    <p style="font-size: 0.8rem; color: var(--primary);">⏳ Valid Till: ${validTill}</p>
+                    
+                    <button onclick="window.location.href='course-desc.html?id=${c.courseId}'" 
+                            style="background: #666; color: white; margin-bottom: 8px;">
+                        Course Description
+                    </button>
 
-const dateString = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : "Pending";
-const validString = expiry ? expiry.toLocaleDateString() : "Lifetime";
-
-return `
-    <div class="course-card" style="${isExpired ? 'border-color: red; opacity: 0.8;' : ''}">
-        <h3>${c.title}</h3>
-        <p style="font-size: 0.8rem;">📅 Enrolled: ${dateString}</p>
-        <p style="font-size: 0.8rem; color: ${isExpired ? 'red' : 'green'};">
-            ⏳ Valid Till: ${validString} ${isExpired ? '(Expired)' : ''}
-        </p>
-
-        <button onclick="window.location.href='course-desc.html?id=${c.courseId}'" 
-                style="background: #555; margin-bottom: 5px;">
-            Course Description
-        </button>
-
-        ${isExpired 
-            ? `<button disabled style="background: #ccc; cursor: not-allowed;">Access Deactivated</button>`
-            : `<button onclick="goToCourse('${c.courseId}')">Continue Reading →</button>`
-        }
-    </div>
-`;
+                    <button onclick="goToCourse('${c.courseId}')">
+                        Continue Reading →
+                    </button>
+                </div>
+            `;
         }).join('');
     } catch (e) { 
-        console.error("Dashboard Error:", e);
-        container.innerHTML = "<p>Unable to load courses. Please refresh.</p>"; 
+        container.innerHTML = "<p>Error loading courses.</p>"; 
     }
 }
     async function loadDashboardDoubts() {
