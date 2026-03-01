@@ -10,18 +10,14 @@ exports.buyCourse = async (req, res) => {
         const course = await Course.findOne({ courseId: cleanId });
         if (!course) return res.status(404).json({ message: "Course not found" });
 
-        // 1. ABSOLUTE NUMERICAL COMPARISON
-        const nowMs = Date.now(); // Current time in milliseconds
+        // 1. Piecewise Logic (Scalar Timestamp Comparison)
+        const nowMs = Date.now();
         const liveLimitMs = course.liveValidityDate ? new Date(course.liveValidityDate).getTime() : 0;
         
         let finalExpiry;
-
-        // If today (March 1) <= March 3 Midnight
         if (liveLimitMs > 0 && nowMs <= liveLimitMs) {
-            // CASE: LIVE PHASE
             finalExpiry = new Date(liveLimitMs);
         } else {
-            // CASE: RECORDED PHASE
             finalExpiry = new Date();
             const days = parseInt(course.recordedDurationDays) || 365;
             finalExpiry.setDate(finalExpiry.getDate() + days);
@@ -30,7 +26,8 @@ exports.buyCourse = async (req, res) => {
         const purgeDate = new Date(finalExpiry);
         purgeDate.setDate(purgeDate.getDate() + 10);
 
-        // 2. CREATE AND SAVE THE BASE RECORD
+        // 2. Create and Save the BASE record
+        // (This triggers your existing logic for className, price, etc.)
         const newPurchase = new Purchase({
             userId: req.user.id,
             courseId: cleanId,
@@ -42,8 +39,8 @@ exports.buyCourse = async (req, res) => {
 
         const savedDoc = await newPurchase.save();
 
-        // 3. BYPASS MONGOOSE SCHEMA (The "Nuclear" Option)
-        // This writes directly to the MongoDB driver to force the fields into Atlas
+        // 3. THE CRITICAL BYPASS (Add this now!)
+        // This forces the expiryDate into Atlas for NEW purchases
         await Purchase.collection.updateOne(
             { _id: savedDoc._id },
             { 
@@ -54,15 +51,14 @@ exports.buyCourse = async (req, res) => {
             }
         );
 
-        console.log(`✅ [HARD-SYNC] Saved ${cleanId}. Expiry: ${finalExpiry.toISOString()}`);
+        console.log(`✅ [NEW PURCHASE SUCCESS] ID: ${savedDoc._id} | Expiry: ${finalExpiry.toISOString()}`);
         res.status(201).json({ success: true, message: "Enrolled!" });
 
     } catch (error) {
-        console.error("❌ CRITICAL ERROR:", error);
+        console.error("❌ PURCHASE ERROR:", error);
         res.status(500).json({ message: "Server error during enrollment" });
     }
 };
-
 exports.getMyCourses = async (req, res) => {
     try {
         const courses = await Purchase.find({ userId: req.user.id }).sort({ createdAt: -1 });
