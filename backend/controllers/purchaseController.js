@@ -5,30 +5,39 @@ const Purchase = require("../models/Purchase");
 const buyCourse = async (req, res) => {
     try {
         const { courseId, paymentId } = req.body;
-        const userId = req.user.id;
-
         const course = await Course.findOne({ courseId });
-        if (!course) return res.status(404).json({ message: "Course not found" });
+        const now = new Date();
+        let finalExpiry;
 
-        // Calculate Expiry Date (Current Date + Course Validity Days)
-        const expiry = new Date();
-        const daysToAdd = course.validityDays || 365; // Default to 1 year if not set
-        expiry.setDate(expiry.getDate() + daysToAdd);
+        // PRIORITY LOGIC
+        const liveDate = new Date(course.liveValidityDate);
+        if (now <= liveDate) {
+            // If buying during Live/Ongoing phase
+            finalExpiry = liveDate;
+        } else {
+            // If buying during Recorded phase
+            finalExpiry = new Date();
+            finalExpiry.setDate(finalExpiry.getDate() + (course.recordedDurationDays || 365));
+        }
+
+        // DATABASE PURGE DATE (10 Days Grace Period)
+        const purgeDate = new Date(finalExpiry);
+        purgeDate.setDate(purgeDate.getDate() + 10);
 
         const newPurchase = new Purchase({
-            userId,
-            courseId: course.courseId,
+            userId: req.user.id,
+            courseId,
             title: course.title,
-            className: course.className,
-            price: course.price,
+            price: course.price, 
             paymentId,
-            expiryDate: expiry // This will now save correctly because of Step 1
+            expiryDate: finalExpiry,
+            purgeAt: purgeDate
         });
 
         await newPurchase.save();
-        res.status(201).json({ success: true, message: "Purchase successful!" });
+        res.status(201).json({ success: true, message: "Enrolled successfully!" });
     } catch (error) {
-        res.status(500).json({ message: "Server error during purchase" });
+        res.status(500).json({ message: "Server error" });
     }
 };
 exports.buyCourse = async (req, res) => {

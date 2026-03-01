@@ -7,9 +7,10 @@ const courseSchema = new mongoose.Schema({
   price: Number,
   description: String,
   notesLink: String,
-  validityDays: { type: Number, default: 365 }, // NEW: Default 1 year
+// NEW FIELDS
+  liveValidityDate: { type: Date }, // Fixed date (e.g., June 30, 2026)
+  recordedDurationDays: { type: Number, default: 365 }, // Days from purchase
   createdAt: { type: Date, default: Date.now },
-  // We embed the lecture data directly here
   lectures: [
     {
       lectureTitle: String,

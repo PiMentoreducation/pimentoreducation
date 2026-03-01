@@ -196,39 +196,35 @@
         } catch (err) { console.error("Notif fetch failed"); }
     }
 
-    async function loadStudentCourses() {
-        const container = document.getElementById("courseList");
-        try {
-            const res = await fetch(`${BASE_URL}/api/purchase/my-courses`, { headers: { "Authorization": "Bearer " + token } });
-            const courses = await res.json();
-            const now = new Date();
+async function loadStudentCourses() {
+    const container = document.getElementById("courseList");
+    try {
+container.innerHTML = activeCourses.map(c => {
+    const now = new Date();
+    const expiry = new Date(c.expiryDate);
+    const isExpired = now > expiry;
 
-            // FILTER: Logic to hide expired courses
-            const activeCourses = courses.filter(c => {
-                if (!c.expiryDate) return true; // Show older ones by default
-                return new Date(c.expiryDate) > now;
-            });
+    return `
+        <div class="course-card" style="${isExpired ? 'opacity:0.8; border:1px solid red;' : ''}">
+            <h3>${c.title}</h3>
+            
+            <button onclick="viewDesc('${c.courseId}')" style="background:#555; margin-bottom:5px;">
+                View Description
+            </button>
 
-            if(!activeCourses.length) { container.innerHTML = "<p>No active courses found.</p>"; return; }
+            ${isExpired 
+                ? `<button disabled style="background:#ccc; cursor:not-allowed;">Access Expired</button>`
+                : `<button onclick="goToCourse('${c.courseId}')">Continue Reading →</button>`
+            }
 
-            container.innerHTML = activeCourses.map(c => {
-                // Formatting Dates
-                const pDate = c.createdAt ? new Date(c.createdAt) : null;
-                const dateString = (pDate && !isNaN(pDate)) ? pDate.toLocaleDateString() : "Date Pending";
-                
-                const eDate = c.expiryDate ? new Date(c.expiryDate) : null;
-                const expiryString = (eDate && !isNaN(eDate)) ? eDate.toLocaleDateString() : "Lifetime";
-
-                return `
-                    <div class="course-card">
-                        <h3>${c.title}</h3>
-                        <p style="font-size:0.75rem; opacity:0.7; margin-bottom:5px;">📅 Enrolled: ${dateString}</p>
-                        <p style="font-size:0.75rem; color:var(--danger); margin-bottom:10px;">⏳ Access Till: ${expiryString}</p>
-                        <button onclick="goToCourse('${c.courseId}')">Continue Learning →</button>
-                    </div>`;
-            }).join('');
-        } catch (e) { container.innerHTML = "<p>Error loading courses.</p>"; }
-    }
+            <p style="font-size:0.7rem; color:var(--danger); margin-top:10px;">
+                Valid Till: ${expiry.toLocaleDateString()}
+            </p>
+        </div>
+    `;
+}).join('');
+    } catch (e) { console.error(e); }
+}
 
     async function loadDashboardDoubts() {
         const container = document.getElementById("dashboardDoubtsContainer");
