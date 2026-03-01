@@ -41,7 +41,7 @@ router.post("/course", auth, admin, async (req, res) => {
                 liveValidityDate: liveValidityDate ? new Date(liveValidityDate) : null, 
                 recordedDurationDays: parseInt(recordedDurationDays) || 365 
             },
-            { new: true, upsert: true }
+            { returnDocument: 'after', upsert: true }
         );
         res.status(201).json({ message: "Course settings updated!", course });
     } catch (error) {
@@ -194,20 +194,6 @@ router.get("/course-enrollments/:courseId", auth, admin, async (req, res) => {
 });
 
 /* ================= DATABASE MAINTENANCE (THE SYNC) ================= */
-
-/**
- * THE MASTER SYNC: This applies your Piecewise Expiry Rule to all purchases.
- * Use this to fix any records missing 'expiryDate' or 'purgeAt'.
- */
-// backend/routes/adminRoutes.js
-
-/**
- * MASTER SYNC ROUTE
- * Purpose: Fixes all old purchases that are missing expiryDate/purgeAt fields.
- */
-// backend/routes/adminRoutes.js
-
-// backend/routes/adminRoutes.js
 
 router.get("/force-sync-expiries", auth, admin, async (req, res) => {
     try {
