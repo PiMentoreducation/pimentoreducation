@@ -199,39 +199,57 @@ router.get("/course-enrollments/:courseId", auth, admin, async (req, res) => {
  * THE MASTER SYNC: This applies your Piecewise Expiry Rule to all purchases.
  * Use this to fix any records missing 'expiryDate' or 'purgeAt'.
  */
+r// backend/routes/adminRoutes.js
+
+/**
+ * MASTER SYNC ROUTE
+ * Purpose: Fixes all old purchases that are missing expiryDate/purgeAt fields.
+ */
 router.get("/force-sync-expiries", auth, admin, async (req, res) => {
     try {
-        // We target only records that are missing the expiryDate field
+        // 1. Find only the 'broken' records
         const purchases = await Purchase.find({ expiryDate: { $exists: false } });
         let updatedCount = 0;
 
         for (let p of purchases) {
             const course = await Course.findOne({ courseId: p.courseId });
+            
             if (course) {
-                // Determine Enrollment Date
-              // Inside adminRoutes.js
-const enrollDate = new Date(p.createdAt || Date.now());
-const liveLimit = course.liveValidityDate ? new Date(course.liveValidityDate) : null;
+                // 2. Mathematical Normalization
+                const enrollDate = new Date(p.createdAt || Date.now());
+                const liveLimit = course.liveValidityDate ? new Date(course.liveValidityDate).getTime() : null;
+                const enrollTime = enrollDate.getTime();
 
-let finalExpiry;
-if (liveLimit && enrollDate.getTime() <= liveLimit.getTime()) {
-    finalExpiry = new Date(liveLimit);
-} else {
-    finalExpiry = new Date(enrollDate);
-    const duration = parseInt(course.recordedDurationDays) || 365;
-    finalExpiry.setDate(finalExpiry.getDate() + duration);
-}
+                let finalExpiry;
 
-                // Force injection of missing fields
+                // 3. Apply Piecewise Rule
+                if (liveLimit && enrollTime <= liveLimit) {
+                    finalExpiry = new Date(liveLimit);
+                } else {
+                    finalExpiry = new Date(enrollDate);
+                    const duration = parseInt(course.recordedDurationDays) || 365;
+                    finalExpiry.setDate(finalExpiry.getDate() + duration);
+                }
+
+                // 4. Manual injection of missing fields
                 p.expiryDate = finalExpiry;
-                p.purgeAt = new Date(finalExpiry.getTime() + 10 * 24 * 60 * 60 * 1000); 
+                p.purgeAt = new Date(finalExpiry.getTime() + 10 * 24 * 60 * 60 * 1000); // +10 days
                 
+                // We use markModified just in case Mongoose is being stubborn
+                p.markModified('expiryDate');
+                p.markModified('purgeAt');
+
                 await p.save();
                 updatedCount++;
             }
         }
-        res.json({ success: true, message: `Successfully synchronized ${updatedCount} records.` });
+
+        res.json({ 
+            success: true, 
+            message: `Mathematical sync complete. Updated ${updatedCount} old records.` 
+        });
     } catch (err) {
+        console.error("SYNC_ERROR:", err);
         res.status(500).json({ error: err.message });
     }
 });

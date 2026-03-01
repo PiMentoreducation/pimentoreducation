@@ -9,11 +9,11 @@ exports.buyCourse = async (req, res) => {
         if (!course) return res.status(404).json({ message: "Course not found" });
 
         const now = new Date();
-        const liveLimit = course.liveValidityDate ? new Date(course.liveValidityDate) : null;
+        const liveLimit = course.liveValidityDate ? new Date(course.liveValidityDate).getTime() : null;
         let finalExpiry;
 
         // Use Timestamps for absolute mathematical accuracy
-        if (liveLimit.getTime() && now.getTime() <= liveLimit.getTime()) {
+        if (liveLimit && now.getTime() <= liveLimit.getTime()) {
            finalExpiry = new Date(liveLimit);
         } else {
             finalExpiry = new Date();
