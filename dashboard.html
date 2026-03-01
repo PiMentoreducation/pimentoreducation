@@ -199,33 +199,52 @@
 async function loadStudentCourses() {
     const container = document.getElementById("courseList");
     try {
-container.innerHTML = activeCourses.map(c => {
-    const now = new Date();
-    const expiry = new Date(c.expiryDate);
-    const isExpired = now > expiry;
+        const res = await fetch(`${BASE_URL}/api/purchase/my-courses`, { 
+            headers: { "Authorization": "Bearer " + token } 
+        });
+        const courses = await res.json();
+        
+        if (!courses || courses.length === 0) {
+            container.innerHTML = "<p>No courses found.</p>";
+            return;
+        }
 
-    return `
-        <div class="course-card" style="${isExpired ? 'opacity:0.8; border:1px solid red;' : ''}">
-            <h3>${c.title}</h3>
-            
-            <button onclick="viewDesc('${c.courseId}')" style="background:#555; margin-bottom:5px;">
-                View Description
-            </button>
+        const now = new Date();
 
-            ${isExpired 
-                ? `<button disabled style="background:#ccc; cursor:not-allowed;">Access Expired</button>`
-                : `<button onclick="goToCourse('${c.courseId}')">Continue Reading →</button>`
-            }
+        container.innerHTML = courses.map(c => {
+            // Priority Logic Check
+            const expiry = c.expiryDate ? new Date(c.expiryDate) : null;
+            const isExpired = expiry && now > expiry;
 
-            <p style="font-size:0.7rem; color:var(--danger); margin-top:10px;">
-                Valid Till: ${expiry.toLocaleDateString()}
-            </p>
-        </div>
-    `;
-}).join('');
-    } catch (e) { console.error(e); }
+            return `
+                <div class="course-card" style="${isExpired ? 'border: 1px solid var(--danger); opacity: 0.8;' : ''}">
+                    <h3>${c.title}</h3>
+                    
+                    <p style="font-size: 0.8rem; margin-bottom: 10px;">
+                        Status: ${isExpired ? '<span style="color:red;">Expired</span>' : '<span style="color:green;">Active</span>'}
+                    </p>
+
+                    <button onclick="window.location.href='course-desc.html?id=${c.courseId}'" 
+                            style="background: #666; color: white; margin-bottom: 8px;">
+                        Course Description
+                    </button>
+
+                    ${isExpired 
+                        ? `<button disabled style="background: #ccc; cursor: not-allowed;">Access Deactivated</button>`
+                        : `<button onclick="goToCourse('${c.courseId}')">Continue Reading →</button>`
+                    }
+
+                    <p style="font-size: 0.7rem; margin-top: 10px; color: #888;">
+                        Valid Until: ${expiry ? expiry.toLocaleDateString() : 'Lifetime'}
+                    </p>
+                </div>
+            `;
+        }).join('');
+    } catch (e) { 
+        console.error("Dashboard Error:", e);
+        container.innerHTML = "<p>Unable to load courses. Please refresh.</p>"; 
+    }
 }
-
     async function loadDashboardDoubts() {
         const container = document.getElementById("dashboardDoubtsContainer");
         try {

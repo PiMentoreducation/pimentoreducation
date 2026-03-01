@@ -24,17 +24,25 @@ router.get("/all-courses", auth, admin, async (req, res) => {
   }
 });
 
+// adminRoutes.js - Update Course Route
 router.post("/course", auth, admin, async (req, res) => {
-  try {
-    const { courseId, title, className, price, description, validityDays } = req.body;
-    const course = await Course.create({ 
-      courseId, title, className, price, description, 
-      validityDays: parseInt(validityDays) || 365 
-    });
-    res.status(201).json({ message: "Course created!", course });
-  } catch (error) {
-    res.status(500).json({ message: "Error creating course" });
-  }
+    try {
+        const { courseId, title, className, price, description, liveValidityDate, recordedDurationDays } = req.body;
+        
+        // Use findOneAndUpdate with 'upsert' so you can update prices anytime
+        const course = await Course.findOneAndUpdate(
+            { courseId },
+            { 
+                title, className, price, description, 
+                liveValidityDate: new Date(liveValidityDate), 
+                recordedDurationDays: parseInt(recordedDurationDays) || 365 
+            },
+            { new: true, upsert: true }
+        );
+        res.status(201).json({ message: "Course settings updated!", course });
+    } catch (error) {
+        res.status(500).json({ message: "Error updating course" });
+    }
 });
 
 router.delete("/course/:courseId", auth, admin, async (req, res) => {
@@ -230,6 +238,30 @@ router.get("/sync-dates", auth, admin, async (req, res) => {
         res.json({ message: `Synchronized ${count} records successfully!` });
     } catch (e) {
         res.status(500).json({ error: e.message });
+    }
+});// adminRoutes.js
+router.get("/sync-old-purchases", auth, admin, async (req, res) => {
+    try {
+        const purchases = await Purchase.find({ expiryDate: { $exists: false } });
+        let count = 0;
+
+        for (let p of purchases) {
+            const start = p.createdAt || new Date();
+            const expiry = new Date(start);
+            expiry.setFullYear(expiry.getFullYear() + 1);
+
+            const purge = new Date(expiry);
+            purge.setDate(purge.getDate() + 10);
+
+            p.expiryDate = expiry;
+            p.purgeAt = purge;
+            // p.paymentId remains as it was (if it existed)
+            await p.save();
+            count++;
+        }
+        res.json({ message: `Updated ${count} records with new expiry/purge logic.` });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 module.exports = router;

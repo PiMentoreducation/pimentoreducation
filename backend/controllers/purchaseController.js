@@ -42,31 +42,43 @@ const buyCourse = async (req, res) => {
 };
 exports.buyCourse = async (req, res) => {
     try {
-        // We take these DIRECTLY from req.body (no 'course' wrapper)
-        const { paymentId, courseId, title, className, price } = req.body;
+        const { courseId, paymentId } = req.body; // 👈 Extract paymentId from frontend
+        const course = await Course.findOne({ courseId });
         
-        // Debugging: This will show in your VS Code terminal
-        console.log("Saving Course ID:", courseId);
+        if (!course) return res.status(404).json({ message: "Course not found" });
+
+        const now = new Date();
+        const liveLimit = new Date(course.liveValidityDate);
+        
+        // Priority Logic: Live vs Recorded
+        let finalExpiry;
+        if (now <= liveLimit) {
+            finalExpiry = liveLimit;
+        } else {
+            finalExpiry = new Date();
+            finalExpiry.setDate(finalExpiry.getDate() + (course.recordedDurationDays || 365));
+        }
+
+        // Purge Date: Expiry + 10 Days
+        const purgeDate = new Date(finalExpiry);
+        purgeDate.setDate(purgeDate.getDate() + 10);
 
         const newPurchase = new Purchase({
-            userId: req.user.id, // Successfully fixed by your new middleware!
-            courseId,            // Simplified ES6 syntax
-            title,
-            className,
-            price,
-            paymentId,
-            createdAt: new Date(),
-            expiryDate: expiry, // This will now save correctly because of Step 1
+            userId: req.user.id,
+            courseId,
+            title: course.title,
+            price: course.price,
+            paymentId, // 👈 Successfully saved to student's record
+            expiryDate: finalExpiry,
+            purgeAt: purgeDate
         });
 
         await newPurchase.save();
-        res.status(201).json({ message: "Purchase successful" });
+        res.status(201).json({ success: true, message: "Enrollment Complete" });
     } catch (error) {
-        console.error("Purchase Save Error:", error);
-        res.status(500).json({ error: "Failed to save purchase" });
+        res.status(500).json({ message: "Internal Server Error" });
     }
 };
-
 exports.getMyCourses = async (req, res) => {
     try {
         const courses = await Purchase.find({ userId: req.user.id });
