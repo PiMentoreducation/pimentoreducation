@@ -40,26 +40,32 @@ const buyCourse = async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 };
+const Purchase = require("../models/Purchase");
+const Course = require("../models/Course");
+
 exports.buyCourse = async (req, res) => {
     try {
-        const { courseId, paymentId } = req.body; // 👈 Extract paymentId from frontend
+        const { courseId, paymentId } = req.body;
         const course = await Course.findOne({ courseId });
-        
         if (!course) return res.status(404).json({ message: "Course not found" });
 
         const now = new Date();
-        const liveLimit = new Date(course.liveValidityDate);
+        const liveLimit = course.liveValidityDate ? new Date(course.liveValidityDate) : null;
         
-        // Priority Logic: Live vs Recorded
         let finalExpiry;
-        if (now <= liveLimit) {
+
+        // PRIORITY LOGIC
+        if (liveLimit && now <= liveLimit) {
+            // Priority 1: Buying during Live/Ongoing phase
             finalExpiry = liveLimit;
         } else {
+            // Priority 2: Buying during Recorded phase (or if no live date set)
             finalExpiry = new Date();
-            finalExpiry.setDate(finalExpiry.getDate() + (course.recordedDurationDays || 365));
+            const duration = parseInt(course.recordedDurationDays) || 365;
+            finalExpiry.setDate(finalExpiry.getDate() + duration);
         }
 
-        // Purge Date: Expiry + 10 Days
+        // DATABASE PURGE DATE (Expiry + 10 Days Grace Period)
         const purgeDate = new Date(finalExpiry);
         purgeDate.setDate(purgeDate.getDate() + 10);
 
@@ -67,23 +73,25 @@ exports.buyCourse = async (req, res) => {
             userId: req.user.id,
             courseId,
             title: course.title,
-            price: course.price,
-            paymentId, // 👈 Successfully saved to student's record
+            price: course.price, // Captures price at moment of sale
+            paymentId,
             expiryDate: finalExpiry,
             purgeAt: purgeDate
         });
 
         await newPurchase.save();
-        res.status(201).json({ success: true, message: "Enrollment Complete" });
+        res.status(201).json({ success: true, message: "Enrolled successfully!" });
     } catch (error) {
-        res.status(500).json({ message: "Internal Server Error" });
+        console.error("BUY ERROR:", error);
+        res.status(500).json({ message: "Server error" });
     }
 };
+
 exports.getMyCourses = async (req, res) => {
     try {
         const courses = await Purchase.find({ userId: req.user.id });
         res.status(200).json(courses);
     } catch (error) {
-        res.status(500).json({ error: "Failed to fetch courses" });
+        res.status(500).json({ error: "Failed to fetch" });
     }
 };
