@@ -402,22 +402,29 @@ async function loadEnrollments(courseId) {
         toggleText.innerText = isNewChapter ? "← Use Existing" : "+ New Chapter";
     }
 
-    async function addCourse() {
-        const payload = {
-            courseId: document.getElementById("courseId").value,
-            title: document.getElementById("title").value,
-            className: document.getElementById("className").value,
-            price: document.getElementById("price").value,
-            description: document.getElementById("description").value
-        };
-        const res = await fetch(`${BASE_URL}/api/admin/course`, {
-            method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-            body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        alert(data.message);
-        loadOngoingCourses();
-    }
+async function addCourse() {
+    const payload = {
+        courseId: document.getElementById("courseId").value,
+        title: document.getElementById("title").value,
+        className: document.getElementById("className").value,
+        description: document.getElementById("description").value,
+        price: document.getElementById("price").value,
+        liveValidityDate: document.getElementById("liveValidityDate").value, // Date from picker
+        recordedDurationDays: document.getElementById("recordedDurationDays").value // Number
+    };
+
+    const res = await fetch(`${BASE_URL}/api/admin/course`, {
+        method: "POST",
+        headers: { 
+            "Content-Type": "application/json", 
+            "Authorization": "Bearer " + token 
+        },
+        body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    alert(data.message);
+    loadOngoingCourses();
+}
 
     async function addLecture() {
         const cid = document.getElementById("targetCourseId").value;

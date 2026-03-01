@@ -1,14 +1,14 @@
 const express = require("express");
 const router = express.Router();
 
-// Imports
+// 1. Imports from Controller
 const { buyCourse, getMyCourses } = require("../controllers/purchaseController");
 const authMiddleware = require("../middleware/authMiddleware");
 
-// Models - Standardized Casing
-const User = require("../models/User"); // Added missing import
-const Doubt = require("../models/Doubt"); // Standardized to match Doubt.js
-const Purchase = require("../models/Purchase");
+// 2. Models - RENAMED 'Purchase' to 'PurchaseModel' to avoid SyntaxError
+const User = require("../models/User");
+const Doubt = require("../models/Doubt");
+const PurchaseModel = require("../models/Purchase"); // Changed name here
 const Course = require("../models/Course");
 const Lecture = require("../models/Lecture");
 
@@ -16,10 +16,10 @@ const Lecture = require("../models/Lecture");
 router.post("/buy", authMiddleware, buyCourse);
 router.get("/my-courses", authMiddleware, getMyCourses);
 
-// 2. Access Verification Route
+// 2. Access Verification Route (Updated to use PurchaseModel)
 router.get("/verify-access/:courseId", authMiddleware, async (req, res) => {
     try {
-        const hasAccess = await Purchase.findOne({ 
+        const hasAccess = await PurchaseModel.findOne({ 
             userId: req.user.id, 
             courseId: req.params.courseId 
         });
@@ -31,11 +31,11 @@ router.get("/verify-access/:courseId", authMiddleware, async (req, res) => {
 
 /* ================= HIERARCHICAL CONTENT DELIVERY (STUDENT) ================= */
 
-// A. Get Unique Chapters for a Course
+// A. Get Unique Chapters for a Course (Updated to use PurchaseModel)
 router.get("/course-chapters/:courseId", authMiddleware, async (req, res) => {
     try {
         const { courseId } = req.params;
-        const hasAccess = await Purchase.findOne({ userId: req.user.id, courseId });
+        const hasAccess = await PurchaseModel.findOne({ userId: req.user.id, courseId });
         if (!hasAccess) return res.status(403).json({ message: "Access Denied: Please purchase this course." });
 
         const chapters = await Lecture.distinct("chapterName", { courseId });
@@ -45,11 +45,11 @@ router.get("/course-chapters/:courseId", authMiddleware, async (req, res) => {
     }
 });
 
-// B. Get Lectures for a Specific Chapter
+// B. Get Lectures for a Specific Chapter (Updated to use PurchaseModel)
 router.get("/course-content/:courseId/:chapterName", authMiddleware, async (req, res) => {
     try {
         const { courseId, chapterName } = req.params;
-        const hasAccess = await Purchase.findOne({ userId: req.user.id, courseId });
+        const hasAccess = await PurchaseModel.findOne({ userId: req.user.id, courseId });
         if (!hasAccess) return res.status(403).json({ message: "Access Denied" });
 
         const lectures = await Lecture.find({ 
@@ -63,13 +63,13 @@ router.get("/course-content/:courseId/:chapterName", authMiddleware, async (req,
     }
 });
 
-// C. Get Single Lecture Details (For Video Player)
+// C. Get Single Lecture Details (Updated to use PurchaseModel)
 router.get("/lecture-details/:lectureId", authMiddleware, async (req, res) => {
     try {
         const lecture = await Lecture.findById(req.params.lectureId);
         if (!lecture) return res.status(404).json({ message: "Lecture not found" });
 
-        const hasAccess = await Purchase.findOne({ userId: req.user.id, courseId: lecture.courseId });
+        const hasAccess = await PurchaseModel.findOne({ userId: req.user.id, courseId: lecture.courseId });
         if (!hasAccess) return res.status(403).json({ message: "Access Denied" });
 
         res.json(lecture);
@@ -77,6 +77,8 @@ router.get("/lecture-details/:lectureId", authMiddleware, async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 });
+
+// ... rest of your code remains the same
 
 /* ================= ADMIN SPECIFIC ROUTES ================= */
 
