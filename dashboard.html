@@ -202,46 +202,53 @@ async function loadStudentCourses() {
         const res = await fetch(`${BASE_URL}/api/purchase/my-courses`, { 
             headers: { "Authorization": "Bearer " + token } 
         });
-        const courses = await res.json();
+        const allPurchases = await res.json();
         
         const now = new Date();
+        console.log("Current System Time:", now);
 
-        // 1. STRICT FILTER: Remove from the array if current time > expiry
-        // This ensures the card vanishes the SECOND it expires.
-        const activeCourses = courses.filter(c => {
-            if (!c.expiryDate) return true; // Show legacy courses
-            return new Date(c.expiryDate) > now; 
+        // 1. THE FILTER (The most important part)
+        // We only keep courses where (now < expiryDate)
+        const activeCourses = allPurchases.filter(c => {
+            if (!c.expiryDate) return true; // Show legacy/manual data
+            const expiry = new Date(c.expiryDate);
+            
+            // Debugging log for you in F12
+            console.log(`Course: ${c.title} | Expiry: ${expiry} | Valid: ${expiry > now}`);
+            
+            return expiry > now; 
         });
 
+        // 2. THE RENDER (We use 'activeCourses', NOT 'allPurchases')
         if (activeCourses.length === 0) {
-            container.innerHTML = "<p style='color:#888;'>No active courses found.</p>";
+            container.innerHTML = `
+                <div style="text-align:center; padding:20px; color:#888;">
+                    <p>No active courses found.</p>
+                    <small>Expired courses are removed from this view.</small>
+                </div>`;
             return;
         }
 
-        // 2. RENDER ONLY ACTIVE COURSES
-        container.innerHTML = activeCourses.map(c => {
-            const enrollDate = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : "Pending";
-            const validTill = c.expiryDate ? new Date(c.expiryDate).toLocaleDateString() : "Lifetime";
+        container.innerHTML = activeCourses.map(c => `
+            <div class="course-card">
+                <h3>${c.title}</h3>
+                <p style="font-size:0.75rem; opacity:0.7;">📅 Enrolled: ${c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'N/A'}</p>
+                <p style="font-size:0.75rem; color:var(--primary);">⏳ Valid Till: ${new Date(c.expiryDate).toLocaleDateString()}</p>
+                
+                <button onclick="window.location.href='course-desc.html?id=${c.courseId}'" 
+                        style="background: #666; color: white; margin-bottom: 8px;">
+                    Course Description
+                </button>
 
-            return `
-                <div class="course-card">
-                    <h3>${c.title}</h3>
-                    <p style="font-size: 0.8rem; opacity: 0.7;">📅 Enrolled: ${enrollDate}</p>
-                    <p style="font-size: 0.8rem; color: var(--primary);">⏳ Valid Till: ${validTill}</p>
-                    
-                    <button onclick="window.location.href='course-desc.html?id=${c.courseId}'" 
-                            style="background: #666; color: white; margin-bottom: 8px;">
-                        Course Description
-                    </button>
+                <button onclick="goToCourse('${c.courseId}')">
+                    Continue Reading →
+                </button>
+            </div>
+        `).join('');
 
-                    <button onclick="goToCourse('${c.courseId}')">
-                        Continue Reading →
-                    </button>
-                </div>
-            `;
-        }).join('');
     } catch (e) { 
-        container.innerHTML = "<p>Error loading courses.</p>"; 
+        console.error("Dashboard Render Error:", e);
+        container.innerHTML = "<p>Error loading courses. Please refresh.</p>"; 
     }
 }
     async function loadDashboardDoubts() {
