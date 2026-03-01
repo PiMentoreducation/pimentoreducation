@@ -296,9 +296,14 @@ router.get("/repair-student-dates", auth, admin, async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+// backend/routes/adminRoutes.js
+
 router.get("/force-sync-expiries", auth, admin, async (req, res) => {
     try {
-        // We fetch ALL purchases that are missing the expiryDate field
+        const Purchase = require("../models/Purchase");
+        const Course = require("../models/Course");
+        
+        // Find all purchases that are missing the expiryDate field
         const purchases = await Purchase.find({ expiryDate: { $exists: false } });
         let updatedCount = 0;
 
@@ -311,18 +316,20 @@ router.get("/force-sync-expiries", auth, admin, async (req, res) => {
                 
                 let finalExpiry;
 
-                // Apply your piecewise logic
+                // Apply the "Agrona Piecewise Logic"
                 if (liveLimit && enrollDate <= liveLimit) {
+                    // Rule 1: Bought during Live phase
                     finalExpiry = liveLimit;
                 } else {
+                    // Rule 2: Bought during Recorded phase
                     finalExpiry = new Date(enrollDate);
                     const duration = parseInt(course.recordedDurationDays) || 365;
                     finalExpiry.setDate(finalExpiry.getDate() + duration);
                 }
 
-                // Update the document
+                // Update the purchase record
                 p.expiryDate = finalExpiry;
-                p.purgeAt = new Date(finalExpiry.getTime() + 10 * 24 * 60 * 60 * 1000); // Expiry + 10 days
+                p.purgeAt = new Date(finalExpiry.getTime() + 10 * 24 * 60 * 60 * 1000); // +10 days
                 
                 await p.save();
                 updatedCount++;
@@ -331,7 +338,7 @@ router.get("/force-sync-expiries", auth, admin, async (req, res) => {
 
         res.json({ 
             success: true, 
-            message: `Synchronized ${updatedCount} records. "Invalid Date" should now be gone.` 
+            message: `Synchronized ${updatedCount} records. Check your DB now!` 
         });
     } catch (err) {
         res.status(500).json({ error: err.message });

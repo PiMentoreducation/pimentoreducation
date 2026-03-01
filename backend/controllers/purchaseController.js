@@ -1,96 +1,78 @@
-// backend/controllers/purchaseController.js
 const Purchase = require("../models/Purchase");
-// Inside purchaseController.js
-
-const buyCourse = async (req, res) => {
-    try {
-        const { courseId, paymentId } = req.body;
-        const course = await Course.findOne({ courseId });
-        const now = new Date();
-        let finalExpiry;
-
-        // PRIORITY LOGIC
-        const liveDate = new Date(course.liveValidityDate);
-        if (now <= liveDate) {
-            // If buying during Live/Ongoing phase
-            finalExpiry = liveDate;
-        } else {
-            // If buying during Recorded phase
-            finalExpiry = new Date();
-            finalExpiry.setDate(finalExpiry.getDate() + (course.recordedDurationDays || 365));
-        }
-
-        // DATABASE PURGE DATE (10 Days Grace Period)
-        const purgeDate = new Date(finalExpiry);
-        purgeDate.setDate(purgeDate.getDate() + 10);
-
-        const newPurchase = new Purchase({
-            userId: req.user.id,
-            courseId,
-            title: course.title,
-            price: course.price, 
-            paymentId,
-            expiryDate: finalExpiry,
-            purgeAt: purgeDate
-        });
-
-        await newPurchase.save();
-        res.status(201).json({ success: true, message: "Enrolled successfully!" });
-    } catch (error) {
-        res.status(500).json({ message: "Server error" });
-    }
-};
 const Course = require("../models/Course");
 
+/**
+ * BUY COURSE LOGIC
+ * Implements the Piecewise Expiry Function:
+ * If PurchaseDate <= ValidityDate -> Expiry = ValidityDate
+ * If PurchaseDate > ValidityDate -> Expiry = PurchaseDate + RecordedDuration
+ */
 exports.buyCourse = async (req, res) => {
     try {
         const { courseId, paymentId } = req.body;
+
+        // 1. Validate Course Existence
         const course = await Course.findOne({ courseId });
-        
-        if (!course) return res.status(404).json({ message: "Course not found" });
+        if (!course) {
+            return res.status(404).json({ message: "Course not found" });
+        }
 
         const now = new Date();
         const liveLimit = course.liveValidityDate ? new Date(course.liveValidityDate) : null;
         
         let finalExpiry;
 
-        // --- THE PIECEWISE LOGIC ---
+        // 2. THE PIECEWISE LOGIC (Agrona's Rule)
         if (liveLimit && now <= liveLimit) {
-            // Priority 1: On or before Course Validity Date
+            // Case 1: Bought during Live/Ongoing phase
             finalExpiry = liveLimit;
         } else {
-            // Priority 2: After Course Validity Date (Purchase + Duration)
+            // Case 2: Bought during Recorded phase
             finalExpiry = new Date();
-            const duration = parseInt(course.recordedDurationDays) || 365;
-            finalExpiry.setDate(finalExpiry.getDate() + duration);
+            const durationDays = parseInt(course.recordedDurationDays) || 365;
+            finalExpiry.setDate(finalExpiry.getDate() + durationDays);
         }
 
-        // Calculate Purge Date (Expiry + 10 Days)
+        // 3. DATABASE PURGE DATE (10 Days Grace Period for TTL Index)
         const purgeDate = new Date(finalExpiry);
         purgeDate.setDate(purgeDate.getDate() + 10);
 
+        // 4. Create and Save Purchase Snapshot
         const newPurchase = new Purchase({
             userId: req.user.id,
             courseId,
             title: course.title,
-            price: course.price,
+            price: course.price, // Captures price at moment of sale
             paymentId,
-            // THESE TWO LINES ARE WHAT'S MISSING IN YOUR DB:
-            expiryDate: finalExpiry, 
-            purgeAt: purgeDate       
+            expiryDate: finalExpiry,
+            purgeAt: purgeDate
         });
 
         await newPurchase.save();
-        res.status(201).json({ success: true, message: "Enrolled successfully!" });
+        
+        res.status(201).json({ 
+            success: true, 
+            message: "Enrolled successfully!",
+            expiry: finalExpiry.toLocaleDateString()
+        });
+
     } catch (error) {
+        console.error("BUY_COURSE_ERROR:", error);
         res.status(500).json({ message: "Server error during enrollment" });
     }
 };
+
+/**
+ * GET STUDENT COURSES
+ * Fetches all purchases for the logged-in user
+ */
 exports.getMyCourses = async (req, res) => {
     try {
-        const courses = await Purchase.find({ userId: req.user.id });
+        // We fetch all, but the dashboard filter will hide expired ones
+        const courses = await Purchase.find({ userId: req.user.id }).sort({ createdAt: -1 });
         res.status(200).json(courses);
     } catch (error) {
-        res.status(500).json({ error: "Failed to fetch" });
+        console.error("GET_MY_COURSES_ERROR:", error);
+        res.status(500).json({ error: "Failed to fetch your courses" });
     }
 };
