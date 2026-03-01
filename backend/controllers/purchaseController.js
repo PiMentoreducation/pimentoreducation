@@ -52,6 +52,7 @@ exports.buyCourse = async (req, res) => {
             price,
             paymentId,
             createdAt: new Date(),
+            expiryDate: expiry, // This will now save correctly because of Step 1
         });
 
         await newPurchase.save();

@@ -190,5 +190,25 @@ router.get("/course-enrollments/:courseId", auth, admin, async (req, res) => {
         res.status(500).json({ message: "Error fetching enrollments" });
     }
 });
+router.get("/fix-database-dates", auth, admin, async (req, res) => {
+    try {
+        const purchases = await Purchase.find({});
+        for (let p of purchases) {
+            // Set a default enrollment date if missing
+            if (!p.createdAt) p.createdAt = new Date(); 
+            
+            // Set a 1-year expiry if missing
+            if (!p.expiryDate) {
+                const exp = new Date(p.createdAt);
+                exp.setFullYear(exp.getFullYear() + 1);
+                p.expiryDate = exp;
+            }
+            await p.save();
+        }
+        res.json({ message: "All existing purchases updated with dates!" });
+    } catch (e) {
+        res.status(500).send(e.message);
+    }
+});
 
 module.exports = router;

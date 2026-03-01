@@ -7,9 +7,11 @@ const purchaseSchema = new mongoose.Schema({
   className: String,
   price: Number,
   paymentId: String,
-  expiryDate: { type: Date } // We keep this for your "Resale" logic
+  // Add this field explicitly
+  expiryDate: { type: Date } 
 }, { 
-  timestamps: true // 👈 This automatically creates 'createdAt' and 'updatedAt'
+  // This automatically creates 'createdAt' (Enrolled Date) and 'updatedAt'
+  timestamps: true 
 });
 
 module.exports = mongoose.model("Purchase", purchaseSchema);
