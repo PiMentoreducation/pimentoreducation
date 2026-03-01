@@ -1,20 +1,22 @@
 const express = require("express");
 const router = express.Router();
 
-// 1. Imports from Controller
+// 1. Ensure these names match the 'exports.name' in your controller
 const { buyCourse, getMyCourses } = require("../controllers/purchaseController");
 const authMiddleware = require("../middleware/authMiddleware");
 
-// 2. Models - RENAMED 'Purchase' to 'PurchaseModel' to avoid SyntaxError
-const User = require("../models/User");
-const Doubt = require("../models/Doubt");
-const PurchaseModel = require("../models/Purchase"); // Changed name here
+// 2. Models (Renamed to PurchaseModel to avoid conflicts)
+const PurchaseModel = require("../models/Purchase"); 
 const Course = require("../models/Course");
 const Lecture = require("../models/Lecture");
+const User = require("../models/User");
+const Doubt = require("../models/Doubt");
 
-// 1. Standard Purchase Routes
-router.post("/buy", authMiddleware, buyCourse);
+// 3. Routes - Check if any of these variables (buyCourse, getMyCourses) are undefined
+router.post("/buy", authMiddleware, buyCourse); // Line 17?
 router.get("/my-courses", authMiddleware, getMyCourses);
+
+// ... rest of your routes
 
 // 2. Access Verification Route (Updated to use PurchaseModel)
 router.get("/verify-access/:courseId", authMiddleware, async (req, res) => {
