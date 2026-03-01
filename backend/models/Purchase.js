@@ -2,18 +2,19 @@ const mongoose = require("mongoose");
 
 const purchaseSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  courseId: String,
+  courseId: { type: String, trim: true },
   title: String,
   price: Number,
   paymentId: String,
-  expiryDate: { type: Date }, // Ensure this is exactly like this
+  className: String,
+  expiryDate: { type: Date }, 
   purgeAt: { type: Date }
 }, { 
   timestamps: true,
-  strict: false // This is the MAGIC FLAG - it tells Mongoose "Save anything I send you"
+  strict: false 
 });
 
+// Force index for auto-deletion
 purchaseSchema.index({ "purgeAt": 1 }, { expireAfterSeconds: 0 });
 
-// This logic prevents "OverwriteModelError" and forces the new schema
 module.exports = mongoose.models.Purchase || mongoose.model("Purchase", purchaseSchema);
