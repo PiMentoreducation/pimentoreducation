@@ -8,7 +8,7 @@ const purchaseSchema = new mongoose.Schema({
   paymentId: String, // Critical for tracking
   expiryDate: { type: Date }, // Actual access cutoff
   purgeAt: { type: Date }    // Expiry + 10 days (Auto-delete trigger)
-}, { 
+},{ 
   timestamps: true // This auto-generates createdAt for your joined date
 });
 
