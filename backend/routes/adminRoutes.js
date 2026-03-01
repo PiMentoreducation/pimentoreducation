@@ -199,7 +199,7 @@ router.get("/course-enrollments/:courseId", auth, admin, async (req, res) => {
  * THE MASTER SYNC: This applies your Piecewise Expiry Rule to all purchases.
  * Use this to fix any records missing 'expiryDate' or 'purgeAt'.
  */
-r// backend/routes/adminRoutes.js
+// backend/routes/adminRoutes.js
 
 /**
  * MASTER SYNC ROUTE
