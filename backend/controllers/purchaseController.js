@@ -1,70 +1,82 @@
 const Purchase = require("../models/Purchase");
 const Course = require("../models/Course");
-const mongoose = require("mongoose");
 
 exports.buyCourse = async (req, res) => {
     try {
         const { courseId, paymentId } = req.body;
         const cleanId = courseId.trim();
-        
-        // 1. Get raw course data
-        const course = await Course.findOne({ courseId: cleanId }).lean();
-        if (!course) return res.status(404).json({ message: "Course not found" });
 
-        // 2. Piecewise Logic
-        const now = new Date();
-        const liveLimit = course.liveValidityDate ? new Date(course.liveValidityDate) : null;
-        let finalExpiry;
-
-        if (liveLimit && !isNaN(liveLimit.getTime()) && now.getTime() <= liveLimit.getTime()) {
-            finalExpiry = new Date(liveLimit.getTime());
-        } else {
-            finalExpiry = new Date();
-            const days = parseInt(course.recordedDurationDays) || 365;
-            finalExpiry.setDate(finalExpiry.getDate() + days);
+        // 1️⃣ Find Course
+        const course = await Course.findOne({ courseId: cleanId });
+        if (!course) {
+            return res.status(404).json({ message: "Course not found" });
         }
 
-        const purgeDate = new Date(finalExpiry.getTime() + (10 * 24 * 60 * 60 * 1000));
+        // 2️⃣ Prevent Duplicate Purchase
+        const alreadyPurchased = await Purchase.findOne({
+            userId: req.user.id,
+            courseId: cleanId
+        });
 
-        // 3. DIRECT DRIVER INSERT (The Nuclear Option)
-        const rawData = {
-            userId: new mongoose.Types.ObjectId(req.user.id),
+        if (alreadyPurchased) {
+            return res.status(400).json({ message: "Course already purchased" });
+        }
+
+        // 3️⃣ Calculate Expiry Logic
+        const now = new Date();
+        let finalExpiry;
+
+        if (
+            course.liveValidityDate &&
+            now.getTime() <= new Date(course.liveValidityDate).getTime()
+        ) {
+            // Live batch access
+            finalExpiry = new Date(course.liveValidityDate);
+        } else {
+            // Recorded access
+            finalExpiry = new Date();
+            finalExpiry.setDate(
+                finalExpiry.getDate() + (course.recordedDurationDays || 365)
+            );
+        }
+
+        // 4️⃣ Purge Date (10 days after expiry)
+        const purgeDate = new Date(finalExpiry);
+        purgeDate.setDate(purgeDate.getDate() + 10);
+
+        // 5️⃣ SAVE USING MONGOOSE (CORRECT WAY)
+        const newPurchase = new Purchase({
+            userId: req.user.id,
             courseId: cleanId,
             title: course.title || "Untitled",
             price: course.price || 0,
-            paymentId: paymentId,
+            paymentId,
             className: course.className || "",
             expiryDate: finalExpiry,
-            purgeAt: purgeDate,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        };
+            purgeAt: purgeDate
+        });
 
-        const result = await mongoose.connection.collection('purchases').insertOne(rawData);
+        await newPurchase.save();
 
-        // DEBUG LOGS - Check these in Render!
-        console.log("-----------------------------------------");
-        console.log(`DB NAME: ${mongoose.connection.db.databaseName}`);
-        console.log(`COLLECTION: purchases`);
-        console.log(`INSERTED_ID: ${result.insertedId}`);
-        console.log(`EXPIRY_SAVED: ${finalExpiry.toISOString()}`);
-        console.log("-----------------------------------------");
-
-        res.status(201).json({ 
-            success: true, 
-            db: mongoose.connection.db.databaseName,
-            expiry: finalExpiry.toISOString() 
+        res.status(201).json({
+            success: true,
+            message: "Course purchased successfully",
+            expiryDate: finalExpiry
         });
 
     } catch (error) {
-        console.error("CRITICAL_ERROR:", error);
+        console.error("BUY COURSE ERROR:", error);
         res.status(500).json({ error: error.message });
     }
 };
 
+// Fetch student's purchased courses
 exports.getMyCourses = async (req, res) => {
     try {
-        const courses = await Purchase.find({ userId: req.user.id }).sort({ createdAt: -1 });
+        const courses = await Purchase.find({
+            userId: req.user.id
+        }).sort({ createdAt: -1 });
+
         res.status(200).json(courses);
     } catch (error) {
         res.status(500).json({ error: "Fetch failed" });

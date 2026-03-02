@@ -29,7 +29,11 @@ router.get("/verify-access/:courseId", authMiddleware, async (req, res) => {
             userId: req.user.id, 
             courseId: req.params.courseId 
         });
+        if (!purchase || new Date() > purchase.expiryDate) {
+        return res.status(403).json({ authorized: false });
+        }else{
         res.status(200).json({ authorized: !!hasAccess });
+        }
     } catch (error) {
         res.status(500).json({ message: "Server error" });
     }

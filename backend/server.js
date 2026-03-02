@@ -9,6 +9,8 @@ const axios = require("axios");
 const connectDB = require("./config/db");
 const Course = require("./models/Course");
 const purchaseRoutes = require("./routes/purchaseRoutes");
+const Purchase = require("./models/Purchase");
+Purchase.syncIndexes();
 
 // Initialize Environment Variables and Database
 dotenv.config();

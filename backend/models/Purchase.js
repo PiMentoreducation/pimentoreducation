@@ -7,14 +7,13 @@ const purchaseSchema = new mongoose.Schema({
   price: Number,
   paymentId: String,
   className: String,
-  expiryDate: { type: Date }, 
-  purgeAt: { type: Date }
+  expiryDate: { type: Date, required: true },
+  purgeAt: { type: Date, required: true }
 }, { 
-  timestamps: true,
-  strict: false 
+  timestamps: true
 });
 
-// Force index for auto-deletion
-purchaseSchema.index({ "purgeAt": 1 }, { expireAfterSeconds: 0 });
+// TTL Auto delete after purgeAt time
+purchaseSchema.index({ purgeAt: 1 }, { expireAfterSeconds: 0 });
 
 module.exports = mongoose.models.Purchase || mongoose.model("Purchase", purchaseSchema);
