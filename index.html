@@ -9,24 +9,30 @@
     
     <style>
         :root {
+            /* DARK MODE (GALACTIC) */
             --space-bg: radial-gradient(circle at top, #0d1117 0%, #010409 100%);
             --accent: #7c4dff;
             --accent-glow: rgba(124, 77, 255, 0.4);
             --glass: rgba(255, 255, 255, 0.05);
             --text: #ffffff;
+            --card-border: rgba(255, 255, 255, 0.1);
             --transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
         }
 
+        /* LIGHT MODE (RISING SUN GRASSLAND) */
         [data-theme="light"] {
-            --space-bg: radial-gradient(circle at top, #f4f7f6 0%, #e8f0fe 100%);
-            --text: #1a1a1a;
-            --glass: rgba(0, 0, 0, 0.05);
+            --space-bg: linear-gradient(180deg, #87CEEB 0%, #E0F7FA 40%, #A8E063 100%);
+            --text: #1b4332;
+            --accent: #2d6a4f; /* Deep Leaf Green */
+            --accent-glow: rgba(45, 106, 79, 0.2);
+            --glass: rgba(255, 255, 255, 0.85);
+            --card-border: rgba(45, 106, 79, 0.2);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--space-bg); color: var(--text); overflow-x: hidden; transition: background 0.5s ease; }
+        body { background: var(--space-bg); color: var(--text); overflow-x: hidden; transition: background 0.5s ease; min-height: 100vh; }
 
-        /* --- STARDUST BACKGROUND --- */
+        /* --- BACKGROUND DECOR --- */
         body::before {
             content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: url('https://www.transparenttextures.com/patterns/stardust.png');
@@ -34,48 +40,73 @@
         }
         @keyframes twinkle { from { background-position: 0 0; } to { background-position: 1000px 1000px; } }
 
+        /* LIGHT MODE DECOR (SUN & TREE) */
+        [data-theme="light"] body::after {
+            content: "☀️"; position: fixed; top: 10%; right: 10%; font-size: 80px; filter: blur(15px); opacity: 0.4; z-index: -1;
+        }
+        .grass-tree {
+            display: none; position: fixed; bottom: 0; left: 5%; font-size: 150px; z-index: -1; opacity: 0.3;
+        }
+        [data-theme="light"] .grass-tree { display: block; }
+
         /* --- NAVBAR --- */
         .navbar {
             position: fixed; top: 0; width: 100%; height: 80px; z-index: 1000;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 5%; background: rgba(13, 17, 23, 0.8);
-            backdrop-filter: blur(15px); border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; justify-content: flex-start;
+            padding: 0 5%; background: var(--glass);
+            backdrop-filter: blur(15px); border-bottom: 1px solid var(--card-border);
         }
 
-        .brand { display: flex; align-items: center; gap: 12px; cursor: pointer; }
-        .logo-img { height: 45px; filter: drop-shadow(0 0 8px var(--accent)); }
-        .logo-text { font-size: 1.5rem; font-weight: 800; background: linear-gradient(90deg, #fff, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .brand { display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.3s; }
+        
+        /* CIRCULAR LOGO DESIGN */
+        .logo-img { 
+            height: 45px; 
+            width: 45px; 
+            border-radius: 50%; 
+            object-fit: cover; 
+            border: 2px solid var(--accent);
+            filter: drop-shadow(0 0 8px var(--accent)); 
+        }
 
-        .nav-links { display: flex; gap: 30px; align-items: center; }
+        .logo-text { font-size: 1.5rem; font-weight: 800; background: linear-gradient(90deg, var(--text), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .nav-links { display: flex; gap: 30px; align-items: center; margin-left: auto; }
         .nav-links a { text-decoration: none; color: inherit; font-weight: 600; transition: var(--transition); opacity: 0.8; }
         .nav-links a:hover { opacity: 1; color: var(--accent); }
         .btn-get-started { background: var(--accent); color: #fff !important; padding: 10px 24px; border-radius: 50px; box-shadow: 0 0 20px var(--accent-glow); opacity: 1 !important; }
 
         /* --- MOBILE HAMBURGER --- */
-        .hamburger { display: none; cursor: pointer; flex-direction: column; gap: 6px; margin-right: 15px; }
+        .hamburger { display: none; cursor: pointer; flex-direction: column; gap: 6px; }
         .hamburger span { width: 28px; height: 3px; background: var(--text); border-radius: 2px; }
+
+        @media (max-width: 900px) {
+            .nav-links { display: none; }
+            .hamburger { display: flex; margin-right: auto; } 
+            .brand { margin-left: auto; } /* Brand pushed to RIGHT */
+        }
 
         /* --- SIDEBAR DRAWER --- */
         .sidebar {
-            position: fixed; top: 0; left: -100%; width: 300px; height: 100%;
-            background: rgba(10, 10, 15, 0.98); backdrop-filter: blur(25px);
-            z-index: 2000; transition: 0.5s cubic-bezier(0.77, 0, 0.175, 1); padding: 40px 30px; border-right: 1px solid var(--accent);
+            position: fixed; top: 0; left: -320px; width: 300px; height: 100%;
+            background: var(--glass); backdrop-filter: blur(25px);
+            z-index: 2000; transition: 0.4s cubic-bezier(0.77, 0, 0.175, 1); padding: 40px 30px; border-right: 1px solid var(--accent);
         }
         .sidebar.open { left: 0; }
         .sidebar-links { display: flex; flex-direction: column; gap: 25px; margin-top: 30px; }
-        .sidebar-links a { color: #fff; text-decoration: none; font-size: 1.1rem; font-weight: 700; width: 100%; }
+        .sidebar-links a { color: var(--text); text-decoration: none; font-size: 1.1rem; font-weight: 700; width: 100%; }
 
         /* --- THEME SWITCH STYLING --- */
         .theme-switch-wrapper {
             display: flex; align-items: center; justify-content: space-between;
-            padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px;
+            padding-bottom: 20px; border-bottom: 1px solid var(--card-border); margin-bottom: 10px;
         }
-        .switch-label { font-weight: 700; color: #fff; }
+        .switch-label { font-weight: 700; color: var(--text); }
         .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider-round {
             position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #333; transition: .4s; border-radius: 34px;
+            background-color: #ccc; transition: .4s; border-radius: 34px;
         }
         .slider-round:before {
             position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px;
@@ -100,19 +131,19 @@
         .course-grid, .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; }
         
         .course-card, .feature-card {
-            background: var(--glass); border: 1px solid rgba(255,255,255,0.1);
+            background: var(--glass); border: 1px solid var(--card-border);
             padding: 30px; border-radius: 24px; transition: var(--transition); backdrop-filter: blur(10px);
         }
         .course-card img { width: 100%; border-radius: 15px; margin-bottom: 20px; }
 
         @media (max-width: 900px) {
-            .nav-links { display: none; }
-            .hamburger { display: flex; }
             .slide-content h2 { font-size: 2.2rem; }
         }
     </style>
 </head>
 <body>
+
+<div class="grass-tree">🌳</div>
 
 <header class="navbar">
     <div class="hamburger" id="hamburger">
@@ -136,8 +167,8 @@
 
 <aside class="sidebar" id="sidebar">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-        <div class="logo-text" style="-webkit-text-fill-color: #fff;">Menu</div>
-        <button id="closeSidebar" style="background:none; border:none; color:#fff; font-size:2.5rem; cursor:pointer;">&times;</button>
+        <div class="logo-text" style="-webkit-text-fill-color: var(--text);">Menu</div>
+        <button id="closeSidebar" style="background:none; border:none; color:var(--text); font-size:2.5rem; cursor:pointer;">&times;</button>
     </div>
     
     <div class="theme-switch-wrapper">
@@ -181,10 +212,10 @@
             <p>Competitive & Board level preparation.</p>
             <a href="/courses.html" class="btn-get-started" style="display:block; text-align:center; margin-top:20px; text-decoration:none;">Enroll</a>
         </div>
-         <div class="course-card">
-            <img src="/images/course.png" alt="Physics">
-            <h3>Class 12 Physics</h3>
-            <p>Competitive & Board level preparation.</p>
+        <div class="course-card">
+            <img src="/images/course.png" alt="Foundation">
+            <h3>Foundation Course</h3>
+            <p>Early Exam Preparation Focus.</p>
             <a href="/courses.html" class="btn-get-started" style="display:block; text-align:center; margin-top:20px; text-decoration:none;">Enroll</a>
         </div>
     </div>
@@ -225,7 +256,6 @@
         localStorage.setItem('pimentor-theme', theme);
     };
 
-    // Load saved theme
     const savedTheme = localStorage.getItem('pimentor-theme') || 'dark';
     applyTheme(savedTheme);
 
