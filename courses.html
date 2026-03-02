@@ -4,17 +4,150 @@
   <meta charset="UTF-8">
   <title>Buy Courses | PiMentor</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="/courses.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+        /* DARK MODE (GALACTIC) */
+        --space-bg: radial-gradient(circle at top, #0d1117 0%, #010409 100%);
+        --accent: #7c4dff;
+        --accent-glow: rgba(124, 77, 255, 0.4);
+        --glass: rgba(255, 255, 255, 0.05);
+        --text: #ffffff;
+        --card-border: rgba(255, 255, 255, 0.1);
+        --transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+
+    /* LIGHT MODE (RISING SUN GRASSLAND) */
+    [data-theme="light"] {
+        --space-bg: linear-gradient(180deg, #87CEEB 0%, #E0F7FA 40%, #A8E063 100%);
+        --text: #1b4332;
+        --accent: #2d6a4f;
+        --glass: rgba(255, 255, 255, 0.85);
+        --card-border: rgba(45, 106, 79, 0.2);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; transition: background 0.5s ease; }
+    body { background: var(--space-bg); color: var(--text); overflow-x: hidden; min-height: 100vh; background-attachment: fixed; }
+
+    /* --- BACKGROUND DECOR --- */
+    body::before {
+        content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: url('https://www.transparenttextures.com/patterns/stardust.png');
+        opacity: 0.2; z-index: -1;
+    }
+    [data-theme="light"] body::after {
+        content: "☀️"; position: fixed; top: 10%; right: 10%; font-size: 80px; filter: blur(15px); opacity: 0.4; z-index: -1;
+    }
+
+    /* --- NAVIGATION --- */
+    .navbar {
+        position: fixed; top: 0; width: 100%; height: 80px; z-index: 1000;
+        display: flex; align-items: center; padding: 0 5%;
+        background: var(--glass); backdrop-filter: blur(15px);
+        border-bottom: 1px solid var(--card-border);
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; cursor: pointer; margin-right: auto; text-decoration: none; }
+    .logo-img { height: 45px; width: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); filter: drop-shadow(0 0 8px var(--accent)); }
+    .logo-text { font-size: 1.5rem; font-weight: 800; background: linear-gradient(90deg, var(--text), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+    .nav-links { display: flex; gap: 30px; align-items: center; }
+    .nav-links a { text-decoration: none; color: inherit; font-weight: 600; opacity: 0.9; }
+
+    /* --- MOBILE HAMBURGER & SIDEBAR --- */
+    .hamburger { display: none; cursor: pointer; flex-direction: column; gap: 6px; }
+    .hamburger span { width: 28px; height: 3px; background: var(--text); border-radius: 2px; }
+
+    .sidebar {
+        position: fixed; top: 0; left: -320px; width: 300px; height: 100%;
+        background: var(--glass); backdrop-filter: blur(25px);
+        z-index: 2000; transition: 0.4s ease; padding: 40px 30px; border-right: 1px solid var(--accent);
+    }
+    .sidebar.open { left: 0; }
+    .sidebar-links { display: flex; flex-direction: column; gap: 20px; margin-top: 30px; }
+    .sidebar-links a { color: var(--text); text-decoration: none; font-size: 1.1rem; font-weight: 700; }
+
+    @media (max-width: 900px) {
+        .nav-links { display: none; }
+        .hamburger { display: flex; order: -1; margin-right: auto; }
+        .brand { margin-left: auto; margin-right: 0; }
+    }
+
+    /* --- THEME SWITCH --- */
+    .theme-switch-wrapper { display: flex; align-items: center; justify-content: space-between; padding-bottom: 20px; border-bottom: 1px solid var(--card-border); }
+    .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider-round { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+    .slider-round:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider-round { background-color: var(--accent); }
+    input:checked + .slider-round:before { transform: translateX(24px); }
+
+    /* --- COURSE LAYOUT --- */
+    .course-container { 
+        max-width: 1200px; margin: 100px auto 40px; padding: 0 20px;
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px;
+    }
+    
+    .course-card { 
+        background: var(--glass); border: 1px solid var(--card-border); border-radius: 24px; 
+        padding: 30px; backdrop-filter: blur(10px); transition: var(--transition);
+        display: flex; flex-direction: column;
+    }
+    .course-card:hover { transform: translateY(-10px); border-color: var(--accent); box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
+    
+    .course-card h3 { font-size: 1.4rem; margin-bottom: 10px; }
+    .course-card .description { font-size: 0.9rem; opacity: 0.7; margin-bottom: 20px; flex-grow: 1; }
+    .course-card .price { font-size: 1.5rem; font-weight: 800; color: #2ecc71; margin-bottom: 20px; }
+
+    .btn-buy { 
+        width: 100%; padding: 14px; border: none; border-radius: 12px; 
+        font-weight: 800; cursor: pointer; transition: 0.3s; color: white;
+    }
+
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
 </head>
 <body>
 
-<header class="top-bar">
-  <h1>Enroll to new Courses</h1>
-  <button onclick="window.location.href='dashboard.html'">Dashboard</button>
+<header class="navbar">
+    <div class="hamburger" id="hamburger">
+        <span></span><span></span><span></span>
+    </div>
+
+    <a href="/index.html" class="brand">
+        <img src="/images/OUR_LOGO.png" class="logo-img" alt="pimentor">
+        <div class="logo-text">PiMentor</div>
+    </a>
+
+    <nav class="nav-links">
+        <a href="/index.html">Home</a>
+        <a href="/dashboard.html">Dashboard</a>
+        <button id="themeToggleBtn" style="background:none; border:none; color:var(--text); cursor:pointer; font-size:1.2rem;">🌙</button>
+    </nav>
 </header>
 
+<aside class="sidebar" id="sidebar">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+        <div class="logo-text" style="-webkit-text-fill-color: var(--text);">Menu</div>
+        <button id="closeSidebar" style="background:none; border:none; color:var(--text); font-size:2.5rem; cursor:pointer;">&times;</button>
+    </div>
+    
+    <div class="theme-switch-wrapper">
+        <span style="font-weight:700;">Dark Theme</span>
+        <label class="switch">
+            <input type="checkbox" id="themeToggle" checked>
+            <span class="slider-round"></span>
+        </label>
+    </div>
+
+    <nav class="sidebar-links">
+        <a href="/index.html">Home</a>
+        <a href="/dashboard.html">Dashboard</a>
+    </nav>
+</aside>
+
 <div class="course-container" id="courseContainer">
-    <p id="statusMessage">Loading courses...</p>
+    <p id="statusMessage" style="grid-column: 1/-1; text-align: center; opacity: 0.6;">Scanning the learning galaxy...</p>
 </div>
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
@@ -25,41 +158,47 @@ document.addEventListener("DOMContentLoaded", async () => {
   const userData = JSON.parse(localStorage.getItem("user") || "{}");
   const currentUserId = userData.id || userData._id;
 
-  // 1. Auth Guard
-  if (!token || !currentUserId) {
-    window.location.href = "login.html";
-    return;
-  }
+  // Sidebar & Theme Setup
+  const hamburger = document.getElementById('hamburger');
+  const sidebar = document.getElementById('sidebar');
+  const closeSidebar = document.getElementById('closeSidebar');
+  const themeToggle = document.getElementById('themeToggle');
+  const themeToggleBtn = document.getElementById('themeToggleBtn');
+
+  hamburger.onclick = () => sidebar.classList.add('open');
+  closeSidebar.onclick = () => sidebar.classList.remove('open');
+
+  const applyTheme = (theme) => {
+    document.documentElement.setAttribute("data-theme", theme);
+    if(themeToggle) themeToggle.checked = (theme === 'dark');
+    if(themeToggleBtn) themeToggleBtn.innerText = (theme === 'dark' ? '☀️' : '🌙');
+    localStorage.setItem('pimentor-theme', theme);
+  };
+  applyTheme(localStorage.getItem('pimentor-theme') || 'dark');
+  
+  const handleToggle = () => {
+    const current = document.documentElement.getAttribute("data-theme");
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+  };
+  if(themeToggle) themeToggle.onchange = handleToggle;
+  if(themeToggleBtn) themeToggleBtn.onclick = handleToggle;
+
+  if (!token || !currentUserId) { window.location.href = "login.html"; return; }
 
   const container = document.getElementById("courseContainer");
 
   try {
-    /* STEP 1: FETCH DATA */
     const [courseRes, purchaseRes] = await Promise.all([
-      fetch("https://pimentor-project.onrender.com/api/purchase/all-courses", {
-        headers: { "Authorization": "Bearer " + token }
-      }),
-      fetch("https://pimentor-project.onrender.com/api/purchase/my-courses", {
-        headers: { "Authorization": "Bearer " + token }
-      })
+      fetch("https://pimentor-project.onrender.com/api/purchase/all-courses", { headers: { "Authorization": "Bearer " + token } }),
+      fetch("https://pimentor-project.onrender.com/api/purchase/my-courses", { headers: { "Authorization": "Bearer " + token } })
     ]);
-
-    if (!courseRes.ok || !purchaseRes.ok) throw new Error("Server Error");
 
     const allCourses = await courseRes.json();
     const purchasedRecords = await purchaseRes.json();
-    
     const nowMs = Date.now();
     container.innerHTML = ""; 
 
-    if (allCourses.length === 0) {
-      container.innerHTML = "<p>No courses are currently available.</p>";
-      return;
-    }
-
-    /* STEP 2: RENDER COURSES WITH EXPIRY LOGIC */
     allCourses.forEach(course => {
-      // Filter records for this specific user and course
       const myPurchases = purchasedRecords.filter(p => 
           String(p.courseId).trim() === String(course.courseId).trim() &&
           String(p.userId) === String(currentUserId)
@@ -67,147 +206,84 @@ document.addEventListener("DOMContentLoaded", async () => {
       
       let isStillActive = false;
       let hasPreviousPurchase = myPurchases.length > 0;
-
       if (hasPreviousPurchase) {
           myPurchases.forEach(p => {
               if (p.expiryDate) {
                   const expMs = new Date(p.expiryDate).getTime();
-                  if (!isNaN(expMs) && expMs > nowMs) {
-                      isStillActive = true; 
-                  }
+                  if (!isNaN(expMs) && expMs > nowMs) isStillActive = true; 
               }
           });
       }
 
       const div = document.createElement("div");
       div.className = "course-card";
-      
-      let buttonText = "Buy Now";
-      let isDisabled = false;
-      let btnBg = "#1a73e8";
-
-      if (isStillActive) {
-          buttonText = "Purchased";
-          isDisabled = true;
-          btnBg = "#6c757d"; 
-      } else if (hasPreviousPurchase) {
-          buttonText = "Renew Now";
-          isDisabled = false;
-          btnBg = "#f39c12"; 
-      }
+      let buttonText = isStillActive ? "Purchased" : (hasPreviousPurchase ? "Renew Now" : "Buy Now");
+      let isDisabled = isStillActive;
+      let btnBg = isStillActive ? "#6c757d" : (hasPreviousPurchase ? "#f39c12" : "#7c4dff");
 
       div.innerHTML = `
+        <span style="font-size: 0.7rem; font-weight: 800; color: var(--accent); text-transform: uppercase;">${course.className || 'General'}</span>
         <h3>${course.title}</h3>
-        <p><strong>${course.className || 'General'}</strong></p>
         <p class="description">${course.description || ''}</p>
         <p class="price">₹${course.price}</p>
-        <button ${isDisabled ? "disabled" : ""} id="btn-${course.courseId}" 
-                style="background: ${btnBg}; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: ${isDisabled ? 'not-allowed' : 'pointer'};">
+        <button class="btn-buy" ${isDisabled ? "disabled" : ""} id="btn-${course.courseId}" 
+                style="background: ${btnBg}; cursor: ${isDisabled ? 'not-allowed' : 'pointer'};">
           ${buttonText}
         </button>
       `;
 
-      if (!isDisabled) {
-        div.querySelector("button").onclick = () => buyCourse(course);
-      }
+      if (!isDisabled) div.querySelector("button").onclick = () => buyCourse(course);
       container.appendChild(div);
     });
 
-    /* STEP 3: DIRECT-TO-PAY AUTO TRIGGER (DASHBOARD REDIRECT) */
     const urlParams = new URLSearchParams(window.location.search);
     const renewId = urlParams.get('renew');
-
     if (renewId) {
-        // Find the course in the catalog we just loaded
-        const targetCourse = allCourses.find(c => String(c.courseId).trim() === String(renewId).trim());
-        
-        if (targetCourse) {
-            console.log("Auto-initiating payment for course:", targetCourse.title);
-            // Small delay to let the browser process the UI, then pop Razorpay
-            setTimeout(() => {
-                buyCourse(targetCourse);
-            }, 700);
-        }
+        const target = allCourses.find(c => String(c.courseId).trim() === String(renewId).trim());
+        if (target) setTimeout(() => buyCourse(target), 700);
     }
-
-  } catch (err) {
-    console.error("Critical Render Error:", err);
-    document.getElementById("statusMessage").innerText = "Database Error. Please refresh.";
-  }
+  } catch (err) { container.innerHTML = "<p>Database Error.</p>"; }
 });
 
-/* STEP 4: RAZORPAY PAYMENT LOGIC (RETAINED) */
 async function buyCourse(course) {
   const token = localStorage.getItem("token");
-
   try {
     const res = await fetch("https://pimentor-project.onrender.com/api/payment/create-order", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token
-      },
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
       body: JSON.stringify({
-        courseId: course.courseId,
-        title: course.title,
-        price: course.price,
-        className: course.className,
-        liveValidityDate: course.liveValidityDate,
+        courseId: course.courseId, title: course.title, price: course.price,
+        className: course.className, liveValidityDate: course.liveValidityDate,
         recordedDurationDays: course.recordedDurationDays
       })
     });
-
     const data = await res.json();
     const order = data.order || data; 
-
     const options = {
-      key: "rzp_test_SIWx62DBo83S8C", 
-      amount: order.amount,
-      currency: "INR",
-      name: "PiMentor",
-      description: course.title,
-      order_id: order.id,
+      key: "rzp_test_SIWx62DBo83S8C", amount: order.amount, currency: "INR",
+      name: "PiMentor", description: course.title, order_id: order.id,
       handler: async function (response) {
         const saveRes = await fetch("https://pimentor-project.onrender.com/api/payment/verify", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + token
-          },
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
           body: JSON.stringify({
             razorpay_order_id: response.razorpay_order_id,
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_signature: response.razorpay_signature,
             course: {
-              courseId: course.courseId,
-              title: course.title,
-              className: course.className,
-              price: course.price,
-              liveValidityDate: course.liveValidityDate,
+              courseId: course.courseId, title: course.title, className: course.className,
+              price: course.price, liveValidityDate: course.liveValidityDate,
               recordedDurationDays: course.recordedDurationDays
             }
           })
         });
-
-        if (saveRes.ok) {
-          alert("Payment Successful! Access updated.");
-          window.location.href = "dashboard.html";
-        } else {
-          alert("Payment verified but database update failed. Please contact support.");
-        }
+        if (saveRes.ok) { alert("Payment Successful!"); window.location.href = "dashboard.html"; }
       },
-      theme: { color: "#3399cc" }
+      theme: { color: "#7c4dff" }
     };
-
-    const rzp = new Razorpay(options);
-    rzp.open();
-
-  } catch (error) {
-    console.error("Payment Error:", error);
-    alert("The purchase process failed. Please try again.");
-  }
+    new Razorpay(options).open();
+  } catch (error) { alert("Purchase failed."); }
 }
 </script>
-
 </body>
 </html>
