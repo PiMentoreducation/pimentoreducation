@@ -3,16 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PiMentor | Learn Smarter</title>
-    <link rel="stylesheet" href="/style.css">
+    <title>PiMentor | Galactic Learning</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700;800&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="/images/OUR_LOGO.png">
+    
+    <style>
+        :root {
+            --space-bg: radial-gradient(circle at top, #0d1117 0%, #010409 100%);
+            --accent: #7c4dff; /* Galactic Purple */
+            --accent-glow: rgba(124, 77, 255, 0.4);
+            --glass: rgba(255, 255, 255, 0.05);
+            --text: #ffffff;
+            --transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        [data-theme="dark"] {
+            --space-bg: radial-gradient(circle at bottom, #000000 0%, #0d1117 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--space-bg); color: var(--text); overflow-x: hidden; min-height: 100vh; }
+
+        /* --- GALACTIC BACKGROUND ANIMATION --- */
+        body::before {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('https://www.transparenttextures.com/patterns/stardust.png');
+            opacity: 0.3; z-index: -1; animation: twinkle 100s linear infinite;
+        }
+        @keyframes twinkle { from { background-position: 0 0; } to { background-position: 1000px 1000px; } }
+
+        /* --- MODERN NAVBAR --- */
+        .navbar {
+            position: fixed; top: 0; width: 100%; height: 80px; z-index: 1000;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 5%; background: rgba(13, 17, 23, 0.7);
+            backdrop-filter: blur(15px); border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .brand { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .logo-img { height: 45px; filter: drop-shadow(0 0 8px var(--accent)); }
+        .logo-text { font-size: 1.5rem; font-weight: 800; letter-spacing: -1px; background: linear-gradient(90deg, #fff, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .nav-links { display: flex; gap: 30px; align-items: center; }
+        .nav-links a { text-decoration: none; color: rgba(255,255,255,0.8); font-weight: 600; font-size: 0.95rem; transition: var(--transition); }
+        .nav-links a:hover { color: var(--accent); text-shadow: 0 0 10px var(--accent-glow); }
+
+        .btn-get-started { background: var(--accent); color: #fff !important; padding: 10px 24px; border-radius: 50px; box-shadow: 0 0 20px var(--accent-glow); }
+        .btn-get-started:hover { transform: scale(1.05); box-shadow: 0 0 30px var(--accent); }
+
+        /* --- MOBILE DRAWER (TOP LEFT) --- */
+        .hamburger { display: none; cursor: pointer; flex-direction: column; gap: 6px; }
+        .hamburger span { width: 28px; height: 3px; background: #fff; border-radius: 2px; transition: 0.3s; }
+
+        .sidebar {
+            position: fixed; top: 0; left: -100%; width: 280px; height: 100%;
+            background: rgba(10, 10, 15, 0.95); backdrop-filter: blur(20px);
+            z-index: 2000; transition: 0.5s cubic-bezier(0.77, 0, 0.175, 1);
+            padding: 40px 20px; border-right: 1px solid var(--accent);
+        }
+        .sidebar.open { left: 0; }
+        .sidebar-links { display: flex; flex-direction: column; gap: 20px; margin-top: 40px; }
+        .sidebar-links a { color: #fff; text-decoration: none; font-size: 1.2rem; font-weight: 700; }
+
+        /* --- FULL WIDTH IMAGE SLIDER --- */
+        .slider-container {
+            width: 100%; height: 60vh; margin-top: 80px; position: relative;
+            overflow: hidden; border-bottom: 2px solid var(--accent);
+        }
+        .slider-wrapper { display: flex; width: 400%; height: 100%; transition: 0.8s ease-in-out; }
+        .slide { width: 100%; height: 100%; position: relative; }
+        .slide img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.6); }
+        .slide-content {
+            position: absolute; bottom: 20%; left: 5%;
+            animation: fadeInUp 1s forwards;
+        }
+        .slide-content h2 { font-size: 3rem; margin-bottom: 10px; }
+        
+        /* --- COURSES SECTION (GLASS CARDS) --- */
+        .courses-section { padding: 80px 5%; text-align: center; }
+        .course-grid { 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 30px; margin-top: 50px; 
+        }
+        .course-card {
+            background: var(--glass); border: 1px solid rgba(255,255,255,0.1);
+            padding: 20px; border-radius: 24px; transition: var(--transition);
+            backdrop-filter: blur(10px); position: relative; overflow: hidden;
+        }
+        .course-card:hover { 
+            transform: translateY(-10px) scale(1.02); 
+            background: rgba(124, 77, 255, 0.1);
+            border-color: var(--accent);
+        }
+        .course-card img { width: 100%; border-radius: 15px; margin-bottom: 15px; }
+
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .nav-links { display: none; }
+            .hamburger { display: flex; order: -1; } /* Moves to the left */
+        }
+    </style>
 </head>
 <body>
 
 <header class="navbar">
-    <div class="brand">
-        <img src="/images/OUR_LOGO.png" class="OUR_LOGO" alt="pimentor">
-        <div class="logo">PiMentor</div>
+    <div class="nav-left">
+        <div class="hamburger" id="hamburger">
+            <span></span><span></span><span></span>
+        </div>
+    </div>
+
+    <div class="brand" onclick="window.location.href='/index.html'">
+        <img src="/images/OUR_LOGO.png" class="logo-img" alt="pimentor">
+        <div class="logo-text">PiMentor</div>
     </div>
 
     <nav class="nav-links" id="mainNav">
@@ -20,159 +125,120 @@
         <a href="/courses.html">Courses</a>
         <a href="/login.html" id="loginLink">Login</a>
         <a href="/register.html" class="btn-get-started" id="startBtn">Get Started</a>
+        <button class="theme-toggle" id="themeBtn" style="background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;">🌙</button>
     </nav>
-
-    <div class="nav-right">
-        <button class="theme-toggle" id="themeBtn" title="Toggle Mode">🌙</button>
-        <div class="hamburger" id="hamburger">
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
-    </div>
 </header>
 
-<div class="sidebar-overlay" id="overlay"></div>
-<aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-        <img src="/images/OUR_LOGO.png" alt="logo" class="OUR_LOGO">
-        <button class="close-sidebar" id="closeSidebar">&times;</button>
+<div class="sidebar" id="sidebar">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="logo-text">Menu</div>
+        <button id="closeSidebar" style="background:none; border:none; color:#fff; font-size:2rem;">&times;</button>
     </div>
     <nav class="sidebar-links">
         <a href="/index.html">Home</a>
         <a href="/courses.html">Courses</a>
         <div id="mobileAuthLinks">
             <a href="/login.html">Login</a>
-            <a href="/register.html" class="sidebar-btn">Get Started</a>
+            <a href="/register.html">Get Started</a>
         </div>
     </nav>
-</aside>
+</div>
 
-<section class="hero">
-    <div class="hero-content">
-        <h1>Learn Smarter with <span class="highlight">PiMentor</span></h1>
-        <p>Structured courses • Expert mentors • Track your progress</p>
-        <div class="hero-btns">
-            <a href="/courses.html" class="btn-primary">Explore Courses</a>
-            <a href="#why" class="btn-secondary">Learn More</a>
+<section class="slider-container" id="slider">
+    <div class="slider-wrapper" id="sliderWrapper">
+        <div class="slide">
+            <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=1920" alt="Space 1">
+            <div class="slide-content">
+                <h2>New Physics Batch</h2>
+                <p>Starting March 2026. Enroll now for early access.</p>
+            </div>
+        </div>
+        <div class="slide">
+            <img src="https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&q=80&w=1920" alt="Space 2">
+            <div class="slide-content">
+                <h2>Expert Mentorship</h2>
+                <p>One-on-one sessions with toppers of Gorakhpur.</p>
+            </div>
+        </div>
+        <div class="slide">
+            <img src="https://images.unsplash.com/photo-1506318137071-a8e063b4bc04?auto=format&fit=crop&q=80&w=1920" alt="Space 3">
+            <div class="slide-content">
+                <h2>Weekly Space Quizzes</h2>
+                <p>Track your progress and win exciting rewards.</p>
+            </div>
         </div>
     </div>
 </section>
 
 <section class="courses-section">
-    <h2>Our Popular Courses</h2>
+    <h2 style="font-size: 2.5rem;">Explore the <span style="color:var(--accent)">Universe</span> of Knowledge</h2>
     <div class="course-grid">
         <div class="course-card">
-            <img src="/images/course.png" alt="Class 10">
+            <img src="/images/course.png" alt="Math">
             <h3>Class 10 Mathematics</h3>
-            <p>CBSE Complete Course</p>
-            <a href="/courses.html" class="view-btn-link">View Course</a>
+            <p>Master concepts with expert logic.</p>
+            <a href="/courses.html" class="btn-get-started" style="display:inline-block; margin-top:15px; text-decoration:none;">View</a>
         </div>
         <div class="course-card">
-            <img src="/images/course.png" alt="Class 11">
+            <img src="/images/course.png" alt="Bio">
             <h3>Class 11 Biology</h3>
-            <p>Concept + NCERT Focus</p>
-            <a href="/courses.html" class="view-btn-link">View Course</a>
+            <p>From cells to ecosystems.</p>
+            <a href="/courses.html" class="btn-get-started" style="display:inline-block; margin-top:15px; text-decoration:none;">View</a>
         </div>
         <div class="course-card">
-            <img src="/images/course.png" alt="Class 12">
+            <img src="/images/course.png" alt="Physics">
             <h3>Class 12 Physics</h3>
-            <p>Boards + Competitive</p>
-            <a href="/courses.html" class="view-btn-link">View Course</a>
-        </div>
-        <div class="course-card">
-            <img src="/images/course.png" alt="Foundation">
-            <h3>Foundation Course</h3>
-            <p>Early Exam Preparation</p>
-            <a href="/courses.html" class="view-btn-link">View Course</a>
+            <p>Conquer the laws of the universe.</p>
+            <a href="/courses.html" class="btn-get-started" style="display:inline-block; margin-top:15px; text-decoration:none;">View</a>
         </div>
     </div>
 </section>
 
-<section class="why" id="why">
-    <h2>Why Choose PiMentor?</h2>
-    <div class="features-grid">
-        <div class="feature-card">📘 Expert Mentors</div>
-        <div class="feature-card">📊 Progress Tracking</div>
-        <div class="feature-card">🎯 Exam-Focused Learning</div>
-        <div class="feature-card">💻 Anytime Access</div>
-    </div>
-</section>
-
-<footer>
-    <p>© 2026 PiMentor. All rights reserved. Designed for Gorakhpur's Toppers.</p>
+<footer style="text-align:center; padding:40px; border-top:1px solid rgba(255,255,255,0.1)">
+    <p>© 2026 PiMentor. Galactic Learning for Gorakhpur's Finest.</p>
 </footer>
 
 <script>
-    /* --- AUTH CHECK (Logic for Dynamic Buttons) --- */
+    /* --- SLIDER LOGIC --- */
+    const wrapper = document.getElementById('sliderWrapper');
+    let index = 0;
+    function autoSlide() {
+        index = (index + 1) % 3;
+        wrapper.style.transform = `translateX(-${index * 25}%)`;
+    }
+    setInterval(autoSlide, 5000);
+
+    /* --- HAMBURGER LOGIC --- */
+    const hamburger = document.getElementById('hamburger');
+    const sidebar = document.getElementById('sidebar');
+    const closeSidebar = document.getElementById('closeSidebar');
+
+    hamburger.onclick = () => sidebar.classList.add('open');
+    closeSidebar.onclick = () => sidebar.classList.remove('open');
+
+    /* --- AUTH CHECK --- */
     document.addEventListener("DOMContentLoaded", () => {
         const token = localStorage.getItem("token");
-        
-        // Desktop elements
-        const loginLink = document.getElementById("loginLink");
         const startBtn = document.getElementById("startBtn");
-        
-        // Mobile container
-        const mobileAuthArea = document.getElementById("mobileAuthLinks");
-
-        if (token) {
-            // Update Desktop View
-            if(loginLink) loginLink.style.display = "none";
-            if(startBtn) {
-                startBtn.innerText = "My Dashboard";
-                startBtn.href = "dashboard.html";
-                startBtn.style.background = "#34a853"; // Green for active session
-            }
-            
-            // Update Mobile Sidebar View
-            if(mobileAuthArea) {
-                mobileAuthArea.innerHTML = `
-                    <a href="dashboard.html" class="sidebar-btn" style="background:#34a853;">My Dashboard</a>
-                `;
-            }
+        if (token && startBtn) {
+            startBtn.innerText = "Dashboard";
+            startBtn.href = "dashboard.html";
+            startBtn.style.boxShadow = "0 0 20px #34a853";
         }
     });
 
-    /* --- GLOBAL THEME SYNC --- */
+    /* --- THEME SYNC --- */
     const themeBtn = document.getElementById('themeBtn');
     const applyTheme = (theme) => {
         document.documentElement.setAttribute('data-theme', theme);
         themeBtn.innerText = theme === 'dark' ? '☀️' : '🌙';
         localStorage.setItem('pimentor-theme', theme);
     };
-
-    const savedTheme = localStorage.getItem('pimentor-theme') || 'light';
-    applyTheme(savedTheme);
-
+    applyTheme(localStorage.getItem('pimentor-theme') || 'light');
     themeBtn.onclick = () => {
         const current = document.documentElement.getAttribute('data-theme');
         applyTheme(current === 'dark' ? 'light' : 'dark');
     };
-
-    /* --- SIDEBAR DRAWER LOGIC --- */
-    const hamburger = document.getElementById('hamburger');
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('overlay');
-    const closeSidebar = document.getElementById('closeSidebar');
-
-    const toggleSidebar = () => {
-        sidebar.classList.toggle('open');
-        overlay.classList.toggle('active');
-        document.body.style.overflow = sidebar.classList.contains('open') ? 'hidden' : 'auto';
-    };
-
-    hamburger.onclick = toggleSidebar;
-    closeSidebar.onclick = toggleSidebar;
-    overlay.onclick = toggleSidebar;
-
-    // Close sidebar on link click
-    document.querySelectorAll('.sidebar-links a').forEach(link => {
-        link.onclick = () => {
-            sidebar.classList.remove('open');
-            overlay.classList.remove('active');
-            document.body.style.overflow = 'auto';
-        };
-    });
 </script>
 
 </body>
