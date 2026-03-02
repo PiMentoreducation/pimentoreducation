@@ -12,6 +12,9 @@
         --accent-glow: rgba(124, 77, 255, 0.4);
         --glass: rgba(255, 255, 255, 0.05);
         --text: #ffffff;
+        --danger: #ff4d4d;
+        --warning: #f39c12;
+        --success: #28a745;
         --transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
     }
 
@@ -38,7 +41,6 @@
         display: flex; align-items: center; justify-content: flex-start;
         padding: 0 5%; background: rgba(13, 17, 23, 0.8);
         backdrop-filter: blur(15px); border-bottom: 1px solid rgba(255,255,255,0.1);
-        gap: 20px;
     }
 
     .brand { display: flex; align-items: center; gap: 12px; cursor: pointer; margin-right: auto; }
@@ -47,10 +49,10 @@
 
     .nav-links { display: flex; gap: 30px; align-items: center; }
     .nav-links a { text-decoration: none; color: inherit; font-weight: 600; opacity: 0.8; transition: var(--transition); }
-    .logout-btn-desktop { color: #ff4d4d !important; border: 1px solid #ff4d4d; padding: 8px 15px; border-radius: 20px; }
+    .logout-btn-desktop { color: var(--danger) !important; border: 1px solid var(--danger); padding: 8px 15px; border-radius: 20px; text-decoration: none; }
 
     /* --- MOBILE HAMBURGER --- */
-    .hamburger { display: none; cursor: pointer; flex-direction: column; gap: 6px; }
+    .hamburger { display: none; cursor: pointer; flex-direction: column; gap: 6px; margin-right: 20px; }
     .hamburger span { width: 28px; height: 3px; background: var(--text); border-radius: 2px; }
 
     /* --- SIDEBAR --- */
@@ -75,19 +77,34 @@
     /* --- DASHBOARD CONTENT --- */
     .dashboard-container { max-width: 1100px; margin: 100px auto 40px; padding: 0 20px; }
     section { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 30px; margin-bottom: 30px; backdrop-filter: blur(10px); }
-    h2 { font-size: 1.3rem; margin-bottom: 20px; color: var(--accent); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+    h2 { font-size: 1.1rem; margin-bottom: 20px; color: var(--accent); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
 
+    /* Course Cards */
     .course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-    .course-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 20px; transition: var(--transition); }
-    .course-card:hover { transform: translateY(-5px); border-color: var(--accent); }
-
-    .btn-main { width: 100%; padding: 12px; border: none; border-radius: 12px; background: var(--accent); color: white; font-weight: bold; cursor: pointer; margin-top: 10px; }
-    .btn-renew { background: #f39c12; color: #000; }
+    .course-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 25px; border-radius: 20px; transition: var(--transition); position: relative; }
+    .course-card:hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
     
+    .status-tag { font-size: 0.7rem; font-weight: 800; padding: 4px 10px; border-radius: 6px; text-transform: uppercase; display: inline-block; margin-bottom: 10px; }
+    .tag-active { background: rgba(40, 167, 69, 0.2); color: #2ecc71; }
+    .tag-expired { background: rgba(220, 53, 69, 0.2); color: var(--danger); }
+    
+    .price-badge { position: absolute; top: 20px; right: 20px; font-weight: 800; color: #2ecc71; }
+    
+    .btn-main { width: 100%; padding: 12px; border: none; border-radius: 12px; background: var(--accent); color: white; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+    .btn-secondary { background: rgba(255,255,255,0.1); color: var(--text); border: 1px solid rgba(255,255,255,0.1); }
+    .btn-renew { background: var(--warning); color: #000; }
+
+    /* Notifications */
+    #notif-container { margin-bottom: 25px; }
+    .notif-card { background: rgba(124, 77, 255, 0.15); border: 1px solid var(--accent); padding: 20px; border-radius: 15px; margin-bottom: 10px; position: relative; animation: slideDown 0.4s ease; }
+    .close-notif { position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 1.2rem; }
+
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
     @media (max-width: 900px) {
         .nav-links { display: none; }
         .hamburger { display: flex; order: -1; }
-        .brand { margin-right: 0; }
+        .brand { margin-right: 0; margin-left: 0; } /* Shifted right relative to hamburger by being after it */
     }
   </style>
 </head>
@@ -128,34 +145,37 @@
         <a href="index.html">Home</a>
         <a href="courses.html">All Courses</a>
         <div style="margin-top:auto; padding-top:20px; border-top:1px solid rgba(255,255,255,0.1);">
-            <a href="#" id="logoutBtnMobile" style="color:#ff4d4d;">Logout</a>
+            <a href="#" id="logoutBtnMobile" style="color:var(--danger);">Logout</a>
         </div>
     </nav>
 </aside>
 
 <div class="dashboard-container">
-    <h1 style="margin-bottom: 30px;">Welcome, <span id="welcomeName" style="color: var(--accent);">Student</span> 🌌</h1>
+    <div id="notif-wrapper"><div id="notif-container"></div></div>
+
+    <h1 style="margin-bottom: 30px;">Hello, <span id="welcomeName" style="color: var(--accent);">Student</span> 👋</h1>
 
     <section class="profile-card">
-        <h2>Your Galactic Profile</h2>
+        <h2>Student Profile</h2>
         <div style="line-height: 1.8;">
             <p><strong>Name:</strong> <span id="profileName"></span></p>
             <p><strong>Email:</strong> <span id="profileEmail"></span></p>
             <p><strong>Current Class:</strong> <span id="studentClass">Loading...</span></p>
         </div>
+        <button class="btn-main" style="width:auto; padding:10px 25px; margin-top:20px;" onclick="window.location.href='courses.html'">+ Explore More Courses</button>
     </section>
 
     <section>
-        <h2>Your Active Courses</h2>
+        <h2>Your Learning Path</h2>
         <div id="courseList" class="course-grid">
-            <p style="opacity: 0.6;">Scanning for enrolled courses...</p>
+            <p style="opacity: 0.6;">Fetching your courses...</p>
         </div>
     </section>
 
     <section>
-        <h2>📬 Mentor Support</h2>
+        <h2>📬 Mentor Support & Doubts</h2>
         <div id="dashboardDoubtsContainer">
-            <p style="opacity: 0.6;">Fetching your doubts...</p>
+            <p style="opacity: 0.6;">Checking for mentor replies...</p>
         </div>
     </section>
 </div>
@@ -189,39 +209,103 @@
 
     document.addEventListener("DOMContentLoaded", () => {
         if (!token) { window.location.href = "login.html"; return; }
-        document.getElementById("welcomeName").innerText = user.name || "Explorer";
+        document.getElementById("welcomeName").innerText = user.name || "Student";
         document.getElementById("profileName").innerText = user.name || "N/A";
         document.getElementById("profileEmail").innerText = user.email || "N/A";
         document.getElementById("studentClass").innerText = user.studentClass || "Not Assigned";
+        
+        fetchNotifications();
         loadStudentCourses();
         loadDashboardDoubts();
     });
 
+    async function fetchNotifications() {
+        const container = document.getElementById("notif-container");
+        let dismissed = JSON.parse(localStorage.getItem("dismissedNotifs") || "[]");
+        try {
+            const [pRes, nRes] = await Promise.all([
+                fetch(`${BASE_URL}/api/purchase/my-courses`, { headers: { "Authorization": "Bearer " + token } }),
+                fetch(`${BASE_URL}/api/admin/active-notifications`, { headers: { "Authorization": "Bearer " + token } })
+            ]);
+            const myPurchasedIds = (await pRes.json()).map(c => c.courseId);
+            const allNotifs = await nRes.json();
+
+            const filtered = allNotifs.filter(n => {
+                const matchesCourse = n.targetCourses.some(id => myPurchasedIds.includes(id));
+                const matchesClass = n.targetCourses.includes(user.studentClass);
+                const isGlobal = n.targetCourses.includes("all") || n.targetCourses.length === 0;
+                return (matchesCourse || matchesClass || isGlobal) && !dismissed.includes(n._id);
+            });
+
+            container.innerHTML = filtered.map(n => `
+                <div class="notif-card" id="notif-${n._id}">
+                    <span class="close-notif" onclick="dismissNotif('${n._id}')">×</span>
+                    <h3>📢 ${n.heading}</h3>
+                    <p>${n.description}</p>
+                    ${n.link ? `<a href="${n.link}" target="_blank" style="color:var(--accent); font-weight:bold;">View Details →</a>` : ''}
+                </div>`).join('');
+        } catch (err) { console.error("Notif fetch error"); }
+    }
+
+    window.dismissNotif = (id) => {
+        let dismissed = JSON.parse(localStorage.getItem("dismissedNotifs") || "[]");
+        dismissed.push(id);
+        localStorage.setItem("dismissedNotifs", JSON.stringify(dismissed));
+        document.getElementById(`notif-${id}`).remove();
+    };
+
     async function loadStudentCourses() {
         const container = document.getElementById("courseList");
         try {
-            const pRes = await fetch(`${BASE_URL}/api/purchase/my-courses`, { headers: { "Authorization": "Bearer " + token } });
+            const [pRes, cRes] = await Promise.all([
+                fetch(`${BASE_URL}/api/purchase/my-courses`, { headers: { "Authorization": "Bearer " + token } }),
+                fetch(`${BASE_URL}/api/admin/all-courses`, { headers: { "Authorization": "Bearer " + token } })
+            ]);
             const purchases = await pRes.json();
-            const cRes = await fetch(`${BASE_URL}/api/admin/all-courses`, { headers: { "Authorization": "Bearer " + token } });
             const allMetadata = await cRes.json();
             const now = new Date();
 
             if (purchases.length === 0) {
-                container.innerHTML = "<p>No active courses found. Start your journey in the Courses page!</p>";
+                container.innerHTML = "<p>No active courses. Explore more to start!</p>";
                 return;
             }
 
-            container.innerHTML = purchases.map(p => {
+            // Deduplicate logic
+            const latestPurchases = {};
+            purchases.forEach(p => {
+                if (!latestPurchases[p.courseId] || new Date(p.createdAt) > new Date(latestPurchases[p.courseId].createdAt)) {
+                    latestPurchases[p.courseId] = p;
+                }
+            });
+
+            container.innerHTML = Object.values(latestPurchases).map(p => {
                 const expiry = new Date(p.expiryDate);
                 const isExpired = now > expiry;
+                const diffDays = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
                 const meta = allMetadata.find(m => m.courseId === p.courseId) || {};
+                const currentPrice = meta.price || p.price;
+
                 return `
                     <div class="course-card">
+                        <div class="price-badge">₹${currentPrice}</div>
+                        <span class="status-tag ${isExpired ? 'tag-expired' : 'tag-active'}">
+                            ${isExpired ? 'Expired' : 'Active Access'}
+                        </span>
                         <h3>${p.title}</h3>
-                        <p style="font-size:0.8rem; margin:10px 0; opacity:0.7;">Expires: ${expiry.toLocaleDateString()}</p>
+                        
+                        <div style="margin: 15px 0; font-size: 0.85rem;">
+                            <p style="color: ${isExpired ? 'var(--danger)' : (diffDays < 7 ? 'var(--warning)' : 'inherit')}; font-weight: bold;">
+                                ${isExpired ? 'Access Ended' : diffDays + ' Days Remaining'}
+                            </p>
+                            <p style="opacity:0.6; margin-top:5px;">📅 Enrolled: ${new Date(p.createdAt).toLocaleDateString()}</p>
+                            <p style="opacity:0.6;">⏳ Valid Until: ${expiry.toLocaleDateString()}</p>
+                        </div>
+
+                        <button class="btn-main btn-secondary" onclick="window.location.href='course-desc.html?id=${p.courseId}'">Course Details</button>
+                        
                         ${isExpired ? 
-                          `<button class="btn-main btn-renew" onclick="window.location.href='courses.html?renew=${p.courseId}'">Renew Now</button>` : 
-                          `<button class="btn-main" onclick="window.location.href='course-structure.html?id=${p.courseId}'">Continue Learning</button>`
+                          `<button class="btn-main btn-renew" onclick="window.location.href='courses.html?renew=${p.courseId}'">Renew Now (₹${currentPrice})</button>` : 
+                          `<button class="btn-main" onclick="window.location.href='course-structure.html?id=${p.courseId}'">Continue Reading →</button>`
                         }
                     </div>`;
             }).join('');
@@ -235,9 +319,12 @@
             const doubts = await res.json();
             if(!doubts.length) { container.innerHTML = "<p>No mentor replies yet.</p>"; return; }
             container.innerHTML = doubts.map(d => `
-                <div style="background:rgba(255,255,255,0.03); padding:15px; border-radius:15px; margin-bottom:10px;">
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); padding:20px; border-radius:15px; margin-bottom:10px;">
+                    <div style="font-size:0.75rem; color:var(--accent); font-weight:bold; margin-bottom:5px;">${d.lectureTitle || 'General Query'}</div>
                     <strong>Q: ${d.question}</strong>
-                    <p style="margin-top:5px; color:var(--accent);">${d.answer || "⏳ Reviewing..."}</p>
+                    <div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.05); color: #ccc;">
+                        ${d.answer ? `🎯 Mentor: ${d.answer}` : "⏳ Reviewing your doubt..."}
+                    </div>
                 </div>`).join('');
         } catch (e) { container.innerHTML = "<p>Doubt inbox unavailable.</p>"; }
     }
