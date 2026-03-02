@@ -25,16 +25,23 @@ router.get("/my-courses", authMiddleware, getMyCourses);
 // Verify if student has access to a specific course
 router.get("/verify-access/:courseId", authMiddleware, async (req, res) => {
     try {
-        const hasAccess = await Purchase.findOne({ 
-            userId: req.user.id, 
-            courseId: req.params.courseId 
+        const purchase = await Purchase.findOne({
+            userId: req.user.id,
+            courseId: req.params.courseId
         });
-        if (!purchase || new Date() > purchase.expiryDate) {
-        return res.status(403).json({ authorized: false });
-        }else{
-        res.status(200).json({ authorized: !!hasAccess });
+
+        if (!purchase) {
+            return res.status(403).json({ authorized: false });
         }
+
+        if (new Date() > purchase.expiryDate) {
+            return res.status(403).json({ authorized: false });
+        }
+
+        return res.status(200).json({ authorized: true });
+
     } catch (error) {
+        console.error("VERIFY ACCESS ERROR:", error);
         res.status(500).json({ message: "Server error" });
     }
 });

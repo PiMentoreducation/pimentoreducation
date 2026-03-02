@@ -107,7 +107,9 @@ async function buyCourse(course) {
         courseId: course.courseId,
         title: course.title,
         price: course.price,
-        className: course.className
+        className: course.className,
+        liveValidityDate: course.liveValidityDate,
+        recordedDurationDays: course.recordedDurationDays
       })
     });
 
