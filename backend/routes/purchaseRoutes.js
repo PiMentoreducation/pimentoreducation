@@ -35,7 +35,7 @@ router.get("/verify-access/:courseId", authMiddleware, async (req, res) => {
         }
 
         if (new Date() > purchase.expiryDate) {
-            return res.status(403).json({ authorized: false });
+            return res.status(403).json({ authorized: false, message: "Course Expired" });
         }
 
         return res.status(200).json({ authorized: true });

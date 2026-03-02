@@ -8,6 +8,7 @@
     :root {
         --primary: #1a73e8; --danger: #dc3545; --warning: #f39c12; --bg: #f4f7f6;
         --card-bg: #ffffff; --text: #333333; --header-bg: #ffffff; --border: #eeeeee; --reply-bg: #f0f7ff;
+        --success: #28a745;
     }
     [data-theme="dark"] {
         --bg: #121212; --card-bg: #1e1e1e; --text: #e0e0e0; --header-bg: #1e1e1e; --border: #333333; --reply-bg: #1a2733;
@@ -46,9 +47,21 @@
     .notif-link { display: inline-block; margin-top: 10px; color: #1a73e8; font-weight: bold; text-decoration: none; font-size: 0.85rem; }
 
     .course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-    .course-card { background: var(--card-bg); border: 1px solid var(--border); padding: 20px; border-radius: 15px; transition: 0.3s; }
+    .course-card { background: var(--card-bg); border: 1px solid var(--border); padding: 20px; border-radius: 15px; transition: 0.3s; position: relative; overflow: hidden; }
     .course-card h3 { margin: 0 0 10px 0; font-size: 1rem; }
-    .course-card button { width: 100%; padding: 10px; border: none; border-radius: 10px; background: var(--primary); color: white; font-weight: bold; cursor: pointer; }
+    
+    .price-badge { position: absolute; top: 15px; right: 15px; font-weight: bold; color: var(--success); font-size: 0.9rem; }
+    
+    .btn-main { width: 100%; padding: 12px; border: none; border-radius: 10px; background: var(--primary); color: white; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 10px; }
+    .btn-main:hover { opacity: 0.9; transform: translateY(-2px); }
+    .btn-renew { background: var(--warning); color: #000; }
+    .btn-secondary { background: #666; color: white; margin-bottom: 8px; }
+
+    .expiry-info { margin-bottom: 15px; }
+    .status-tag { font-size: 0.7rem; font-weight: bold; padding: 4px 8px; border-radius: 5px; display: inline-block; text-transform: uppercase; margin-bottom: 5px; }
+    .tag-active { background: #e8f0fe; color: var(--primary); }
+    .tag-expired { background: #fdeaea; color: var(--danger); }
+    .days-left { font-size: 0.8rem; font-weight: bold; }
 
     .doubt-inbox { max-height: 300px; overflow-y: auto; }
     .reply-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
@@ -107,12 +120,16 @@
     const token = localStorage.getItem("token");
     const user = JSON.parse(localStorage.getItem("user") || "{}");
 
+    // FEATURE RETAINED: Visited Courses tracking
     window.goToCourse = function(id) {
         let v = JSON.parse(localStorage.getItem("visited_courses") || "[]");
         if(!v.includes(id)) { v.push(id); localStorage.setItem("visited_courses", JSON.stringify(v)); }
         window.location.href = `course-structure.html?id=${id}`;
     };
 
+    window.renewAction = (id) => window.location.href = `course-desc.html?id=${id}`;
+
+    // FEATURE RETAINED: Notification Dismissal
     window.dismissNotif = function(id) {
         let dismissed = JSON.parse(localStorage.getItem("dismissedNotifs") || "[]");
         dismissed.push(id);
@@ -148,6 +165,7 @@
         });
     });
 
+    // FEATURE RETAINED: Dark/Light Mode logic
     function initTheme() {
         const themeBtn = document.getElementById("themeBtn");
         const applyTheme = (theme) => {
@@ -162,6 +180,7 @@
         });
     }
 
+    // FEATURE RETAINED: Filtered Notifications (Targeted + Dismissed)
     async function fetchNotifications() {
         const wrapper = document.getElementById("notif-wrapper");
         const container = document.getElementById("notif-container");
@@ -196,70 +215,85 @@
         } catch (err) { console.error("Notif fetch failed"); }
     }
 
-async function loadStudentCourses() {
-    const container = document.getElementById("courseList");
-    try {
-        const res = await fetch(`${BASE_URL}/api/purchase/my-courses`, { 
-            headers: { "Authorization": "Bearer " + token } 
-        });
-        const allPurchases = await res.json();
-        
-        const now = new Date();
-        console.log("Current System Time:", now);
+    // UPDATED: Retained 'Course Description' + Added 'Renew' and 'Days Left'
+    async function loadStudentCourses() {
+        const container = document.getElementById("courseList");
+        try {
+            const pRes = await fetch(`${BASE_URL}/api/purchase/my-courses`, { headers: { "Authorization": "Bearer " + token } });
+            const purchases = await pRes.json();
 
-        // 1. THE FILTER (The most important part)
-        // We only keep courses where (now < expiryDate)
-        const activeCourses = allPurchases.filter(c => {
-            if (!c.expiryDate) return true; // Show legacy/manual data
-            const expiry = new Date(c.expiryDate);
+            const cRes = await fetch(`${BASE_URL}/api/admin/all-courses`, { headers: { "Authorization": "Bearer " + token } });
+            const allMetadata = await cRes.json();
+
+            const now = new Date();
             
-            // Debugging log for you in F12
-            console.log(`Course: ${c.title} | Expiry: ${expiry} | Valid: ${expiry > now}`);
-            
-            return expiry > now; 
-        });
+            if (purchases.length === 0) {
+                container.innerHTML = "<p style='color:#888;'>Explore our courses to start your journey!</p>";
+                return;
+            }
 
-        // 2. THE RENDER (We use 'activeCourses', NOT 'allPurchases')
-        if (activeCourses.length === 0) {
-            container.innerHTML = `
-                <div style="text-align:center; padding:20px; color:#888;">
-                    <p>No active courses found.</p>
-                    <small>Expired courses are removed from this view.</small>
-                </div>`;
-            return;
-        }
-
-        container.innerHTML = activeCourses.map(c => `
-            <div class="course-card">
-                <h3>${c.title}</h3>
-                <p style="font-size:0.75rem; opacity:0.7;">📅 Enrolled: ${c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'N/A'}</p>
-                <p style="font-size:0.75rem; color:var(--primary);">⏳ Valid Till: ${new Date(c.expiryDate).toLocaleDateString()}</p>
+            container.innerHTML = purchases.map(p => {
+                const expiry = new Date(p.expiryDate);
+                const isExpired = now > expiry;
                 
-                <button onclick="window.location.href='course-desc.html?id=${c.courseId}'" 
-                        style="background: #666; color: white; margin-bottom: 8px;">
-                    Course Description
-                </button>
+                // MATH: Days Remaining
+                const diffTime = expiry - now;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                // DYNAMIC PRICE: From Admin Collection
+                const meta = allMetadata.find(m => m.courseId === p.courseId) || {};
+                const currentPrice = meta.price || p.price;
 
-                <button onclick="goToCourse('${c.courseId}')">
-                    Continue Reading →
-                </button>
-            </div>
-        `).join('');
+                return `
+                    <div class="course-card">
+                        <div class="price-badge">₹${currentPrice}</div>
+                        <h3>${p.title}</h3>
+                        
+                        <div class="expiry-info">
+                            <span class="status-tag ${isExpired ? 'tag-expired' : 'tag-active'}">
+                                ${isExpired ? 'Expired' : 'Active Access'}
+                            </span>
+                            <div class="days-left" style="color: ${isExpired ? 'var(--danger)' : (diffDays < 7 ? 'var(--warning)' : '#666')}">
+                                ${isExpired ? 'Course access ended' : (diffDays + ' Days Left')}
+                            </div>
+                        </div>
 
-    } catch (e) { 
-        console.error("Dashboard Render Error:", e);
-        container.innerHTML = "<p>Error loading courses. Please refresh.</p>"; 
+                        <p style="font-size:0.75rem; opacity:0.7; margin-bottom:5px;">📅 Enrolled: ${new Date(p.createdAt).toLocaleDateString()}</p>
+                        <p style="font-size:0.75rem; margin-bottom:15px; opacity:0.7;">⏳ Valid Until: ${expiry.toLocaleDateString()}</p>
+
+                        <button class="btn-main btn-secondary" onclick="window.location.href='course-desc.html?id=${p.courseId}'">
+                            Course Details
+                        </button>
+
+                        ${isExpired ? `
+                            <button class="btn-main btn-renew" onclick="renewAction('${p.courseId}')">
+                                Renew Course (₹${currentPrice})
+                            </button>
+                        ` : `
+                            <button class="btn-main" onclick="goToCourse('${p.courseId}')">
+                                Continue Reading →
+                            </button>
+                        `}
+                    </div>
+                `;
+            }).join('');
+
+        } catch (e) { 
+            console.error("Dashboard Render Error:", e);
+            container.innerHTML = "<p>Error loading Learning Path. Please refresh.</p>"; 
+        }
     }
-}
+
+    // FEATURE RETAINED: Doubt Inbox with Mentor Replies
     async function loadDashboardDoubts() {
         const container = document.getElementById("dashboardDoubtsContainer");
         try {
             const res = await fetch(`${BASE_URL}/api/purchase/my-dashboard-doubts`, { headers: { "Authorization": "Bearer " + token } });
             const doubts = await res.json();
-            if(!doubts.length) { container.innerHTML = "<p>No doubts raised yet.</p>"; return; }
+            if(!doubts.length) { container.innerHTML = "<p>No mentor replies yet.</p>"; return; }
             container.innerHTML = doubts.map(d => `
                 <div class="reply-card">
-                    <div style="font-size:0.8rem; color:var(--primary); font-weight:bold;">${d.lectureTitle || 'General'}</div>
+                    <div style="font-size:0.8rem; color:var(--primary); font-weight:bold;">${d.lectureTitle || 'General Question'}</div>
                     <div style="margin: 5px 0;">Q: ${d.question}</div>
                     ${d.status === "Resolved" ? `<div class="mentor-a">${d.answer}</div>` : `<div>⏳ Reviewing...</div>`}
                 </div>`).join('');
