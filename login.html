@@ -193,16 +193,18 @@ const data = await res.json();
 
                 // 2. THE ADMIN REDIRECT LOGIC
                 // We check if the user object has the role "admin"
-                if (data.user.role === "admin") {
-                    console.log("Admin login detected. Redirecting to Management Suite...");
-                    window.location.href = "/admin.html";
-                } else {
-                    console.log("Student login detected. Redirecting to Learning Path...");
-                    window.location.href = "/dashboard.html";
-                }
-            } else {
-                alert(data.message || "Invalid credentials.");
-            }
+               const userRole = data.user.role ? String(data.user.role).toLowerCase().trim() : "no-role";
+
+    if (userRole === "admin") {
+        console.log("Routing to Admin Suite...");
+        window.location.href = "/admin.html";
+    } else {
+        console.log("Routing to Student Dashboard...");
+        window.location.href = "/dashboard.html";
+    }
+} else {
+    alert(data.message || "Invalid credentials.");
+}
         } catch (err) {
             alert("Connection error. Is the server running?");
         }
