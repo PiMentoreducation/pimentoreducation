@@ -184,12 +184,22 @@
                 body: JSON.stringify({ email, password })
             });
 
-            const data = await res.json();
+const data = await res.json();
 
             if (res.ok) {
+                // 1. Save credentials to localStorage as usual
                 localStorage.setItem("token", data.token);
                 localStorage.setItem("user", JSON.stringify(data.user));
-                window.location.href = "/dashboard.html";
+
+                // 2. THE ADMIN REDIRECT LOGIC
+                // We check if the user object has the role "admin"
+                if (data.user && data.user.role === "admin") {
+                    console.log("Admin login detected. Redirecting to Management Suite...");
+                    window.location.href = "/admin.html";
+                } else {
+                    console.log("Student login detected. Redirecting to Learning Path...");
+                    window.location.href = "/dashboard.html";
+                }
             } else {
                 alert(data.message || "Invalid credentials.");
             }
