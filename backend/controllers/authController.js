@@ -111,10 +111,16 @@ const login = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    res.json({
+res.json({
       message: "Login successful",
       token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+      user: { 
+        id: user._id, 
+        name: user.name, 
+        email: user.email, 
+        // Force a default if role is missing in the DB record
+        role: user.role || "student" 
+      }
     });
   } catch (error) {
     console.error("LOGIN ERROR:", error);

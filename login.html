@@ -190,21 +190,16 @@ const data = await res.json();
                 // 1. Save credentials to localStorage as usual
                 localStorage.setItem("token", data.token);
                 localStorage.setItem("user", JSON.stringify(data.user));
-console.log("Full User Object from Server:", data.user);
                 // 2. THE ADMIN REDIRECT LOGIC
                 // We check if the user object has the role "admin"
-               const userRole = data.user.role ? String(data.user.role).toLowerCase().trim() : "no-role";
-
-    if (userRole === "admin") {
-        console.log("Routing to Admin Suite...");
-        window.location.href = "/admin.html";
-    } else {
-        console.log("Routing to Student Dashboard...");
+            if (data.user && String(data.user.role).toLowerCase().trim() === "admin") {
+              window.location.href = "/admin.html";
+        } else {
         window.location.href = "/dashboard.html";
+        }
+    }   else {
+        alert(data.message || "Invalid credentials.");
     }
-} else {
-    alert(data.message || "Invalid credentials.");
-}
         } catch (err) {
             alert("Connection error. Is the server running?");
         }
