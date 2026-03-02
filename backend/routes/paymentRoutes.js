@@ -1,4 +1,28 @@
+const express = require("express");
+const crypto = require("crypto");
+const router = express.Router(); // ✅ MUST exist
+
+const auth = require("../middleware/authMiddleware");
+const razorpay = require("../utils/razorpay");
 const { buyCourse } = require("../controllers/purchaseController");
+
+/* ================= CREATE ORDER ================= */
+router.post("/create-order", auth, async (req, res) => {
+  const { courseId, price } = req.body;
+
+  try {
+    const order = await razorpay.orders.create({
+      amount: price * 100,
+      currency: "INR",
+      receipt: `rcpt_${courseId}_${Date.now()}`
+    });
+
+    res.json({ order });
+  } catch (err) {
+    console.error("Order creation failed:", err);
+    res.status(500).json({ message: "Failed to create order" });
+  }
+});
 
 /* ================= VERIFY PAYMENT ================= */
 router.post("/verify", auth, async (req, res) => {
@@ -21,7 +45,7 @@ router.post("/verify", auth, async (req, res) => {
       return res.status(400).json({ message: "Payment verification failed" });
     }
 
-    // ✅ Forward to buyCourse controller
+    // Forward to purchase controller
     req.body = {
       courseId: course.courseId,
       paymentId: razorpay_payment_id
@@ -34,3 +58,5 @@ router.post("/verify", auth, async (req, res) => {
     res.status(500).json({ message: "Payment verification failed" });
   }
 });
+
+module.exports = router;
