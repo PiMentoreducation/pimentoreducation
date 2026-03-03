@@ -24,7 +24,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user"));
 
-  // Auth Guard
   if (!token || !user) {
     window.location.href = "login.html";
     return;
@@ -33,7 +32,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const container = document.getElementById("courseContainer");
 
   try {
-    /* STEP 1: FETCH DATA */
     const [courseRes, purchaseRes] = await Promise.all([
       fetch("https://pimentor-project.onrender.com/api/purchase/all-courses", {
         headers: { "Authorization": "Bearer " + token }
@@ -43,13 +41,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       })
     ]);
 
-    if (!courseRes.ok || !purchaseRes.ok) throw new Error("Server responded with an error");
+    if (!courseRes.ok || !purchaseRes.ok) throw new Error("Server Error");
 
     const allCourses = await courseRes.json();
     const purchasedRecords = await purchaseRes.json();
     
-    // Fix: Get current time as a numerical timestamp
-    const nowMs = Date.now();
+    // Get current time in Milliseconds
+    const nowMs = new Date().getTime();
 
     container.innerHTML = ""; 
 
@@ -59,22 +57,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     allCourses.forEach(course => {
-      /* STEP 2: LOGIC UPGRADE 
-         Find the latest purchase and compare using getTime() to prevent string errors.
-      */
+      // 1. Find all purchases for this course
       const userPurchases = purchasedRecords.filter(p => p.courseId === course.courseId);
       
-      // Sort newest first based on the 'createdAt' timestamp
+      // 2. Sort newest first
       userPurchases.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       
       const latest = userPurchases;
       let isStillActive = false;
 
       if (latest && latest.expiryDate) {
+          // Force parse the date string
           const expiryDateObj = new Date(latest.expiryDate);
           const expiryMs = expiryDateObj.getTime();
 
-          // Numerical comparison is 100% accurate
+          // DEBUG LOG: Press F12 to see these numbers
+          console.log(`Course: ${course.title} | Expiry: ${latest.expiryDate} | Active: ${expiryMs > nowMs}`);
+
           if (!isNaN(expiryMs) && expiryMs > nowMs) {
               isStillActive = true; 
           }
@@ -85,13 +84,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       
       let buttonText = "Buy Now";
       let isDisabled = false;
+      let btnBg = "#1a73e8";
 
       if (isStillActive) {
           buttonText = "Purchased";
-          isDisabled = true; 
+          isDisabled = true;
+          btnBg = "#6c757d"; // Gray for purchased
       } else if (latest) {
-          buttonText = "Renew Now"; // Record exists but time has run out
+          buttonText = "Renew Now";
           isDisabled = false;
+          btnBg = "#f39c12"; // Orange for renewal
       }
 
       div.innerHTML = `
@@ -100,7 +102,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         <p class="description">${course.description || ''}</p>
         <p class="price">₹${course.price}</p>
         <button ${isDisabled ? "disabled" : ""} id="btn-${course.courseId}" 
-                style="${isDisabled ? "background: #ccc; cursor: not-allowed;" : ""}">
+                style="background: ${btnBg}; color: white; border: none; padding: 10px; border-radius: 8px; width: 100%; font-weight: bold; cursor: ${isDisabled ? 'not-allowed' : 'pointer'};">
           ${buttonText}
         </button>
       `;
@@ -113,11 +115,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   } catch (err) {
     console.error("Failed to load data:", err);
-    document.getElementById("statusMessage").innerText = "Error: Could not connect to the PiMentor database.";
+    document.getElementById("statusMessage").innerText = "Error: Database connection issue.";
   }
 });
 
-/* STEP 3: PAYMENT & DATABASE SYNC */
+/* RAZORPAY PURCHASE LOGIC */
 async function buyCourse(course) {
   const token = localStorage.getItem("token");
 
@@ -172,10 +174,10 @@ async function buyCourse(course) {
         });
 
         if (saveRes.ok) {
-          alert("Payment Successful! Your access has been updated.");
+          alert("Payment Successful! Access updated.");
           window.location.href = "dashboard.html";
         } else {
-          alert("Payment verified but failed to update access. Contact support.");
+          alert("Verification failed. Please contact support.");
         }
       },
       theme: { color: "#3399cc" }
