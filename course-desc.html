@@ -77,9 +77,43 @@
         .grid-list { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .list-item { display: flex; gap: 10px; font-size: 0.95rem; opacity: 0.9; }
 
-        /* FAQ */
-        .faq-item { margin-bottom: 15px; border-bottom: 1px solid var(--card-border); padding-bottom: 10px; }
-        .faq-q { font-weight: 700; display: block; margin-bottom: 5px; }
+        /* --- ACCORDION STYLING --- */
+        .faq-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            border-radius: 15px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .faq-header {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        .faq-header:hover { background: rgba(124, 77, 255, 0.05); }
+
+        .faq-icon { font-size: 1.2rem; transition: transform 0.3s ease; }
+
+        .faq-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .faq-content { padding: 0 20px 20px 20px; font-size: 0.9rem; opacity: 0.8; line-height: 1.6; }
+
+        .faq-card.active .faq-body { max-height: 300px; }
+        .faq-card.active .faq-icon { transform: rotate(45deg); }
+
+        [data-theme="light"] .faq-card { background: #ffffff; }
 
         /* --- RIGHT COLUMN (SIDEBAR) --- */
         .sticky-sidebar { position: sticky; top: 100px; height: fit-content; }
@@ -101,61 +135,6 @@
             .demo-grid { grid-template-columns: 1fr; }
             .grid-list { grid-template-columns: 1fr; }
         }
-/* --- ACCORDION STYLING --- */
-.faq-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--card-border);
-    border-radius: 15px;
-    margin-bottom: 12px;
-    overflow: hidden;
-    transition: var(--transition);
-}
-
-.faq-header {
-    padding: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-    font-weight: 800;
-    color: var(--accent);
-}
-
-.faq-header:hover {
-    background: rgba(124, 77, 255, 0.05);
-}
-
-.faq-icon {
-    font-size: 1.2rem;
-    transition: transform 0.3s ease;
-}
-
-.faq-body {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    background: rgba(0, 0, 0, 0.1);
-}
-
-.faq-content {
-    padding: 0 20px 20px 20px;
-    font-size: 0.9rem;
-    opacity: 0.8;
-    line-height: 1.6;
-}
-
-/* State when active */
-.faq-card.active .faq-body {
-    max-height: 200px; /* Adjust if answer is very long */
-}
-
-.faq-card.active .faq-icon {
-    transform: rotate(45deg); /* Turns + into x */
-}
-
-[data-theme="light"] .faq-card {
-    background: #ffffff;
-}
     </style>
 </head>
 <body>
@@ -209,37 +188,7 @@
 
         <div class="content-section">
             <h2 class="section-title">Frequently Asked Questions</h2>
-            <div id="faqList"></div>
-            <div class="faq-card">
-    <span class="faq-q">🚀 How long will I have access to the course?</span>
-    <span class="faq-a">You will get unlimited access for 1 full year from the date of purchase. This includes all recorded lectures and uploaded notes.</span>
-</div>
-
-<div class="faq-card">
-    <span class="faq-q">📱 Can I watch the classes on my phone?</span>
-    <span class="faq-a">Absolutely! PiMentor is fully responsive. You can learn on your laptop, tablet, or smartphone anytime, anywhere.</span>
-</div>
-
-<div class="faq-card">
-    <span class="faq-q">❓ How can I clear my doubts?</span>
-    <span class="faq-a">Every lecture has a dedicated "Ask Doubt" section. Our mentors usually respond within 24 hours to ensure your learning never stops.</span>
-</div>
-
-<div class="faq-card">
-    <span class="faq-q">📄 Will I get printed notes?</span>
-    <span class="faq-a">We provide high-quality downloadable PDF Mindmaps and Class Notes. You can download them and print them at your convenience.</span>
-</div>
-
-<div class="faq-card">
-    <span class="faq-q">💳 Is my payment secure?</span>
-    <span class="faq-a">Yes, all payments are processed through Razorpay, India's leading secure payment gateway, supporting UPI, Cards, and Netbanking.</span>
-</div>
-
-<div class="faq-card">
-    <span class="faq-q">🔄 Can I renew the course after 1 year?</span>
-    <span class="faq-a">Yes! You can easily renew your subscription from the "Explore Courses" section at a special discounted renewal price.</span>
-</div>
-        </div>
+            <div id="faqList"></div> </div>
     </div>
 
     <div class="sticky-sidebar">
@@ -254,7 +203,7 @@
             <div style="text-align: left; font-size: 0.85rem; line-height: 2;">
                 <p>🚀 100+ Lectures (Recorded + Live)</p>
                 <p>📄 Downloadable PDF Mindmaps</p>
-                <p>🎯 Daily Practice Mcq Quized & DPPs</p>
+                <p>🎯 Daily Practice MCQ Quizzes & DPPs</p>
                 <p>♾️ Unlimited Access</p>
                 <p>💻 Watch on Laptop, Tablet, or Smartphone</p>
             </div>
@@ -290,7 +239,7 @@
         document.getElementById("mobileNav").innerHTML = links;
     }
 
- async function loadData() {
+    async function loadData() {
         if (!courseId) {
             alert("No Course Selected!");
             window.location.href = "courses.html";
@@ -299,9 +248,7 @@
 
         try {
             const res = await fetch(`${BASE_URL}/api/admin/course/${courseId}`);
-            
             if (!res.ok) throw new Error("Course data not found in galaxy.");
-            
             const d = await res.json();
 
             // 1. Basic Info
@@ -310,18 +257,15 @@
             document.getElementById("newPrice").innerText = `₹${d.price}`;
             document.getElementById("thumb").src = d.thumbnail || "/images/course-default.png";
             
-            // 2. YouTube Demo Processing (spontaneous play)
             const formatYT = (url) => {
                 if (!url) return "";
                 let id = url.split('v=')[1] || url.split('/').pop();
                 if(id.includes('&')) id = id.split('&')[0];
                 return `https://www.youtube.com/embed/${id}?autoplay=0&rel=0`;
             };
-
             document.getElementById("demo1").src = formatYT(d.demo1);
             document.getElementById("demo2").src = formatYT(d.demo2);
             
-            // 3. Learning Points ( RoadMap )
             if (d.learningPoints) {
                 const lp = d.learningPoints.split(',');
                 document.getElementById("learningList").innerHTML = lp.map(x => 
@@ -329,57 +273,62 @@
                 ).join('');
             }
 
-            // 4. Instructor Logic (Matches your Admin Payload)
             document.getElementById("instName").innerText = d.teacherName || "Expert Mentor";
             document.getElementById("instImg").src = d.teacherImg || "/images/teacher-default.png";
             document.getElementById("instQual").innerText = d.teacherQual || "Qualified Educator";
-            
-            // Note: Fixed key to match your database 'teacherAchievements'
             document.getElementById("instAchieve").innerText = d.teacherAchievements || "Top Result Producer";
 
-            // 5. Dynamic Calculations
             const discount = Math.round(((d.oldPrice - d.price) / d.oldPrice) * 100);
             if(discount > 0) document.getElementById("discountTxt").innerText = `SAVE ${discount}% TODAY`;
+
+            // Curriculum & FAQ Dummy
+            document.getElementById("curriculum").innerHTML = `<p>Detailed syllabus including NCERT Exercise, PYQs, and Test Series for ${d.title}.</p>`;
+            document.getElementById("testimonials").innerText = `"This course completely changed my approach to ${d.title}. Highly recommended!" - Student from Gorakhpur`;
+
+            // Dynamic FAQs Generator
+            renderFAQs();
 
         } catch (err) { 
             console.error("Fetch Error:", err);
             document.getElementById("title").innerText = "Course Orbit Not Found";
         }
-        // Add this inside loadData() after you fetch the course details
-const faqs = [
-    { q: "🚀 How long will I have access?", a: "You get 1 full year of unlimited access to all recorded lectures and mindmaps from your date of purchase." },
-    { q: "📱 Can I watch on my mobile?", a: "Yes! PiMentor is built for mobile. You can access your classes on any smartphone, tablet, or laptop seamlessly." },
-    { q: "❓ How do I clear my doubts?", a: "Every video has an 'Ask Doubt' button. Your mentors will respond directly to your queries within 24 hours." },
-    { q: "📄 Are the notes downloadable?", a: "Yes, all mindmaps and PDF notes can be downloaded and printed for offline study." },
-    { q: "💳 What are the payment options?", a: "We support all major UPI apps (GPay, PhonePe), Debit/Credit cards, and Netbanking via secure Razorpay encryption." }
-];
-
-const faqContainer = document.getElementById("faqList");
-faqContainer.innerHTML = faqs.map((f, index) => `
-    <div class="faq-card" id="faq-${index}">
-        <div class="faq-header" onclick="toggleFaq(${index})">
-            <span>${f.q}</span>
-            <span class="faq-icon">+</span>
-        </div>
-        <div class="faq-body">
-            <div class="faq-content">${f.a}</div>
-        </div>
-    </div>
-`).join('');
-
-// Toggle Function
-function toggleFaq(index) {
-    const card = document.getElementById(`faq-${index}`);
-    const isActive = card.classList.contains('active');
-    
-    // Close all other cards (Optional: remove this line if you want multiple open at once)
-    document.querySelectorAll('.faq-card').forEach(c => c.classList.remove('active'));
-    
-    if (!isActive) {
-        card.classList.add('active');
     }
-}
+
+    function renderFAQs() {
+        const faqs = [
+            { q: "🚀 How long will I have access?", a: "You get 1 full year of unlimited access to all recorded lectures and mindmaps from your date of purchase." },
+            { q: "📱 Can I watch on my mobile?", a: "Yes! PiMentor is built for mobile. You can access your classes on any smartphone, tablet, or laptop seamlessly." },
+            { q: "❓ How do I clear my doubts?", a: "Every video has an 'Ask Doubt' button. Your mentors will respond directly to your queries within 24 hours." },
+            { q: "📄 Are the notes downloadable?", a: "Yes, all mindmaps and PDF notes can be downloaded and printed for offline study." },
+            { q: "💳 What are the payment options?", a: "We support all major UPI apps (GPay, PhonePe), Debit/Credit cards, and Netbanking via secure Razorpay encryption." }
+        ];
+
+        const faqContainer = document.getElementById("faqList");
+        faqContainer.innerHTML = faqs.map((f, index) => `
+            <div class="faq-card" id="faq-${index}">
+                <div class="faq-header" onclick="toggleFaq(${index})">
+                    <span>${f.q}</span>
+                    <span class="faq-icon">+</span>
+                </div>
+                <div class="faq-body">
+                    <div class="faq-content">${f.a}</div>
+                </div>
+            </div>
+        `).join('');
     }
+
+    function toggleFaq(index) {
+        const card = document.getElementById(`faq-${index}`);
+        const isActive = card.classList.contains('active');
+        
+        // Close all other cards
+        document.querySelectorAll('.faq-card').forEach(c => c.classList.remove('active'));
+        
+        if (!isActive) {
+            card.classList.add('active');
+        }
+    }
+
     function handleEnrollment() {
         const token = localStorage.getItem("token");
         if (!token) { window.location.href = "login.html"; return; }
