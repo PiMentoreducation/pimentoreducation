@@ -77,45 +77,52 @@
         .grid-list { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .list-item { display: flex; gap: 10px; font-size: 0.95rem; opacity: 0.9; }
 
-        /* --- ACCORDION STYLING --- */
-        .faq-card {
+        /* --- SUCCESS STORIES SLIDER --- */
+        .success-slider {
+            display: flex;
+            overflow-x: auto;
+            gap: 20px;
+            padding: 10px 5px 25px;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent) transparent;
+        }
+        .success-slider::-webkit-scrollbar { height: 6px; }
+        .success-slider::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+
+        .success-card {
+            min-width: 300px;
+            max-width: 300px;
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--card-border);
-            border-radius: 15px;
-            margin-bottom: 12px;
-            overflow: hidden;
-            transition: var(--transition);
-        }
-
-        .faq-header {
-            padding: 20px;
+            border-radius: 20px;
+            padding: 25px;
+            scroll-snap-align: start;
+            transition: 0.3s;
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             align-items: center;
-            cursor: pointer;
-            font-weight: 800;
-            color: var(--accent);
+            text-align: center;
         }
+        .success-card:hover { transform: translateY(-5px); border-color: var(--accent); background: rgba(124, 77, 255, 0.05); }
 
+        .student-img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent); margin-bottom: 15px; }
+        .student-name { font-weight: 800; font-size: 1.1rem; color: var(--text); margin-bottom: 5px; }
+        .student-saying { font-size: 0.85rem; opacity: 0.8; font-style: italic; line-height: 1.5; }
+
+        /* --- ACCORDION STYLING --- */
+        .faq-card { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--card-border); border-radius: 15px; margin-bottom: 12px; overflow: hidden; transition: var(--transition); }
+        .faq-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: 800; color: var(--accent); }
         .faq-header:hover { background: rgba(124, 77, 255, 0.05); }
-
         .faq-icon { font-size: 1.2rem; transition: transform 0.3s ease; }
-
-        .faq-body {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            background: rgba(0, 0, 0, 0.1);
-        }
-
+        .faq-body { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1); background: rgba(0, 0, 0, 0.1); }
         .faq-content { padding: 0 20px 20px 20px; font-size: 0.9rem; opacity: 0.8; line-height: 1.6; }
-
         .faq-card.active .faq-body { max-height: 300px; }
         .faq-card.active .faq-icon { transform: rotate(45deg); }
 
-        [data-theme="light"] .faq-card { background: #ffffff; }
+        [data-theme="light"] .faq-card, [data-theme="light"] .success-card { background: #ffffff; }
 
-        /* --- RIGHT COLUMN (SIDEBAR) --- */
+        /* --- RIGHT COLUMN --- */
         .sticky-sidebar { position: sticky; top: 100px; height: fit-content; }
         .pricing-card { background: var(--glass); border: 2px solid var(--accent); border-radius: 30px; padding: 30px; backdrop-filter: blur(20px); text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
         .thumbnail-img { width: 100%; border-radius: 20px; margin-bottom: 20px; border: 1px solid var(--card-border); }
@@ -183,12 +190,29 @@
 
         <div class="content-section">
             <h2 class="section-title">Success Stories</h2>
-            <div id="testimonials" style="font-style: italic; opacity: 0.9;"></div>
+            <div class="success-slider" id="testimonials">
+                <div class="success-card">
+                    <img src="/images/student1.jpg" class="student-img" alt="Student">
+                    <div class="student-name">Aditya Verma</div>
+                    <div class="student-saying">"The mindmaps provided in this course helped me score 98 in Mathematics. PiMentor is the best!"</div>
+                </div>
+                <div class="success-card">
+                    <img src="/images/student2.jpg" class="student-img" alt="Student">
+                    <div class="student-name">Sneha Kapoor</div>
+                    <div class="student-saying">"I was struggling with Physics, but the spontaneous demos made concepts so easy to understand."</div>
+                </div>
+                <div class="success-card">
+                    <img src="/images/student3.jpg" class="student-img" alt="Student">
+                    <div class="student-name">Rahul Singh</div>
+                    <div class="student-saying">"The 24/7 doubt support is amazing. I never felt lost during my board preparation."</div>
+                </div>
+            </div>
         </div>
 
         <div class="content-section">
             <h2 class="section-title">Frequently Asked Questions</h2>
-            <div id="faqList"></div> </div>
+            <div id="faqList"></div>
+        </div>
     </div>
 
     <div class="sticky-sidebar">
@@ -251,7 +275,6 @@
             if (!res.ok) throw new Error("Course data not found in galaxy.");
             const d = await res.json();
 
-            // 1. Basic Info
             document.getElementById("title").innerText = d.title || "Untitled Course";
             document.getElementById("oldPrice").innerText = d.oldPrice ? `₹${d.oldPrice}` : `₹${Number(d.price) + 500}`;
             document.getElementById("newPrice").innerText = `₹${d.price}`;
@@ -281,11 +304,8 @@
             const discount = Math.round(((d.oldPrice - d.price) / d.oldPrice) * 100);
             if(discount > 0) document.getElementById("discountTxt").innerText = `SAVE ${discount}% TODAY`;
 
-            // Curriculum & FAQ Dummy
             document.getElementById("curriculum").innerHTML = `<p>Detailed syllabus including NCERT Exercise, PYQs, and Test Series for ${d.title}.</p>`;
-            document.getElementById("testimonials").innerText = `"This course completely changed my approach to ${d.title}. Highly recommended!" - Student from Gorakhpur`;
 
-            // Dynamic FAQs Generator
             renderFAQs();
 
         } catch (err) { 
@@ -320,13 +340,8 @@
     function toggleFaq(index) {
         const card = document.getElementById(`faq-${index}`);
         const isActive = card.classList.contains('active');
-        
-        // Close all other cards
         document.querySelectorAll('.faq-card').forEach(c => c.classList.remove('active'));
-        
-        if (!isActive) {
-            card.classList.add('active');
-        }
+        if (!isActive) card.classList.add('active');
     }
 
     function handleEnrollment() {
