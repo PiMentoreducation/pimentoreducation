@@ -176,6 +176,7 @@
         .btn-lecture { background: #2196F3; color: white; }
         .btn-delete { background: var(--danger); color: white; }
         .btn-broadcast { background: var(--warning); color: #000; }
+        .btn-add-teacher { background: rgba(255,255,255,0.1); color: var(--text); margin-bottom: 20px; border: 1px dashed var(--primary); }
 
         button:hover {
             transform: translateY(-2px);
@@ -197,6 +198,32 @@
             font-size: 0.85rem; 
             font-weight: 800; 
             text-decoration: underline;
+        }
+
+        /* Multi-Teacher Styles */
+        .teacher-box {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--card-border);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        .remove-teacher {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         /* --- DATA PRESENTATION --- */
@@ -301,18 +328,13 @@
     <textarea id="course_roadmap" placeholder="Course_Roadmap" rows="2"></textarea>
     <textarea id="learningPoints" placeholder="Learning Objectives (Separate with commas, e.g. Daily Quizzes, 1:1 Doubt Solving, Board Prep)"></textarea>
 
-    <div class="row" style="margin-top:15px; border-top: 1px solid var(--card-border); padding-top:25px;">
-        <div class="col">
-            <span class="hint">Teacher Identity</span>
-            <input id="teacherName" placeholder="Faculty Name">
-            <input id="teacherImg" placeholder="Faculty Photo URL">
-        </div>
-        <div class="col">
-            <span class="hint">Professional Profile</span>
-            <input id="teacherQual" placeholder="Qualifications (e.g. B.Tech IIT, M.Sc)">
-            <input id="teacherAchieve" placeholder="Achievements (e.g. Produced AIR 1, 15+ years exp)">
-        </div>
+    <div style="margin-top: 25px; border-top: 1px solid var(--card-border); padding-top: 25px;">
+        <h3 style="font-size: 0.9rem; color: var(--primary); margin-bottom: 15px;">👨‍🏫 TEACHER PROFILES</h3>
+        <div id="teachersContainer">
+            </div>
+        <button class="btn-add-teacher" onclick="addTeacherField()">+ Add Another Teacher</button>
     </div>
+
     <button class="btn-create" onclick="addCourse()">Save / Update Course Settings</button>
 </section>
 
@@ -369,7 +391,15 @@
     
     <button class="btn-lecture" onclick="addLecture()">Deploy Lecture to Cloud</button>
 </section>
-
+<section>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+        <h2>Student Registry (<span id="enrollmentCount">0</span>)</h2>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="downloadEmails()" style="width:auto; padding:10px 20px; background:var(--success); color:white; font-size:0.85rem;">📥 Download Emails</button>
+            <input type="text" id="studentSearch" placeholder="🔍 Search..." onkeyup="filterStudentTable()" style="width:250px; margin-bottom:0;">
+        </div>
+    </div>
+    </section>
 <section>
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
         <h2>Enrolled Student Registry (<span id="enrollmentCount">0</span>)</h2>
@@ -428,30 +458,59 @@
             window.location.href = "login.html";
             return;
         }
-        
-        // Load stored theme or default to dark
         const savedTheme = localStorage.getItem('pimentor-theme') || 'dark';
         applyTheme(savedTheme);
-        
-        // Populate core data
         loadOngoingCourses();
         loadActiveNotifs();
+        addTeacherField(); // Initialize with one teacher field
     }
 
     /* --- THEME CONTROLLER --- */
     function applyTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
         const btn = document.getElementById('themeBtn');
-        if (btn) {
-            btn.innerText = (theme === 'dark') ? '☀️' : '🌙';
-        }
+        if (btn) btn.innerText = (theme === 'dark') ? '☀️' : '🌙';
         localStorage.setItem('pimentor-theme', theme);
     }
 
     function toggleTheme() {
         const currentTheme = document.documentElement.getAttribute('data-theme');
-        const targetTheme = (currentTheme === 'dark') ? 'light' : 'dark';
-        applyTheme(targetTheme);
+        applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+    }
+
+    /* --- MULTI-TEACHER LOGIC --- */
+    function addTeacherField(data = null) {
+        const container = document.getElementById('teachersContainer');
+        const teacherDiv = document.createElement('div');
+        teacherDiv.className = 'teacher-box';
+        teacherDiv.innerHTML = `
+            <button class="remove-teacher" onclick="this.parentElement.remove()">×</button>
+            <div class="row">
+                <div class="col">
+                    <input class="teacher-name" placeholder="Faculty Name" value="${data ? data.name : ''}">
+                    <input class="teacher-img" placeholder="Faculty Photo URL" value="${data ? data.image : ''}">
+                </div>
+                <div class="col">
+                    <input class="teacher-qual" placeholder="Qualifications" value="${data ? data.qual : ''}">
+                    <input class="teacher-achieve" placeholder="Achievements" value="${data ? data.achieve : ''}">
+                </div>
+            </div>
+        `;
+        container.appendChild(teacherDiv);
+    }
+
+    function getTeacherData() {
+        const boxes = document.querySelectorAll('.teacher-box');
+        const teachers = [];
+        boxes.forEach(box => {
+            teachers.push({
+                name: box.querySelector('.teacher-name').value,
+                image: box.querySelector('.teacher-img').value,
+                qual: box.querySelector('.teacher-qual').value,
+                achieve: box.querySelector('.teacher-achieve').value
+            });
+        });
+        return teachers;
     }
 
     /* --- DATA LOADING LOGIC --- */
@@ -461,139 +520,94 @@
                 headers: { "Authorization": "Bearer " + token } 
             });
             const courses = await response.json();
-            
             const mainDropdown = document.getElementById("courseDropdown");
             const notifDropdown = document.getElementById("notifCourseSelect");
-            
             mainDropdown.innerHTML = '<option value="">-- Select a Course --</option>';
             notifDropdown.innerHTML = '<option value="all" style="font-weight:bold; color:var(--primary);">🌍 BROADCAST TO ALL</option>'; 
-
             courses.forEach(function(course) {
                 const optionHtml = `<option value="${course.courseId}">${course.title} (${course.courseId})</option>`;
                 mainDropdown.innerHTML += optionHtml;
                 notifDropdown.innerHTML += optionHtml;
             });
-        } catch (error) {
-            console.error("Course Load Error:", error);
-        }
+        } catch (error) { console.error("Course Load Error:", error); }
     }
 
     async function syncCourseSelection() {
         const selectedId = document.getElementById("courseDropdown").value;
         document.getElementById("targetCourseId").value = selectedId;
         document.getElementById("deleteCourseId").value = selectedId;
-        
         if (!selectedId) return;
-
         try {
-            // 1. Chapters
             const chapRes = await fetch(`${BASE_URL}/api/purchase/course-chapters/${selectedId}`, { 
                 headers: { "Authorization": "Bearer " + token } 
             });
             const chapters = await chapRes.json();
             const chapDrop = document.getElementById('chapterDropdown');
             chapDrop.innerHTML = '<option value="">-- Select Existing Chapter --</option>';
-            chapters.forEach(ch => { 
-                chapDrop.innerHTML += `<option value="${ch}">${ch}</option>`; 
-            });
-
-            // 2. Lectures for deletion dropdown
+            chapters.forEach(ch => { chapDrop.innerHTML += `<option value="${ch}">${ch}</option>`; });
             const lecRes = await fetch(`${BASE_URL}/api/purchase/all-lectures-admin/${selectedId}`, { 
                 headers: { "Authorization": "Bearer " + token } 
             });
             const lectures = await lecRes.json();
             const delDrop = document.getElementById("deleteLectureDropdown");
             delDrop.innerHTML = '<option value="">-- Select Lecture --</option>';
-            lectures.forEach(lec => { 
-                delDrop.innerHTML += `<option value="${lec._id}">${lec.chapterName} > ${lec.title}</option>`; 
-            });
-
-            // 3. Doubts and Enrolled Students
+            lectures.forEach(lec => { delDrop.innerHTML += `<option value="${lec._id}">${lec.chapterName} > ${lec.title}</option>`; });
             loadDoubts(selectedId);
             loadEnrollments(selectedId);
-        } catch (error) {
-            console.error("Sync Error:", error);
-        }
+        } catch (error) { console.error("Sync Error:", error); }
     }
 
-    /* --- COURSE CREATION (EVERY FIELD RETAINED) --- */
-async function addCourse() {
-    const payload = {
-        courseId: document.getElementById("courseId").value.trim(),
-        title: document.getElementById("title").value,
-        className: document.getElementById("className").value,
-        description: document.getElementById("description").value,
-        course_roadmap: document.getElementById("course_roadmap").value,
-        price: Number(document.getElementById("price").value),
-        oldPrice: Number(document.getElementById("oldPrice").value),
-        thumbnail: document.getElementById("thumbnail").value,
-        demo1: document.getElementById("demo1").value,
-        demo2: document.getElementById("demo2").value,
-        learningPoints: document.getElementById("learningPoints").value,
-        teacherName: document.getElementById("teacherName").value,
-        teacherImg: document.getElementById("teacherImg").value,
-        teacherQual: document.getElementById("teacherQual").value,
-        teacherAchievements: document.getElementById("teacherAchieve").value,
-        liveValidityDate: document.getElementById("liveValidityDate").value,
-        recordedDurationDays: Number(document.getElementById("recordedDurationDays").value)
-    };
+    /* --- COURSE CREATION --- */
+    async function addCourse() {
+        const payload = {
+            courseId: document.getElementById("courseId").value.trim(),
+            title: document.getElementById("title").value,
+            className: document.getElementById("className").value,
+            description: document.getElementById("description").value,
+            course_roadmap: document.getElementById("course_roadmap").value,
+            price: Number(document.getElementById("price").value),
+            oldPrice: Number(document.getElementById("oldPrice").value),
+            thumbnail: document.getElementById("thumbnail").value,
+            demo1: document.getElementById("demo1").value,
+            demo2: document.getElementById("demo2").value,
+            learningPoints: document.getElementById("learningPoints").value,
+            teachers: getTeacherData(), // 🔥 Pushing multiple teachers
+            liveValidityDate: document.getElementById("liveValidityDate").value,
+            recordedDurationDays: Number(document.getElementById("recordedDurationDays").value)
+        };
 
-    if (!payload.courseId || !payload.title) {
-        return alert("Course ID and Title are mandatory.");
-    }
+        if (!payload.courseId || !payload.title) return alert("Course ID and Title are mandatory.");
 
-    try {
-        const response = await fetch(`${BASE_URL}/api/admin/course`, {
-            method: "POST",
-            headers: { 
-                "Content-Type": "application/json", 
-                "Authorization": "Bearer " + token 
-            },
-            body: JSON.stringify(payload)
-        });
-        
-        const result = await response.json();
-        
-        if (response.ok) {
-            alert("Course Data Synchronized Successfully!");
+        try {
+            const response = await fetch(`${BASE_URL}/api/admin/course`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+            alert(result.message);
             loadOngoingCourses();
-        } else {
-            alert("Error: " + result.message);
-        }
-    } catch (error) {
-        console.error("Course Save Error:", error);
-        alert("Network Error. Check console.");
+        } catch (error) { alert("Network Error during course creation"); }
     }
-}
 
     /* --- NOTIFICATION LOGIC --- */
     async function broadcastNotification() {
         const select = document.getElementById("notifCourseSelect");
         const selectedOptions = Array.from(select.selectedOptions).map(opt => opt.value);
-        
         const payload = {
             heading: document.getElementById("notifHeading").value,
             description: document.getElementById("notifDesc").value,
             link: document.getElementById("notifLink").value,
             targetCourses: selectedOptions
         };
-
         try {
             const response = await fetch(`${BASE_URL}/api/admin/send-notification`, {
                 method: "POST", 
-                headers: { 
-                    "Content-Type": "application/json", 
-                    "Authorization": "Bearer " + token 
-                },
+                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
                 body: JSON.stringify(payload)
             });
-            if (response.ok) { 
-                alert("Broadcast sent to target galaxy!"); 
-                loadActiveNotifs(); 
-            }
-        } catch (error) {
-            console.error("Broadcast Fail:", error);
-        }
+            if (response.ok) { alert("Broadcast sent!"); loadActiveNotifs(); }
+        } catch (error) { console.error("Broadcast Fail:", error); }
     }
 
     async function loadActiveNotifs() {
@@ -603,7 +617,6 @@ async function addCourse() {
             });
             const notifications = await response.json();
             const listDiv = document.getElementById("adminNotifList");
-            
             listDiv.innerHTML = notifications.map(n => `
                 <div class="notif-item">
                     <b>${n.heading}</b> 
@@ -611,16 +624,13 @@ async function addCourse() {
                     <br><small style="opacity:0.6;">Targets: ${n.targetCourses.join(', ')}</small>
                 </div>
             `).join('');
-        } catch (error) {
-            console.error("Notif Load Error");
-        }
+        } catch (error) { console.error("Notif Load Error"); }
     }
 
     async function deleteNotif(notifId) {
         if (!confirm("Remove this broadcast?")) return;
         const response = await fetch(`${BASE_URL}/api/admin/notification/${notifId}`, { 
-            method: "DELETE", 
-            headers: { "Authorization": "Bearer " + token } 
+            method: "DELETE", headers: { "Authorization": "Bearer " + token } 
         });
         if (response.ok) loadActiveNotifs();
     }
@@ -629,7 +639,6 @@ async function addCourse() {
     async function addLecture() {
         const targetId = document.getElementById("targetCourseId").value;
         const finalChapterName = isNewChapter ? document.getElementById("chapterNameInput").value : document.getElementById("chapterDropdown").value;
-        
         const payload = {
             lectureTitle: document.getElementById("lectureTitle").value,
             chapterName: finalChapterName, 
@@ -640,10 +649,8 @@ async function addCourse() {
             pdfNotes: document.getElementById("pdfNotes").value,
             practiceMcq: document.getElementById("practiceMcq").value
         };
-
         const response = await fetch(`${BASE_URL}/api/admin/course/${targetId}/lecture`, {
-            method: "POST", 
-            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+            method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
             body: JSON.stringify(payload)
         });
         const result = await response.json();
@@ -659,70 +666,49 @@ async function addCourse() {
                 headers: { "Authorization": "Bearer " + token } 
             });
             const doubts = await response.json();
-            
             if (doubts.length === 0) {
-                container.innerHTML = "<p style='opacity:0.5;'>All doubts resolved. Clean orbit!</p>";
+                container.innerHTML = "<p style='opacity:0.5;'>All doubts resolved.</p>";
                 return;
             }
-
             container.innerHTML = doubts.map(d => `
                 <div class="doubt-card">
                     <div style="font-size:0.85rem; margin-bottom:10px;"><b>${d.studentName}</b> asked on <i>${d.lectureTitle}</i></div>
                     <div style="font-weight:bold; margin-bottom:15px;">Q: ${d.question}</div>
-                    <textarea id="reply-${d._id}" placeholder="Type your response here..." rows="2"></textarea>
+                    <textarea id="reply-${d._id}" placeholder="Type response..." rows="2"></textarea>
                     <button onclick="resolveDoubt('${d._id}')" style="width:auto; background:var(--primary); color:white; padding:8px 20px;">Submit Answer</button>
                 </div>
             `).join('');
-        } catch (error) {
-            console.error("Doubt fetch error");
-        }
+        } catch (error) { console.error("Doubt fetch error"); }
     }
 
     async function resolveDoubt(doubtId) {
         const answer = document.getElementById(`reply-${doubtId}`).value;
         if (!answer.trim()) return alert("Response cannot be empty.");
-        
         const response = await fetch(`${BASE_URL}/api/admin/resolve-doubt`, {
-            method: "POST", 
-            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+            method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
             body: JSON.stringify({ doubtId, answer })
         });
-        
-        if (response.ok) { 
-            alert("Doubt resolved successfully!"); 
-            syncCourseSelection(); 
-        }
+        if (response.ok) { alert("Doubt resolved!"); syncCourseSelection(); }
     }
 
     /* --- STUDENT REGISTRY --- */
     async function loadEnrollments(courseId) {
         const body = document.getElementById("enrollmentBody");
         const countSpan = document.getElementById("enrollmentCount");
-        
         try {
             const response = await fetch(`${BASE_URL}/api/admin/course-enrollments/${courseId}`, { 
                 headers: { "Authorization": "Bearer " + token } 
             });
             const students = await response.json();
-            
             countSpan.innerText = students.length;
-            
             if (students.length === 0) {
-                body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:30px;">No explorers found for this course ID.</td></tr>';
+                body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:30px;">No explorers found.</td></tr>';
                 return;
             }
-
             body.innerHTML = students.map(s => `
-                <tr>
-                    <td>${s.name}</td>
-                    <td>${s.email}</td>
-                    <td>${s.studentClass}</td>
-                    <td>${new Date(s.enrolledAt).toLocaleDateString()}</td>
-                </tr>
+                <tr><td>${s.name}</td><td>${s.email}</td><td>${s.studentClass}</td><td>${new Date(s.enrolledAt).toLocaleDateString()}</td></tr>
             `).join('');
-        } catch (error) {
-            body.innerHTML = '<tr><td colspan="4">Error retrieving student registry.</td></tr>';
-        }
+        } catch (error) { body.innerHTML = '<tr><td colspan="4">Error retrieving student registry.</td></tr>'; }
     }
 
     function filterStudentTable() {
@@ -734,26 +720,19 @@ async function addCourse() {
         }
     }
 
-    /* --- CLEANUP UTILS --- */
     function toggleChapterInput() {
         isNewChapter = !isNewChapter;
-        const selectBox = document.getElementById('chapter-select-container');
-        const inputBox = document.getElementById('chapter-input-container');
-        const label = document.getElementById('toggleText');
-        
-        selectBox.style.display = isNewChapter ? 'none' : 'block';
-        inputBox.style.display = isNewChapter ? 'block' : 'none';
-        label.innerText = isNewChapter ? "← Select Existing" : "+ Create New Chapter";
+        document.getElementById('chapter-select-container').style.display = isNewChapter ? 'none' : 'block';
+        document.getElementById('chapter-input-container').style.display = isNewChapter ? 'block' : 'none';
+        document.getElementById('toggleText').innerText = isNewChapter ? "← Select Existing" : "+ Create New Chapter";
     }
 
     async function deleteLecture() {
         const lectureId = document.getElementById("deleteLectureDropdown").value;
         const currentCourseId = document.getElementById("targetCourseId").value;
-        if (!lectureId || !confirm("Permanently delete this lesson?")) return;
-        
+        if (!lectureId || !confirm("Delete this lesson?")) return;
         const response = await fetch(`${BASE_URL}/api/admin/course/${currentCourseId}/lecture/${lectureId}`, { 
-            method: "DELETE", 
-            headers: { "Authorization": "Bearer " + token } 
+            method: "DELETE", headers: { "Authorization": "Bearer " + token } 
         });
         const result = await response.json();
         alert(result.message);
@@ -762,16 +741,45 @@ async function addCourse() {
 
     async function deleteCourse() {
         const deleteId = document.getElementById("deleteCourseId").value;
-        if (!deleteId || !confirm("CRITICAL: Wipe this entire course and all its students?")) return;
-        
+        if (!deleteId || !confirm("CRITICAL: Wipe course?")) return;
         const response = await fetch(`${BASE_URL}/api/admin/course/${deleteId}`, { 
-            method: "DELETE", 
-            headers: { "Authorization": "Bearer " + token } 
+            method: "DELETE", headers: { "Authorization": "Bearer " + token } 
         });
         const result = await response.json();
         alert(result.message);
         loadOngoingCourses();
     }
+    function downloadEmails() {
+    const rows = document.getElementById("enrollmentBody").querySelectorAll("tr");
+    const emails = [];
+    
+    // Header for CSV
+    emails.push("Email Address");
+
+    rows.forEach(row => {
+        const emailCell = row.cells[1]; // Index 1 is the Email column
+        if (emailCell && emailCell.innerText.includes("@")) {
+            emails.push(emailCell.innerText.trim());
+        }
+    });
+
+    if (emails.length <= 1) {
+        return alert("No student emails found to download. Select a course first!");
+    }
+
+    // Create the CSV file
+    const csvContent = "data:text/csv;charset=utf-8," + emails.join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    
+    const courseId = document.getElementById("targetCourseId").value || "students";
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `PiMentor_${courseId}_Emails.csv`);
+    document.body.appendChild(link);
+    
+    link.click();
+    document.body.removeChild(link);
+}
 </script>
 </body>
 </html>
