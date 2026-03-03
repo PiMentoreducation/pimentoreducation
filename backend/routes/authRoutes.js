@@ -105,19 +105,46 @@ router.post("/login", async (req, res) => {
     const { email, password } = req.body;
     try {
         const user = await User.findOne({ email });
-        if (!user) return res.status(400).json({ success: false, message: "Invalid Credentials" });
+        if (!user) {
+            return res.status(400).json({ success: false, message: "Invalid Credentials" });
+        }
 
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ success: false, message: "Invalid Credentials" });
+        if (!isMatch) {
+            return res.status(400).json({ success: false, message: "Invalid Credentials" });
+        }
 
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+        // 1. Generate a unique Session ID (using timestamp + random string)
+        const newSessionId = Date.now().toString() + Math.random().toString(36).substring(2, 7);
+
+        // 2. Update the user's currentSessionId in the database
+        // This effectively "kicks out" any previously logged-in device
+        user.currentSessionId = newSessionId;
+        await user.save();
+
+        // 3. Include the sessionId in the JWT payload
+        const token = jwt.sign(
+            { 
+                id: user._id, 
+                sessionId: newSessionId // 🔥 Critical for verification
+            }, 
+            process.env.JWT_SECRET, 
+            { expiresIn: "7d" }
+        );
 
         res.status(200).json({
             success: true,
             token,
-            user: { id: user._id, name: user.name, email: user.email, studentClass: user.studentClass, role: user.role }
+            user: { 
+                id: user._id, 
+                name: user.name, 
+                email: user.email, 
+                studentClass: user.studentClass, 
+                role: user.role 
+            }
         });
     } catch (err) {
+        console.error("Login Error:", err);
         res.status(500).json({ success: false, message: "Server error during login" });
     }
 });

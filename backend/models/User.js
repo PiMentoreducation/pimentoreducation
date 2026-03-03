@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
     enum: ["student", "admin"],
     default: "student"
   },
+  currentSessionId: { type: String, default: null }, // 🔥 New Field
 });
 
 module.exports = mongoose.model("User", userSchema);

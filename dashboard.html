@@ -207,6 +207,26 @@
     const token = localStorage.getItem("token");
     const user = JSON.parse(localStorage.getItem("user") || "{}");
 
+    // --- NEW: SESSION & RESPONSE INTERCEPTOR ---
+    // This handles the "Single Session" kick-out logic globally for the dashboard
+    async function handleResponse(response) {
+        const data = await response.json();
+        
+        // If the backend sent the "CONCURRENT_LOGIN" code from our middleware
+        if (response.status === 401 && data.code === "CONCURRENT_LOGIN") {
+            alert("⚠️ Session Terminated: You have been logged in on another device.");
+            localStorage.clear(); 
+            window.location.href = "login.html"; 
+            return null; 
+        }
+        
+        if (!response.ok) {
+            throw new Error(data.message || "Something went wrong");
+        }
+        
+        return data;
+    }
+
     // SideBar & Theme Controls
     const hamburger = document.getElementById('hamburger');
     const sidebar = document.getElementById('sidebar');
@@ -249,10 +269,15 @@
                 fetch(`${BASE_URL}/api/purchase/my-courses`, { headers: { "Authorization": "Bearer " + token } }),
                 fetch(`${BASE_URL}/api/admin/active-notifications`, { headers: { "Authorization": "Bearer " + token } })
             ]);
-            const myPurchasedIds = (await pRes.json()).map(c => c.courseId);
-            const allNotifs = await nRes.json();
+
+            // Using the new interceptor logic for safety
+            const myPurchasedData = await handleResponse(pRes);
+            const allNotifs = await handleResponse(nRes);
             
-            // Re-implementing the full logic for course, class, or global matching
+            if(!myPurchasedData || !allNotifs) return;
+
+            const myPurchasedIds = myPurchasedData.map(c => c.courseId);
+            
             const filtered = allNotifs.filter(n => {
                 const matchesCourse = n.targetCourses.some(id => myPurchasedIds.includes(id));
                 const matchesClass = n.targetCourses.includes(user.studentClass);
@@ -267,7 +292,7 @@
                     <p>${n.description}</p>
                     ${n.link ? `<br><a href="${n.link}" target="_blank" style="color:var(--accent); font-weight:800; text-decoration:none;">View Details →</a>` : ''}
                 </div>`).join('');
-        } catch (err) { console.error("Notification load failed"); }
+        } catch (err) { console.error("Notification load failed", err); }
     }
 
     window.dismissNotif = (id) => {
@@ -278,101 +303,99 @@
         if(el) el.remove();
     };
 
-async function loadStudentCourses() {
-    const container = document.getElementById("courseList");
-    try {
-        const [pRes, cRes] = await Promise.all([
-            // 1. Fetch student's own purchases
-            fetch(`${BASE_URL}/api/purchase/my-courses`, { 
-                headers: { "Authorization": "Bearer " + token } 
-            }),
-            // 2. Fetch the catalog (USING THE STUDENT-SAFE ROUTE)
-            // We use /api/purchase/all-courses because /api/admin/all-courses BLOCKS students
-            fetch(`${BASE_URL}/api/purchase/all-courses`, { 
-                headers: { "Authorization": "Bearer " + token } 
-            })
-        ]);
+    async function loadStudentCourses() {
+        const container = document.getElementById("courseList");
+        try {
+            const [pRes, cRes] = await Promise.all([
+                fetch(`${BASE_URL}/api/purchase/my-courses`, { 
+                    headers: { "Authorization": "Bearer " + token } 
+                }),
+                fetch(`${BASE_URL}/api/purchase/all-courses`, { 
+                    headers: { "Authorization": "Bearer " + token } 
+                })
+            ]);
 
-        // If either call fails, throw error to trigger the catch block
-        if (!pRes.ok || !cRes.ok) {
-            const errorMsg = !pRes.ok ? "Purchase fetch failed" : "Catalog fetch failed";
-            throw new Error(errorMsg);
-        }
+            // Integrated single-session validation check
+            const purchases = await handleResponse(pRes);
+            const allMetadata = await handleResponse(cRes);
 
-        const purchases = await pRes.json();
-        const allMetadata = await cRes.json();
-        const now = new Date();
+            if (!purchases || !allMetadata) return;
 
-        // 3. Deduplication: In case of multiple renewal records, keep only the latest
-        const latest = {};
-        purchases.forEach(p => { 
-            const cid = String(p.courseId).trim();
-            if(!latest[cid] || new Date(p.createdAt) > new Date(latest[cid].createdAt)) {
-                latest[cid] = p;
-            }
-        });
+            const now = new Date();
 
-        const purchaseValues = Object.values(latest);
-        
-        if (purchaseValues.length === 0) {
-            container.innerHTML = `
-                <div style="grid-column: 1/-1; text-align: center; padding: 40px; opacity: 0.7;">
-                    <p>No active missions found in your learning galaxy.</p>
-                    <button class="btn-main" style="width:auto; margin-top:15px;" onclick="window.location.href='courses.html'">Start Learning →</button>
-                </div>`;
-            return;
-        }
+            const latest = {};
+            purchases.forEach(p => { 
+                const cid = String(p.courseId).trim();
+                if(!latest[cid] || new Date(p.createdAt) > new Date(latest[cid].createdAt)) {
+                    latest[cid] = p;
+                }
+            });
 
-        container.innerHTML = purchaseValues.map(p => {
-            const expiry = new Date(p.expiryDate);
-            const isExpired = now > expiry;
-            const diffTime = expiry - now;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            const purchaseValues = Object.values(latest);
             
-            // 4. Robust ID Matching (Handles potential type mismatches)
-            const meta = allMetadata.find(m => String(m.courseId).trim() === String(p.courseId).trim()) || {};
-            const currentPrice = meta.price || p.price || "N/A";
+            if (purchaseValues.length === 0) {
+                container.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 40px; opacity: 0.7;">
+                        <p>No active missions found in your learning galaxy.</p>
+                        <button class="btn-main" style="width:auto; margin-top:15px;" onclick="window.location.href='courses.html'">Start Learning →</button>
+                    </div>`;
+                return;
+            }
 
-            return `
-                <div class="course-card">
-                    <span class="status-tag ${isExpired ? 'tag-expired' : 'tag-active'}">
-                        ${isExpired ? 'Access Expired' : 'Active Mission'}
-                    </span>
-                    <h3 style="margin-bottom:12px;">${p.title || meta.title || 'Course'}</h3>
-                    
-                    <div style="margin: 15px 0; font-size: 0.9rem;">
-                        <p style="color: ${isExpired ? 'var(--danger)' : (diffDays < 7 ? 'var(--warning)' : 'var(--success)')}; font-weight: 800;">
-                            ${isExpired ? 'Mission Ended' : diffDays + ' Days Remaining'}
-                        </p>
-                        <p style="opacity:0.7; margin-top:8px;">📅 Enrolled: ${new Date(p.createdAt).toLocaleDateString()}</p>
-                        <p style="opacity:0.7;">⏳ Valid Until: ${expiry.toLocaleDateString()}</p>
-                    </div>
+            container.innerHTML = purchaseValues.map(p => {
+                const expiry = new Date(p.expiryDate);
+                const isExpired = now > expiry;
+                const diffTime = expiry - now;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                const meta = allMetadata.find(m => String(m.courseId).trim() === String(p.courseId).trim()) || {};
+                const currentPrice = meta.price || p.price || "N/A";
 
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <button class="btn-main btn-secondary" onclick="window.location.href='course-desc.html?id=${p.courseId}'">Course Details</button>
+                return `
+                    <div class="course-card">
+                        <span class="status-tag ${isExpired ? 'tag-expired' : 'tag-active'}">
+                            ${isExpired ? 'Access Expired' : 'Active Mission'}
+                        </span>
+                        <h3 style="margin-bottom:12px;">${p.title || meta.title || 'Course'}</h3>
                         
-                        ${isExpired ? 
-                          `<button class="btn-main btn-renew" onclick="window.location.href='courses.html?renew=${p.courseId}'">Renew Access (₹${currentPrice})</button>` : 
-                          `<button class="btn-main" onclick="window.location.href='course-structure.html?id=${p.courseId}'">Enter Classroom →</button>`
-                        }
-                    </div>
+                        <div style="margin: 15px 0; font-size: 0.9rem;">
+                            <p style="color: ${isExpired ? 'var(--danger)' : (diffDays < 7 ? 'var(--warning)' : 'var(--success)')}; font-weight: 800;">
+                                ${isExpired ? 'Mission Ended' : diffDays + ' Days Remaining'}
+                            </p>
+                            <p style="opacity:0.7; margin-top:8px;">📅 Enrolled: ${new Date(p.createdAt).toLocaleDateString()}</p>
+                            <p style="opacity:0.7;">⏳ Valid Until: ${expiry.toLocaleDateString()}</p>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <button class="btn-main btn-secondary" onclick="window.location.href='course-desc.html?id=${p.courseId}'">Course Details</button>
+                            
+                            ${isExpired ? 
+                              `<button class="btn-main btn-renew" onclick="window.location.href='courses.html?renew=${p.courseId}'">Renew Access (₹${currentPrice})</button>` : 
+                              `<button class="btn-main" onclick="window.location.href='course-structure.html?id=${p.courseId}'">Enter Classroom →</button>`
+                            }
+                        </div>
+                    </div>`;
+            }).join('');
+        } catch (e) { 
+            console.error("Critical Dashboard Sync Failure:", e);
+            container.innerHTML = `
+                <div style="grid-column: 1/-1; text-align: center; color: var(--danger); padding: 20px; background: rgba(255,0,0,0.05); border-radius: 15px;">
+                    <strong>Synchronization Error</strong>
+                    <p style="font-size: 0.8rem; margin-top: 5px;">We couldn't connect to your learning profile. Please try logging in again.</p>
+                    <button class="btn-main" style="width:auto; background: var(--text); color: var(--bg); margin-top:15px;" onclick="location.reload()">Retry Sync</button>
                 </div>`;
-        }).join('');
-    } catch (e) { 
-        console.error("Critical Dashboard Sync Failure:", e);
-        container.innerHTML = `
-            <div style="grid-column: 1/-1; text-align: center; color: var(--danger); padding: 20px; background: rgba(255,0,0,0.05); border-radius: 15px;">
-                <strong>Synchronization Error</strong>
-                <p style="font-size: 0.8rem; margin-top: 5px;">We couldn't connect to your learning profile. Please try logging in again.</p>
-                <button class="btn-main" style="width:auto; background: var(--text); color: var(--bg); margin-top:15px;" onclick="location.reload()">Retry Sync</button>
-            </div>`;
+        }
     }
-}
+
     async function loadDashboardDoubts() {
         const container = document.getElementById("dashboardDoubtsContainer");
         try {
-            const res = await fetch(`${BASE_URL}/api/purchase/my-dashboard-doubts`, { headers: { "Authorization": "Bearer " + token } });
-            const doubts = await res.json();
+            const res = await fetch(`${BASE_URL}/api/purchase/my-dashboard-doubts`, { 
+                headers: { "Authorization": "Bearer " + token } 
+            });
+            
+            const doubts = await handleResponse(res);
+            if(!doubts) return;
             
             if(!doubts.length) { 
                 container.innerHTML = "<p style='opacity:0.6;'>No mentor interactions found in your orbit.</p>"; 
