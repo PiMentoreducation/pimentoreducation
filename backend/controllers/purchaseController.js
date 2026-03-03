@@ -5,24 +5,15 @@ exports.buyCourse = async (req, res) => {
     try {
         const { courseId, paymentId } = req.body;
         const cleanId = courseId.trim();
+        const userId = req.user.id;
 
-        // 1️⃣ Find Course
+        // 1️⃣ Find Course to get validity rules
         const course = await Course.findOne({ courseId: cleanId });
         if (!course) {
             return res.status(404).json({ message: "Course not found" });
         }
 
-        // 2️⃣ Prevent Duplicate Purchase
-        const alreadyPurchased = await Purchase.findOne({
-            userId: req.user.id,
-            courseId: cleanId
-        });
-
-        if (alreadyPurchased) {
-            return res.status(400).json({ message: "Course already purchased" });
-        }
-
-        // 3️⃣ Calculate Expiry Logic
+        // 2️⃣ Calculate New Expiry Logic
         const now = new Date();
         let finalExpiry;
 
@@ -30,42 +21,52 @@ exports.buyCourse = async (req, res) => {
             course.liveValidityDate &&
             now.getTime() <= new Date(course.liveValidityDate).getTime()
         ) {
-            // Live batch access
+            // Live batch access: Set to specific fixed date
             finalExpiry = new Date(course.liveValidityDate);
         } else {
-            // Recorded access
+            // Recorded access: Set to Current Date + Duration Days
             finalExpiry = new Date();
             finalExpiry.setDate(
-                finalExpiry.getDate() + (course.recordedDurationDays || 365)
+                finalExpiry.getDate() + (Number(course.recordedDurationDays) || 365)
             );
         }
 
-        // 4️⃣ Purge Date (10 days after expiry)
+        // 3️⃣ Purge Date (10 days after expiry for TTL cleanup)
         const purgeDate = new Date(finalExpiry);
         purgeDate.setDate(purgeDate.getDate() + 10);
 
-        // 5️⃣ SAVE USING MONGOOSE (CORRECT WAY)
-        const newPurchase = new Purchase({
-            userId: req.user.id,
+        // 4️⃣ UPSERT LOGIC (The Renewal Fix)
+        // If (userId + courseId) exists, UPDATE it. If not, CREATE it.
+        const purchaseData = {
+            userId: userId,
             courseId: cleanId,
             title: course.title || "Untitled",
             price: course.price || 0,
-            paymentId,
+            paymentId: paymentId,
             className: course.className || "",
             expiryDate: finalExpiry,
             purgeAt: purgeDate
-        });
+        };
 
-        await newPurchase.save();
+        const updatedPurchase = await Purchase.findOneAndUpdate(
+            { userId: userId, courseId: cleanId }, // Search criteria
+            { $set: purchaseData },                // Data to update
+            { 
+                upsert: true,                      // Create if doesn't exist
+                new: true,                         // Return the updated doc
+                runValidators: true 
+            }
+        );
 
-        res.status(201).json({
+        res.status(200).json({
             success: true,
-            message: "Course purchased successfully",
-            expiryDate: finalExpiry
+            message: "Course access updated successfully",
+            expiryDate: finalExpiry,
+            purchase: updatedPurchase
         });
 
     } catch (error) {
-        console.error("BUY COURSE ERROR:", error);
+        console.error("BUY/RENEW COURSE ERROR:", error);
         res.status(500).json({ error: error.message });
     }
 };
@@ -79,6 +80,7 @@ exports.getMyCourses = async (req, res) => {
 
         res.status(200).json(courses);
     } catch (error) {
+        console.error("FETCH COURSES ERROR:", error);
         res.status(500).json({ error: "Fetch failed" });
     }
 };
