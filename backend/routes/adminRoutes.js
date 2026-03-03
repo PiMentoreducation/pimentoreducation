@@ -31,7 +31,7 @@ router.post("/course", auth, admin, async (req, res) => {
     try {
         const { 
             courseId, title, className, price, oldPrice, 
-            description, thumbnail, demo1, demo2, learningPoints, 
+            description, course_roadmap, thumbnail, demo1, demo2, learningPoints, 
             teacherName, teacherImg, teacherQual, teacherAchievements,
             liveValidityDate, recordedDurationDays 
         } = req.body;
@@ -42,6 +42,7 @@ router.post("/course", auth, admin, async (req, res) => {
             price: Number(price),
             oldPrice: Number(oldPrice),
             description,
+            course_roadmap,
             thumbnail,
             demo1,
             demo2,

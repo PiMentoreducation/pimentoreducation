@@ -8,6 +8,7 @@ const courseSchema = new mongoose.Schema({
   price: Number,
   oldPrice: Number, // 🔥 Added
   description: String,
+  course_roadmap: String,
   thumbnail: String, // 🔥 Added
   demo1: String, // 🔥 Added
   demo2: String, // 🔥 Added

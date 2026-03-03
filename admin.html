@@ -298,6 +298,7 @@
     
     <span class="hint">Marketing Description</span>
     <textarea id="description" placeholder="Short course subline for the banner..." rows="2"></textarea>
+    <textarea id="course_roadmap" placeholder="Course_Roadmap" rows="2"></textarea>
     <textarea id="learningPoints" placeholder="Learning Objectives (Separate with commas, e.g. Daily Quizzes, 1:1 Doubt Solving, Board Prep)"></textarea>
 
     <div class="row" style="margin-top:15px; border-top: 1px solid var(--card-border); padding-top:25px;">
@@ -312,7 +313,6 @@
             <input id="teacherAchieve" placeholder="Achievements (e.g. Produced AIR 1, 15+ years exp)">
         </div>
     </div>
-
     <button class="btn-create" onclick="addCourse()">Save / Update Course Settings</button>
 </section>
 
@@ -523,6 +523,7 @@ async function addCourse() {
         title: document.getElementById("title").value,
         className: document.getElementById("className").value,
         description: document.getElementById("description").value,
+        course_roadmap: document.getElementById("course_roadmap").value,
         price: Number(document.getElementById("price").value),
         oldPrice: Number(document.getElementById("oldPrice").value),
         thumbnail: document.getElementById("thumbnail").value,
