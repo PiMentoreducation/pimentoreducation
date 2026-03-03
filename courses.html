@@ -22,9 +22,11 @@
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
   const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user"));
+  // Get the logged-in user's details to prevent cross-user data interference
+  const userData = JSON.parse(localStorage.getItem("user") || "{}");
+  const currentUserId = userData.id || userData._id;
 
-  if (!token || !user) {
+  if (!token || !currentUserId) {
     window.location.href = "login.html";
     return;
   }
@@ -32,6 +34,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const container = document.getElementById("courseContainer");
 
   try {
+    /* STEP 1: FETCH DATA */
     const [courseRes, purchaseRes] = await Promise.all([
       fetch("https://pimentor-project.onrender.com/api/purchase/all-courses", {
         headers: { "Authorization": "Bearer " + token }
@@ -46,9 +49,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const allCourses = await courseRes.json();
     const purchasedRecords = await purchaseRes.json();
     
-    // Get current time in Milliseconds
-    const nowMs = new Date().getTime();
-
+    const nowMs = Date.now();
     container.innerHTML = ""; 
 
     if (allCourses.length === 0) {
@@ -57,26 +58,28 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     allCourses.forEach(course => {
-      // 1. Find all purchases for this course
-      const userPurchases = purchasedRecords.filter(p => p.courseId === course.courseId);
+      /* STEP 2: USER-SPECIFIC ITERATIVE LOGIC 
+         We only look at records where the userId matches the person logged in.
+      */
+      const myPurchases = purchasedRecords.filter(p => 
+          String(p.courseId).trim() === String(course.courseId).trim() &&
+          String(p.userId) === String(currentUserId)
+      );
       
-      // 2. Sort newest first
-      userPurchases.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      
-      const latest = userPurchases;
       let isStillActive = false;
+      let hasPreviousPurchase = myPurchases.length > 0;
 
-      if (latest && latest.expiryDate) {
-          // Force parse the date string
-          const expiryDateObj = new Date(latest.expiryDate);
-          const expiryMs = expiryDateObj.getTime();
-
-          // DEBUG LOG: Press F12 to see these numbers
-          console.log(`Course: ${course.title} | Expiry: ${latest.expiryDate} | Active: ${expiryMs > nowMs}`);
-
-          if (!isNaN(expiryMs) && expiryMs > nowMs) {
-              isStillActive = true; 
-          }
+      // Check if ANY of this specific user's records for this course are still valid
+      if (hasPreviousPurchase) {
+          myPurchases.forEach(p => {
+              if (p.expiryDate) {
+                  const expMs = new Date(p.expiryDate).getTime();
+                  // Mathematical check: Is the expiry timestamp in the future?
+                  if (!isNaN(expMs) && expMs > nowMs) {
+                      isStillActive = true; 
+                  }
+              }
+          });
       }
 
       const div = document.createElement("div");
@@ -84,13 +87,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       
       let buttonText = "Buy Now";
       let isDisabled = false;
-      let btnBg = "#1a73e8";
+      let btnBg = "#1a73e8"; // Default Blue
 
       if (isStillActive) {
           buttonText = "Purchased";
           isDisabled = true;
           btnBg = "#6c757d"; // Gray for purchased
-      } else if (latest) {
+      } else if (hasPreviousPurchase) {
           buttonText = "Renew Now";
           isDisabled = false;
           btnBg = "#f39c12"; // Orange for renewal
@@ -102,7 +105,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         <p class="description">${course.description || ''}</p>
         <p class="price">₹${course.price}</p>
         <button ${isDisabled ? "disabled" : ""} id="btn-${course.courseId}" 
-                style="background: ${btnBg}; color: white; border: none; padding: 10px; border-radius: 8px; width: 100%; font-weight: bold; cursor: ${isDisabled ? 'not-allowed' : 'pointer'};">
+                style="background: ${btnBg}; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: ${isDisabled ? 'not-allowed' : 'pointer'};">
           ${buttonText}
         </button>
       `;
@@ -114,12 +117,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
   } catch (err) {
-    console.error("Failed to load data:", err);
-    document.getElementById("statusMessage").innerText = "Error: Database connection issue.";
+    console.error("Critical Render Error:", err);
+    document.getElementById("statusMessage").innerText = "Database Error. Please refresh the page.";
   }
 });
 
-/* RAZORPAY PURCHASE LOGIC */
+/* STEP 3: RAZORPAY PURCHASE LOGIC (RETAINED) */
 async function buyCourse(course) {
   const token = localStorage.getItem("token");
 
@@ -174,7 +177,7 @@ async function buyCourse(course) {
         });
 
         if (saveRes.ok) {
-          alert("Payment Successful! Access updated.");
+          alert("Payment Successful! Access has been granted.");
           window.location.href = "dashboard.html";
         } else {
           alert("Verification failed. Please contact support.");
