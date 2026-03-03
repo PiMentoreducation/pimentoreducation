@@ -282,28 +282,44 @@ async function loadStudentCourses() {
     const container = document.getElementById("courseList");
     try {
         const [pRes, cRes] = await Promise.all([
-            fetch(`${BASE_URL}/api/purchase/my-courses`, { headers: { "Authorization": "Bearer " + token } }),
-            // 🔥 FIXED: Use the PUBLIC/STUDENT courses route, NOT the admin one
-            fetch(`${BASE_URL}/api/purchase/all-courses`, { headers: { "Authorization": "Bearer " + token } })
+            // 1. Fetch student's own purchases
+            fetch(`${BASE_URL}/api/purchase/my-courses`, { 
+                headers: { "Authorization": "Bearer " + token } 
+            }),
+            // 2. Fetch the catalog (USING THE STUDENT-SAFE ROUTE)
+            // We use /api/purchase/all-courses because /api/admin/all-courses BLOCKS students
+            fetch(`${BASE_URL}/api/purchase/all-courses`, { 
+                headers: { "Authorization": "Bearer " + token } 
+            })
         ]);
 
-        if (!pRes.ok || !cRes.ok) throw new Error("Sync failed");
+        // If either call fails, throw error to trigger the catch block
+        if (!pRes.ok || !cRes.ok) {
+            const errorMsg = !pRes.ok ? "Purchase fetch failed" : "Catalog fetch failed";
+            throw new Error(errorMsg);
+        }
 
         const purchases = await pRes.json();
         const allMetadata = await cRes.json();
         const now = new Date();
 
-        // Deduplication logic
+        // 3. Deduplication: In case of multiple renewal records, keep only the latest
         const latest = {};
         purchases.forEach(p => { 
-            if(!latest[p.courseId] || new Date(p.createdAt) > new Date(latest[p.courseId].createdAt)) {
-                latest[p.courseId] = p;
+            const cid = String(p.courseId).trim();
+            if(!latest[cid] || new Date(p.createdAt) > new Date(latest[cid].createdAt)) {
+                latest[cid] = p;
             }
         });
 
         const purchaseValues = Object.values(latest);
+        
         if (purchaseValues.length === 0) {
-            container.innerHTML = "<p style='opacity:0.6; padding:20px;'>No courses found in your library yet.</p>";
+            container.innerHTML = `
+                <div style="grid-column: 1/-1; text-align: center; padding: 40px; opacity: 0.7;">
+                    <p>No active missions found in your learning galaxy.</p>
+                    <button class="btn-main" style="width:auto; margin-top:15px;" onclick="window.location.href='courses.html'">Start Learning →</button>
+                </div>`;
             return;
         }
 
@@ -313,39 +329,45 @@ async function loadStudentCourses() {
             const diffTime = expiry - now;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             
-            // 🔥 FIXED: String conversion ensures IDs match regardless of type
+            // 4. Robust ID Matching (Handles potential type mismatches)
             const meta = allMetadata.find(m => String(m.courseId).trim() === String(p.courseId).trim()) || {};
             const currentPrice = meta.price || p.price || "N/A";
 
             return `
                 <div class="course-card">
                     <span class="status-tag ${isExpired ? 'tag-expired' : 'tag-active'}">
-                        ${isExpired ? 'Expired' : 'Active Access'}
+                        ${isExpired ? 'Access Expired' : 'Active Mission'}
                     </span>
-                    <h3 style="margin-bottom:12px;">${p.title || meta.title}</h3>
+                    <h3 style="margin-bottom:12px;">${p.title || meta.title || 'Course'}</h3>
                     
                     <div style="margin: 15px 0; font-size: 0.9rem;">
-                        <p style="color: ${isExpired ? 'var(--danger)' : (diffDays < 7 ? 'var(--warning)' : 'inherit')}; font-weight: 800;">
-                            ${isExpired ? 'Access Ended' : diffDays + ' Days Remaining'}
+                        <p style="color: ${isExpired ? 'var(--danger)' : (diffDays < 7 ? 'var(--warning)' : 'var(--success)')}; font-weight: 800;">
+                            ${isExpired ? 'Mission Ended' : diffDays + ' Days Remaining'}
                         </p>
                         <p style="opacity:0.7; margin-top:8px;">📅 Enrolled: ${new Date(p.createdAt).toLocaleDateString()}</p>
                         <p style="opacity:0.7;">⏳ Valid Until: ${expiry.toLocaleDateString()}</p>
                     </div>
 
-                    <button class="btn-main btn-secondary" onclick="window.location.href='course-desc.html?id=${p.courseId}'">Course Details</button>
-                    
-                    ${isExpired ? 
-                      `<button class="btn-main btn-renew" onclick="window.location.href='courses.html?renew=${p.courseId}'">Renew Now (₹${currentPrice})</button>` : 
-                      `<button class="btn-main" onclick="window.location.href='course-structure.html?id=${p.courseId}'">Continue Reading →</button>`
-                    }
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button class="btn-main btn-secondary" onclick="window.location.href='course-desc.html?id=${p.courseId}'">Course Details</button>
+                        
+                        ${isExpired ? 
+                          `<button class="btn-main btn-renew" onclick="window.location.href='courses.html?renew=${p.courseId}'">Renew Access (₹${currentPrice})</button>` : 
+                          `<button class="btn-main" onclick="window.location.href='course-structure.html?id=${p.courseId}'">Enter Classroom →</button>`
+                        }
+                    </div>
                 </div>`;
         }).join('');
     } catch (e) { 
-        console.error("Dashboard Sync Error:", e);
-        container.innerHTML = "<p style='color:var(--danger);'>Critical: Data synchronization failed. Please refresh or relogin.</p>"; 
+        console.error("Critical Dashboard Sync Failure:", e);
+        container.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; color: var(--danger); padding: 20px; background: rgba(255,0,0,0.05); border-radius: 15px;">
+                <strong>Synchronization Error</strong>
+                <p style="font-size: 0.8rem; margin-top: 5px;">We couldn't connect to your learning profile. Please try logging in again.</p>
+                <button class="btn-main" style="width:auto; background: var(--text); color: var(--bg); margin-top:15px;" onclick="location.reload()">Retry Sync</button>
+            </div>`;
     }
 }
-
     async function loadDashboardDoubts() {
         const container = document.getElementById("dashboardDoubtsContainer");
         try {
