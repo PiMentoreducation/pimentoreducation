@@ -278,58 +278,73 @@
         if(el) el.remove();
     };
 
-    async function loadStudentCourses() {
-        const container = document.getElementById("courseList");
-        try {
-            const [pRes, cRes] = await Promise.all([
-                fetch(`${BASE_URL}/api/purchase/my-courses`, { headers: { "Authorization": "Bearer " + token } }),
-                fetch(`${BASE_URL}/api/admin/all-courses`, { headers: { "Authorization": "Bearer " + token } })
-            ]);
-            const purchases = await pRes.json();
-            const allMetadata = await cRes.json();
-            const now = new Date();
+async function loadStudentCourses() {
+    const container = document.getElementById("courseList");
+    try {
+        const [pRes, cRes] = await Promise.all([
+            fetch(`${BASE_URL}/api/purchase/my-courses`, { headers: { "Authorization": "Bearer " + token } }),
+            // 🔥 FIXED: Use the PUBLIC/STUDENT courses route, NOT the admin one
+            fetch(`${BASE_URL}/api/purchase/all-courses`, { headers: { "Authorization": "Bearer " + token } })
+        ]);
 
-            // Deduplication logic to ensure only the latest purchase record shows per course
-            const latest = {};
-            purchases.forEach(p => { 
-                if(!latest[p.courseId] || new Date(p.createdAt) > new Date(latest[p.courseId].createdAt)) {
-                    latest[p.courseId] = p;
-                }
-            });
+        if (!pRes.ok || !cRes.ok) throw new Error("Sync failed");
 
-            container.innerHTML = Object.values(latest).map(p => {
-                const expiry = new Date(p.expiryDate);
-                const isExpired = now > expiry;
-                const diffTime = expiry - now;
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                const meta = allMetadata.find(m => m.courseId === p.courseId) || {};
-                const currentPrice = meta.price || p.price;
+        const purchases = await pRes.json();
+        const allMetadata = await cRes.json();
+        const now = new Date();
 
-                return `
-                    <div class="course-card">
-                        <span class="status-tag ${isExpired ? 'tag-expired' : 'tag-active'}">
-                            ${isExpired ? 'Expired' : 'Active Access'}
-                        </span>
-                        <h3 style="margin-bottom:12px;">${p.title}</h3>
-                        
-                        <div style="margin: 15px 0; font-size: 0.9rem;">
-                            <p style="color: ${isExpired ? 'var(--danger)' : (diffDays < 7 ? 'var(--warning)' : 'inherit')}; font-weight: 800;">
-                                ${isExpired ? 'Access Ended' : diffDays + ' Days Remaining'}
-                            </p>
-                            <p style="opacity:0.7; margin-top:8px;">📅 Enrolled: ${new Date(p.createdAt).toLocaleDateString()}</p>
-                            <p style="opacity:0.7;">⏳ Valid Until: ${expiry.toLocaleDateString()}</p>
-                        </div>
+        // Deduplication logic
+        const latest = {};
+        purchases.forEach(p => { 
+            if(!latest[p.courseId] || new Date(p.createdAt) > new Date(latest[p.courseId].createdAt)) {
+                latest[p.courseId] = p;
+            }
+        });
 
-                        <button class="btn-main btn-secondary" onclick="window.location.href='course-desc.html?id=${p.courseId}'">Course Details</button>
-                        
-                        ${isExpired ? 
-                          `<button class="btn-main btn-renew" onclick="window.location.href='courses.html?renew=${p.courseId}'">Renew Now (₹${currentPrice})</button>` : 
-                          `<button class="btn-main" onclick="window.location.href='course-structure.html?id=${p.courseId}'">Continue Reading →</button>`
-                        }
-                    </div>`;
-            }).join('');
-        } catch (e) { container.innerHTML = "<p>Data synchronization error.</p>"; }
+        const purchaseValues = Object.values(latest);
+        if (purchaseValues.length === 0) {
+            container.innerHTML = "<p style='opacity:0.6; padding:20px;'>No courses found in your library yet.</p>";
+            return;
+        }
+
+        container.innerHTML = purchaseValues.map(p => {
+            const expiry = new Date(p.expiryDate);
+            const isExpired = now > expiry;
+            const diffTime = expiry - now;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            // 🔥 FIXED: String conversion ensures IDs match regardless of type
+            const meta = allMetadata.find(m => String(m.courseId).trim() === String(p.courseId).trim()) || {};
+            const currentPrice = meta.price || p.price || "N/A";
+
+            return `
+                <div class="course-card">
+                    <span class="status-tag ${isExpired ? 'tag-expired' : 'tag-active'}">
+                        ${isExpired ? 'Expired' : 'Active Access'}
+                    </span>
+                    <h3 style="margin-bottom:12px;">${p.title || meta.title}</h3>
+                    
+                    <div style="margin: 15px 0; font-size: 0.9rem;">
+                        <p style="color: ${isExpired ? 'var(--danger)' : (diffDays < 7 ? 'var(--warning)' : 'inherit')}; font-weight: 800;">
+                            ${isExpired ? 'Access Ended' : diffDays + ' Days Remaining'}
+                        </p>
+                        <p style="opacity:0.7; margin-top:8px;">📅 Enrolled: ${new Date(p.createdAt).toLocaleDateString()}</p>
+                        <p style="opacity:0.7;">⏳ Valid Until: ${expiry.toLocaleDateString()}</p>
+                    </div>
+
+                    <button class="btn-main btn-secondary" onclick="window.location.href='course-desc.html?id=${p.courseId}'">Course Details</button>
+                    
+                    ${isExpired ? 
+                      `<button class="btn-main btn-renew" onclick="window.location.href='courses.html?renew=${p.courseId}'">Renew Now (₹${currentPrice})</button>` : 
+                      `<button class="btn-main" onclick="window.location.href='course-structure.html?id=${p.courseId}'">Continue Reading →</button>`
+                    }
+                </div>`;
+        }).join('');
+    } catch (e) { 
+        console.error("Dashboard Sync Error:", e);
+        container.innerHTML = "<p style='color:var(--danger);'>Critical: Data synchronization failed. Please refresh or relogin.</p>"; 
     }
+}
 
     async function loadDashboardDoubts() {
         const container = document.getElementById("dashboardDoubtsContainer");
