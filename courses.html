@@ -33,9 +33,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const container = document.getElementById("courseContainer");
 
   try {
-    /* STEP 1: FETCH DATA
-       We fetch both the catalog and the user's specific purchases.
-    */
+    /* STEP 1: FETCH DATA */
     const [courseRes, purchaseRes] = await Promise.all([
       fetch("https://pimentor-project.onrender.com/api/purchase/all-courses", {
         headers: { "Authorization": "Bearer " + token }
@@ -49,9 +47,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const allCourses = await courseRes.json();
     const purchasedRecords = await purchaseRes.json();
-    const now = new Date();
+    
+    // Fix: Get current time as a numerical timestamp
+    const nowMs = Date.now();
 
-    container.innerHTML = ""; // Clear loading message
+    container.innerHTML = ""; 
 
     if (allCourses.length === 0) {
       container.innerHTML = "<p>No courses are currently available.</p>";
@@ -59,37 +59,38 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     allCourses.forEach(course => {
-      /* LOGIC UPGRADE: 
-         Instead of just checking if it exists, we find the LATEST 
-         purchase for this ID and check if it is still valid.
+      /* STEP 2: LOGIC UPGRADE 
+         Find the latest purchase and compare using getTime() to prevent string errors.
       */
       const userPurchases = purchasedRecords.filter(p => p.courseId === course.courseId);
       
-      // Sort newest first
-      userPurchases.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      // Sort newest first based on the 'createdAt' timestamp
+      userPurchases.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
       const latest = userPurchases;
-
       let isStillActive = false;
+
       if (latest && latest.expiryDate) {
-          const expiry = new Date(latest.expiryDate);
-          if (expiry > now) {
-              isStillActive = true; // Student still has time left
+          const expiryDateObj = new Date(latest.expiryDate);
+          const expiryMs = expiryDateObj.getTime();
+
+          // Numerical comparison is 100% accurate
+          if (!isNaN(expiryMs) && expiryMs > nowMs) {
+              isStillActive = true; 
           }
       }
 
       const div = document.createElement("div");
       div.className = "course-card";
       
-      // Determine Button State
       let buttonText = "Buy Now";
       let isDisabled = false;
 
       if (isStillActive) {
           buttonText = "Purchased";
-          isDisabled = true;
+          isDisabled = true; 
       } else if (latest) {
-          // It exists but is expired
-          buttonText = "Renew Now";
+          buttonText = "Renew Now"; // Record exists but time has run out
           isDisabled = false;
       }
 
@@ -98,7 +99,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         <p><strong>${course.className || 'General'}</strong></p>
         <p class="description">${course.description || ''}</p>
         <p class="price">₹${course.price}</p>
-        <button ${isDisabled ? "disabled" : ""} id="btn-${course.courseId}">
+        <button ${isDisabled ? "disabled" : ""} id="btn-${course.courseId}" 
+                style="${isDisabled ? "background: #ccc; cursor: not-allowed;" : ""}">
           ${buttonText}
         </button>
       `;
@@ -115,9 +117,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-/* STEP 3: PAYMENT & DATABASE SYNC
-   Initiates Razorpay and saves the record to the Purchase collection.
-*/
+/* STEP 3: PAYMENT & DATABASE SYNC */
 async function buyCourse(course) {
   const token = localStorage.getItem("token");
 
@@ -172,10 +172,10 @@ async function buyCourse(course) {
         });
 
         if (saveRes.ok) {
-          alert("Payment Successful! Access granted/renewed.");
+          alert("Payment Successful! Your access has been updated.");
           window.location.href = "dashboard.html";
         } else {
-          alert("Verification failed. Please contact support.");
+          alert("Payment verified but failed to update access. Contact support.");
         }
       },
       theme: { color: "#3399cc" }
@@ -186,7 +186,7 @@ async function buyCourse(course) {
 
   } catch (error) {
     console.error("Payment Error:", error);
-    alert("Purchase process failed. Try again.");
+    alert("An error occurred. Please try again.");
   }
 }
 </script>
