@@ -206,37 +206,62 @@
         document.getElementById("mobileNav").innerHTML = links;
     }
 
-    async function loadData() {
-        if (!courseId) return;
+ async function loadData() {
+        if (!courseId) {
+            alert("No Course Selected!");
+            window.location.href = "courses.html";
+            return;
+        }
+
         try {
             const res = await fetch(`${BASE_URL}/api/admin/course/${courseId}`);
+            
+            if (!res.ok) throw new Error("Course data not found in galaxy.");
+            
             const d = await res.json();
 
-            document.getElementById("title").innerText = d.title;
-            document.getElementById("oldPrice").innerText = `₹${d.oldPrice || parseInt(d.price) + 500}`;
+            // 1. Basic Info
+            document.getElementById("title").innerText = d.title || "Untitled Course";
+            document.getElementById("oldPrice").innerText = d.oldPrice ? `₹${d.oldPrice}` : `₹${Number(d.price) + 500}`;
             document.getElementById("newPrice").innerText = `₹${d.price}`;
             document.getElementById("thumb").src = d.thumbnail || "/images/course-default.png";
-            document.getElementById("demo1").src = d.demo1 ? d.demo1.replace("watch?v=", "embed/") : "";
-            document.getElementById("demo2").src = d.demo2 ? d.demo2.replace("watch?v=", "embed/") : "";
             
-            // Learning Points
-            const lp = d.learningPoints ? d.learningPoints.split(',') : ["Point A", "Point B"];
-            document.getElementById("learningList").innerHTML = lp.map(x => `<div class="list-item">✨ ${x}</div>`).join('');
+            // 2. YouTube Demo Processing (spontaneous play)
+            const formatYT = (url) => {
+                if (!url) return "";
+                let id = url.split('v=')[1] || url.split('/').pop();
+                if(id.includes('&')) id = id.split('&')[0];
+                return `https://www.youtube.com/embed/${id}?autoplay=0&rel=0`;
+            };
 
-            // Instructor
-            document.getElementById("instName").innerText = d.teacherName || "Master Mentor";
+            document.getElementById("demo1").src = formatYT(d.demo1);
+            document.getElementById("demo2").src = formatYT(d.demo2);
+            
+            // 3. Learning Points ( RoadMap )
+            if (d.learningPoints) {
+                const lp = d.learningPoints.split(',');
+                document.getElementById("learningList").innerHTML = lp.map(x => 
+                    `<div class="list-item">✨ ${x.trim()}</div>`
+                ).join('');
+            }
+
+            // 4. Instructor Logic (Matches your Admin Payload)
+            document.getElementById("instName").innerText = d.teacherName || "Expert Mentor";
             document.getElementById("instImg").src = d.teacherImg || "/images/teacher-default.png";
-            document.getElementById("instQual").innerText = d.teacherQual || "Expert Educator";
-            document.getElementById("instAchieve").innerText = d.teacherAchievements || "Top Ranker Mentor";
+            document.getElementById("instQual").innerText = d.teacherQual || "Qualified Educator";
+            
+            // Note: Fixed key to match your database 'teacherAchievements'
+            document.getElementById("instAchieve").innerText = d.teacherAchievements || "Top Result Producer";
 
-            // Curriculum & FAQ (Dummy fallback if not in DB)
-            document.getElementById("curriculum").innerHTML = `<p>Detailed syllabus including NCERT Exercise, PYQs, and Test Series for ${d.title}.</p>`;
-            document.getElementById("faqList").innerHTML = `<div class="faq-item"><span class="faq-q">Can I watch on mobile?</span><span>Yes, PiMentor works perfectly on all devices.</span></div>`;
-            document.getElementById("testimonials").innerText = `"This course completely changed my approach to ${d.title}. Highly recommended!" - Student from Gorakhpur`;
+            // 5. Dynamic Calculations
+            const discount = Math.round(((d.oldPrice - d.price) / d.oldPrice) * 100);
+            if(discount > 0) document.getElementById("discountTxt").innerText = `SAVE ${discount}% TODAY`;
 
-        } catch (err) { console.error(err); }
+        } catch (err) { 
+            console.error("Fetch Error:", err);
+            document.getElementById("title").innerText = "Course Orbit Not Found";
+        }
     }
-
     function handleEnrollment() {
         const token = localStorage.getItem("token");
         if (!token) { window.location.href = "login.html"; return; }

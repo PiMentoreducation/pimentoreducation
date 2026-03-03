@@ -248,5 +248,25 @@ router.get("/force-sync-expiries", auth, admin, async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+/* ================= PUBLIC COURSE DETAILS ================= */
+
+// Public route to get course details by courseId string
+router.get("/course/:courseId", async (req, res) => {
+    try {
+        const { courseId } = req.params;
+        const Course = require("../models/Course"); // Ensure model is available
+        
+        const course = await Course.findOne({ courseId: courseId.trim() });
+
+        if (!course) {
+            return res.status(404).json({ message: "Course not found" });
+        }
+
+        res.json(course);
+    } catch (err) {
+        console.error("Public Fetch Error:", err);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
 
 module.exports = router;
