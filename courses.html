@@ -154,7 +154,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     container.innerHTML = ""; 
 
     allCourses.forEach(course => {
-      // LOGIC RESTORED: Precise filtering for purchased status
+      // Precise filtering for purchased status
       const myPurchases = purchasedRecords.filter(p => 
           String(p.courseId).trim() === String(course.courseId).trim() &&
           String(p.userId) === String(currentUserId)
@@ -210,13 +210,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function buyCourse(course) {
   const token = localStorage.getItem("token");
   try {
+    // Ensuring the EXACT price from the database is sent to the order creation
     const res = await fetch("https://pimentor-project.onrender.com/api/payment/create-order", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
       body: JSON.stringify({
         courseId: course.courseId,
         title: course.title,
-        price: course.price,
+        price: Number(course.price), // Force Number type
         className: course.className,
         liveValidityDate: course.liveValidityDate,
         recordedDurationDays: course.recordedDurationDays
@@ -228,13 +229,12 @@ async function buyCourse(course) {
 
     const options = {
       key: "rzp_test_SIWx62DBo83S8C",
-      amount: order.amount,
+      amount: order.amount, // This is now correctly calculated by backend using provided price
       currency: "INR",
       name: "PiMentor",
       description: course.title,
       order_id: order.id,
       handler: async function (response) {
-        // VERIFICATION LOGIC FIXED: Sending complete data object
         const verifyBody = {
             razorpay_order_id: response.razorpay_order_id,
             razorpay_payment_id: response.razorpay_payment_id,
@@ -243,7 +243,7 @@ async function buyCourse(course) {
               courseId: course.courseId,
               title: course.title,
               className: course.className,
-              price: course.price,
+              price: Number(course.price),
               liveValidityDate: course.liveValidityDate,
               recordedDurationDays: course.recordedDurationDays
             }
