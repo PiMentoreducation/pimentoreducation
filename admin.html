@@ -391,7 +391,15 @@
     
     <button class="btn-lecture" onclick="addLecture()">Deploy Lecture to Cloud</button>
 </section>
-
+<section>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+        <h2>Student Registry (<span id="enrollmentCount">0</span>)</h2>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="downloadEmails()" style="width:auto; padding:10px 20px; background:var(--success); color:white; font-size:0.85rem;">📥 Download Emails</button>
+            <input type="text" id="studentSearch" placeholder="🔍 Search..." onkeyup="filterStudentTable()" style="width:250px; margin-bottom:0;">
+        </div>
+    </div>
+    </section>
 <section>
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
         <h2>Enrolled Student Registry (<span id="enrollmentCount">0</span>)</h2>
@@ -741,6 +749,37 @@
         alert(result.message);
         loadOngoingCourses();
     }
+    function downloadEmails() {
+    const rows = document.getElementById("enrollmentBody").querySelectorAll("tr");
+    const emails = [];
+    
+    // Header for CSV
+    emails.push("Email Address");
+
+    rows.forEach(row => {
+        const emailCell = row.cells[1]; // Index 1 is the Email column
+        if (emailCell && emailCell.innerText.includes("@")) {
+            emails.push(emailCell.innerText.trim());
+        }
+    });
+
+    if (emails.length <= 1) {
+        return alert("No student emails found to download. Select a course first!");
+    }
+
+    // Create the CSV file
+    const csvContent = "data:text/csv;charset=utf-8," + emails.join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    
+    const courseId = document.getElementById("targetCourseId").value || "students";
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `PiMentor_${courseId}_Emails.csv`);
+    document.body.appendChild(link);
+    
+    link.click();
+    document.body.removeChild(link);
+}
 </script>
 </body>
 </html>
