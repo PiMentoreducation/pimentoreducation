@@ -299,6 +299,10 @@
                 </div>`).join('');
         } catch (e) { container.innerHTML = "<p>Doubt inbox unavailable.</p>"; }
     }
+        window.renewAction = function(courseId) {
+    // This sends the ID to the courses page as a "query parameter"
+    window.location.href = `courses.html?renew=${courseId}`;
+};
 </script>
 </body>
 </html>

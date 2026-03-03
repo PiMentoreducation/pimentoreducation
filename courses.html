@@ -22,10 +22,10 @@
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
   const token = localStorage.getItem("token");
-  // Get the logged-in user's details to prevent cross-user data interference
   const userData = JSON.parse(localStorage.getItem("user") || "{}");
   const currentUserId = userData.id || userData._id;
 
+  // 1. Auth Guard
   if (!token || !currentUserId) {
     window.location.href = "login.html";
     return;
@@ -57,10 +57,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
+    /* STEP 2: RENDER COURSES WITH EXPIRY LOGIC */
     allCourses.forEach(course => {
-      /* STEP 2: USER-SPECIFIC ITERATIVE LOGIC 
-         We only look at records where the userId matches the person logged in.
-      */
+      // Filter records for this specific user and course
       const myPurchases = purchasedRecords.filter(p => 
           String(p.courseId).trim() === String(course.courseId).trim() &&
           String(p.userId) === String(currentUserId)
@@ -69,12 +68,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       let isStillActive = false;
       let hasPreviousPurchase = myPurchases.length > 0;
 
-      // Check if ANY of this specific user's records for this course are still valid
       if (hasPreviousPurchase) {
           myPurchases.forEach(p => {
               if (p.expiryDate) {
                   const expMs = new Date(p.expiryDate).getTime();
-                  // Mathematical check: Is the expiry timestamp in the future?
                   if (!isNaN(expMs) && expMs > nowMs) {
                       isStillActive = true; 
                   }
@@ -87,16 +84,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       
       let buttonText = "Buy Now";
       let isDisabled = false;
-      let btnBg = "#1a73e8"; // Default Blue
+      let btnBg = "#1a73e8";
 
       if (isStillActive) {
           buttonText = "Purchased";
           isDisabled = true;
-          btnBg = "#6c757d"; // Gray for purchased
+          btnBg = "#6c757d"; 
       } else if (hasPreviousPurchase) {
           buttonText = "Renew Now";
           isDisabled = false;
-          btnBg = "#f39c12"; // Orange for renewal
+          btnBg = "#f39c12"; 
       }
 
       div.innerHTML = `
@@ -116,13 +113,30 @@ document.addEventListener("DOMContentLoaded", async () => {
       container.appendChild(div);
     });
 
+    /* STEP 3: DIRECT-TO-PAY AUTO TRIGGER (DASHBOARD REDIRECT) */
+    const urlParams = new URLSearchParams(window.location.search);
+    const renewId = urlParams.get('renew');
+
+    if (renewId) {
+        // Find the course in the catalog we just loaded
+        const targetCourse = allCourses.find(c => String(c.courseId).trim() === String(renewId).trim());
+        
+        if (targetCourse) {
+            console.log("Auto-initiating payment for course:", targetCourse.title);
+            // Small delay to let the browser process the UI, then pop Razorpay
+            setTimeout(() => {
+                buyCourse(targetCourse);
+            }, 700);
+        }
+    }
+
   } catch (err) {
     console.error("Critical Render Error:", err);
-    document.getElementById("statusMessage").innerText = "Database Error. Please refresh the page.";
+    document.getElementById("statusMessage").innerText = "Database Error. Please refresh.";
   }
 });
 
-/* STEP 3: RAZORPAY PURCHASE LOGIC (RETAINED) */
+/* STEP 4: RAZORPAY PAYMENT LOGIC (RETAINED) */
 async function buyCourse(course) {
   const token = localStorage.getItem("token");
 
@@ -154,7 +168,6 @@ async function buyCourse(course) {
       description: course.title,
       order_id: order.id,
       handler: async function (response) {
-        
         const saveRes = await fetch("https://pimentor-project.onrender.com/api/payment/verify", {
           method: "POST",
           headers: {
@@ -177,10 +190,10 @@ async function buyCourse(course) {
         });
 
         if (saveRes.ok) {
-          alert("Payment Successful! Access has been granted.");
+          alert("Payment Successful! Access updated.");
           window.location.href = "dashboard.html";
         } else {
-          alert("Verification failed. Please contact support.");
+          alert("Payment verified but database update failed. Please contact support.");
         }
       },
       theme: { color: "#3399cc" }
@@ -191,7 +204,7 @@ async function buyCourse(course) {
 
   } catch (error) {
     console.error("Payment Error:", error);
-    alert("An error occurred. Please try again.");
+    alert("The purchase process failed. Please try again.");
   }
 }
 </script>
