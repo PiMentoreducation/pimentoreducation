@@ -17,7 +17,7 @@
     }
 
     [data-theme="light"] {
-        --bg: linear-gradient(180deg, #87CEEB 0%, #E0F7FA 40%, #A8E063 100%);
+        --space-bg: linear-gradient(180deg, #87CEEB 0%, #E0F7FA 40%, #A8E063 100%);
         --text: #1b4332;
         --accent: #2d6a4f;
         --glass: rgba(255, 255, 255, 0.85);
@@ -72,21 +72,19 @@
     
     .course-card { 
         background: var(--glass); border: 1px solid var(--card-border); border-radius: 24px; 
-        padding: 20px; backdrop-filter: blur(10px); transition: var(--transition);
+        padding: 30px; backdrop-filter: blur(10px); transition: var(--transition);
         display: flex; flex-direction: column;
     }
+    .course-thumb {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 16px;
+    margin-bottom: 15px;
+    border: 1px solid var(--card-border);
+}
     .course-card:hover { transform: translateY(-10px); border-color: var(--accent); box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
     
-    /* NEW THUMBNAIL CSS */
-    .course-thumb {
-        width: 100%;
-        height: 160px;
-        object-fit: cover;
-        border-radius: 16px;
-        margin-bottom: 15px;
-        background: rgba(0,0,0,0.2);
-    }
-
     .course-card h3 { font-size: 1.4rem; margin-bottom: 10px; }
     .course-card .description { font-size: 0.9rem; opacity: 0.7; margin-bottom: 20px; flex-grow: 1; }
     .course-card .price { font-size: 1.5rem; font-weight: 800; color: #2ecc71; margin-bottom: 20px; }
@@ -173,12 +171,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       let isStillActive = false;
       let hasPreviousPurchase = myPurchases.length > 0;
       if (hasPreviousPurchase) {
-        myPurchases.forEach(p => {
-            if (p.expiryDate) {
-                const expMs = new Date(p.expiryDate).getTime();
-                if (!isNaN(expMs) && expMs > nowMs) isStillActive = true; 
-            }
-        });
+          myPurchases.forEach(p => {
+              if (p.expiryDate) {
+                  const expMs = new Date(p.expiryDate).getTime();
+                  if (!isNaN(expMs) && expMs > nowMs) isStillActive = true; 
+              }
+          });
       }
 
       const div = document.createElement("div");
@@ -191,18 +189,23 @@ document.addEventListener("DOMContentLoaded", async () => {
           buttonText = "Renew Now"; isDisabled = false; btnBg = "#f39c12"; 
       }
 
-      // THUMBNAIL LOGIC: We pull the course.thumbnail URL from your DB
-      div.innerHTML = `
-        <img src="${course.thumbnail || '/images/course-default.png'}" class="course-thumb" alt="${course.title}">
-        <span style="font-size: 0.7rem; font-weight: 800; color: var(--accent); text-transform: uppercase;">${course.className || 'General'}</span>
-        <h3>${course.title}</h3>
-        <p class="description">${course.description || ''}</p>
-        <p class="price">₹${course.price}</p>
-        <button class="btn-action btn-details" onclick="window.location.href='course-desc.html?id=${course.courseId}'">Course Details</button>
-        <button class="btn-action btn-buy" ${isDisabled ? "disabled" : ""} id="btn-${course.courseId}" style="background: ${btnBg}; cursor: ${isDisabled ? 'not-allowed' : 'pointer'};">
-          ${buttonText}
-        </button>
-      `;
+div.innerHTML = `
+  ${course.thumbnail ? `<img src="${course.thumbnail}" class="course-thumb" alt="${course.title}">` : ''}
+  <span style="font-size: 0.7rem; font-weight: 800; color: var(--accent); text-transform: uppercase;">
+    ${course.className || 'General'}
+  </span>
+  <h3>${course.title}</h3>
+  <p class="description">${course.description || ''}</p>
+  <p class="price">₹${course.price}</p>
+  <button class="btn-action btn-details" onclick="window.location.href='course-desc.html?id=${course.courseId}'">
+    Course Details
+  </button>
+  <button class="btn-action btn-buy" ${isDisabled ? "disabled" : ""} 
+    id="btn-${course.courseId}" 
+    style="background: ${btnBg}; cursor: ${isDisabled ? 'not-allowed' : 'pointer'};">
+    ${buttonText}
+  </button>
+`;
 
       if (!isDisabled) div.querySelector(".btn-buy").onclick = () => buyCourse(course);
       container.appendChild(div);
@@ -226,7 +229,7 @@ async function buyCourse(course) {
     const res = await fetch("https://pimentor-project.onrender.com/api/payment/create-order", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-      body: JSON.stringify({ courseId: course.courseId }) 
+      body: JSON.stringify({ courseId: course.courseId }) // Backend fetches price from DB
     });
     
     const data = await res.json();
@@ -248,7 +251,7 @@ async function buyCourse(course) {
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_signature: response.razorpay_signature,
             course: {
-              courseId: course.courseId 
+              courseId: course.courseId // Essential for backend lookup
             }
         };
 
