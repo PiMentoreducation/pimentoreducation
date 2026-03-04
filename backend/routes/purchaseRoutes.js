@@ -174,5 +174,5 @@ router.get("/notifications", auth, async (req, res) => {
     } catch (err) {
         res.status(500).json({ message: "Error fetching notifications" });
     }
-
+});
 module.exports = router;
