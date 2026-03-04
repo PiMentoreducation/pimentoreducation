@@ -267,7 +267,7 @@
         try {
             const [pRes, nRes] = await Promise.all([
                 fetch(`${BASE_URL}/api/purchase/my-courses`, { headers: { "Authorization": "Bearer " + token } }),
-                fetch(`${BASE_URL}/api/admin/active-notifications`, { headers: { "Authorization": "Bearer " + token } })
+                fetch(`${BASE_URL}/api/purchase/active-notifications`, { headers: { "Authorization": "Bearer " + token } })
             ]);
 
             // Using the new interceptor logic for safety

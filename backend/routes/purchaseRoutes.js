@@ -165,5 +165,14 @@ router.get("/my-dashboard-doubts", authMiddleware, async (req, res) => {
         res.status(500).json({ message: "Error fetching dashboard doubts" });
     }
 });
+// Add this to your purchaseRoutes.js
+router.get("/notifications", auth, async (req, res) => {
+    try {
+        const Notification = require("../models/Notification");
+        const list = await Notification.find().sort({ createdAt: -1 });
+        res.json(list);
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching notifications" });
+    }
 
 module.exports = router;
