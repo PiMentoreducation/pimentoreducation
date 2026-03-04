@@ -304,6 +304,14 @@
 
 <section>
     <h2>Step 1: Course Configuration & Details</h2>
+        <div class="row">
+        <div class="col">
+            <span class="hint">Load Existing Course (Optional)</span>
+            <select id="courseConfigDropdown" onchange="loadCourseDetails()">
+                <option value="">-- Create New Course --</option>
+            </select>
+        </div>
+    </div>
     <div class="row">
         <div class="col">
             <span class="hint">Identification & Pricing</span>
@@ -514,24 +522,95 @@
     }
 
     /* --- DATA LOADING LOGIC --- */
-    async function loadOngoingCourses() {
-        try {
-            const response = await fetch(`${BASE_URL}/api/admin/all-courses`, { 
-                headers: { "Authorization": "Bearer " + token } 
-            });
-            const courses = await response.json();
-            const mainDropdown = document.getElementById("courseDropdown");
-            const notifDropdown = document.getElementById("notifCourseSelect");
-            mainDropdown.innerHTML = '<option value="">-- Select a Course --</option>';
-            notifDropdown.innerHTML = '<option value="all" style="font-weight:bold; color:var(--primary);">🌍 BROADCAST TO ALL</option>'; 
-            courses.forEach(function(course) {
-                const optionHtml = `<option value="${course.courseId}">${course.title} (${course.courseId})</option>`;
-                mainDropdown.innerHTML += optionHtml;
-                notifDropdown.innerHTML += optionHtml;
-            });
-        } catch (error) { console.error("Course Load Error:", error); }
+async function loadOngoingCourses() {
+    try {
+        const response = await fetch(`${BASE_URL}/api/admin/all-courses`, { 
+            headers: { "Authorization": "Bearer " + token } 
+        });
+        const courses = await response.json();
+
+        const mainDropdown = document.getElementById("courseDropdown");
+        const notifDropdown = document.getElementById("notifCourseSelect");
+        const configDropdown = document.getElementById("courseConfigDropdown");
+
+        mainDropdown.innerHTML = '<option value="">-- Select a Course --</option>';
+        notifDropdown.innerHTML = '<option value="all" style="font-weight:bold; color:var(--primary);">🌍 BROADCAST TO ALL</option>'; 
+        
+        if (configDropdown) {
+            configDropdown.innerHTML = '<option value="">-- Create New Course --</option>';
+        }
+
+        courses.forEach(function(course) {
+            const optionHtml = `<option value="${course.courseId}">${course.title} (${course.courseId})</option>`;
+            mainDropdown.innerHTML += optionHtml;
+            notifDropdown.innerHTML += optionHtml;
+            if (configDropdown) {
+                configDropdown.innerHTML += optionHtml;
+            }
+        });
+
+    } catch (error) { 
+        console.error("Course Load Error:", error); 
+    }
+}
+async function loadCourseDetails() {
+    const selectedId = document.getElementById("courseConfigDropdown").value;
+
+    if (!selectedId) {
+        // Reset all fields for new course
+        document.getElementById("courseId").value = "";
+        document.getElementById("title").value = "";
+        document.getElementById("className").value = "";
+        document.getElementById("description").value = "";
+        document.getElementById("course_roadmap").value = "";
+        document.getElementById("price").value = "";
+        document.getElementById("oldPrice").value = "";
+        document.getElementById("thumbnail").value = "";
+        document.getElementById("demo1").value = "";
+        document.getElementById("demo2").value = "";
+        document.getElementById("learningPoints").value = "";
+        document.getElementById("liveValidityDate").value = "";
+        document.getElementById("recordedDurationDays").value = 365;
+        document.getElementById("teachersContainer").innerHTML = "";
+        addTeacherField();
+        return;
     }
 
+    try {
+        const response = await fetch(`${BASE_URL}/api/admin/course/${selectedId}`, {
+            headers: { "Authorization": "Bearer " + token }
+        });
+
+        const course = await response.json();
+
+        document.getElementById("courseId").value = course.courseId || "";
+        document.getElementById("title").value = course.title || "";
+        document.getElementById("className").value = course.className || "";
+        document.getElementById("description").value = course.description || "";
+        document.getElementById("course_roadmap").value = course.course_roadmap || "";
+        document.getElementById("price").value = course.price || 0;
+        document.getElementById("oldPrice").value = course.oldPrice || 0;
+        document.getElementById("thumbnail").value = course.thumbnail || "";
+        document.getElementById("demo1").value = course.demo1 || "";
+        document.getElementById("demo2").value = course.demo2 || "";
+        document.getElementById("learningPoints").value = course.learningPoints || "";
+        document.getElementById("liveValidityDate").value = course.liveValidityDate ? course.liveValidityDate.split("T")[0] : "";
+        document.getElementById("recordedDurationDays").value = course.recordedDurationDays || 365;
+
+        // Load teachers
+        const container = document.getElementById("teachersContainer");
+        container.innerHTML = "";
+        if (course.teachers && course.teachers.length > 0) {
+            course.teachers.forEach(t => addTeacherField(t));
+        } else {
+            addTeacherField();
+        }
+
+    } catch (error) {
+        console.error("Error loading course details:", error);
+        alert("Failed to load course details.");
+    }
+}
     async function syncCourseSelection() {
         const selectedId = document.getElementById("courseDropdown").value;
         document.getElementById("targetCourseId").value = selectedId;
