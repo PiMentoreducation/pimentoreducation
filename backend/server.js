@@ -81,3 +81,29 @@ const PORT = process.env.PORT || 10000;
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on port ${PORT}`);
 });
+// This is the "endpoint" your Flutter app is looking for
+const Notification = require("./models/Notification"); // Import the model
+
+// Replace the old temporary route at the bottom of server.js with this:
+const Notification = require("./models/Notification"); // Ensure this model exists
+
+app.get('/api/notifications/latest', async (req, res) => {
+    try {
+        // Fetch the absolute newest broadcast
+        const latest = await Notification.findOne().sort({ createdAt: -1 });
+
+        if (!latest) {
+            return res.json({ new_alert: false });
+        }
+
+        // The Flutter app's "message" variable will now contain both heading and description
+        res.status(200).json({
+            new_alert: true, 
+            message: `${latest.heading}: ${latest.description}`, 
+            id: latest._id.toString() 
+        });
+    } catch (error) {
+        console.error("Poll Error:", error);
+        res.status(500).json({ new_alert: false });
+    }
+});
