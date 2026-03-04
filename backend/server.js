@@ -84,9 +84,6 @@ app.listen(PORT, "0.0.0.0", () => {
 // This is the "endpoint" your Flutter app is looking for
 const Notification = require("./models/Notification"); // Import the model
 
-// Replace the old temporary route at the bottom of server.js with this:
-const Notification = require("./models/Notification"); // Ensure this model exists
-
 // DO NOT add the 'const Notification' line here again if it's at the top of the file
 app.get('/api/notifications/latest', async (req, res) => {
     try {
