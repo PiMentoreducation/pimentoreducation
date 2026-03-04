@@ -11,6 +11,7 @@ const Course = require("../models/Course");
 const Lecture = require("../models/Lecture");
 const User = require("../models/User");
 const Doubt = require("../models/Doubt");
+const Notification = require("../models/Notification"); // Standard import
 
 /* ================= CORE PURCHASE & DASHBOARD ================= */
 
@@ -165,14 +166,27 @@ router.get("/my-dashboard-doubts", authMiddleware, async (req, res) => {
         res.status(500).json({ message: "Error fetching dashboard doubts" });
     }
 });
-// Add this to your purchaseRoutes.js
-router.get("/notifications", auth, async (req, res) => {
+
+/* ================= NOTIFICATIONS (STUDENT SAFE) ================= */
+
+// This route is called by your dashboard fetch to show broadcasts
+router.get("/active-notifications", authMiddleware, async (req, res) => {
     try {
-        const Notification = require("../models/Notification");
         const list = await Notification.find().sort({ createdAt: -1 });
         res.json(list);
     } catch (err) {
         res.status(500).json({ message: "Error fetching notifications" });
     }
 });
+
+// Fixed the naming error here (auth -> authMiddleware)
+router.get("/notifications", authMiddleware, async (req, res) => {
+    try {
+        const list = await Notification.find().sort({ createdAt: -1 });
+        res.json(list);
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching notifications" });
+    }
+});
+
 module.exports = router;
