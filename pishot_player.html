@@ -27,12 +27,42 @@
         body { 
             background: var(--space-bg); 
             color: var(--text); 
-            overflow: hidden; /* Prevent body scroll */
+            overflow: hidden; 
             height: 100vh;
             width: 100vw;
         }
 
-        /* --- NAVBAR (Same as Hub) --- */
+        /* --- SPLASH SCREEN STYLES --- */
+        #unmute-splash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 5000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.6s ease, visibility 0.6s;
+            pointer-events: none;
+        }
+
+        .splash-content {
+            text-align: center;
+            animation: splashPulse 1.5s infinite;
+        }
+
+        @keyframes splashPulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+
+        .hidden-splash { opacity: 0; visibility: hidden; }
+
+        /* --- NAVBAR --- */
         .navbar {
             position: fixed; top: 0; width: 100%; height: 70px; z-index: 1000;
             display: flex; align-items: center; padding: 0 5%;
@@ -49,7 +79,7 @@
         .nav-links { display: flex; gap: 20px; align-items: center; margin-left: auto; }
         .nav-links a { text-decoration: none; color: #fff; font-weight: 600; font-size: 0.8rem; opacity: 0.8; }
 
-        /* --- DRAWER (Same as Hub) --- */
+        /* --- DRAWER --- */
         .sidebar {
             position: fixed; top: 0; left: -320px; width: 300px; height: 100%;
             background: var(--glass); backdrop-filter: blur(25px);
@@ -80,31 +110,18 @@
             justify-content: center;
         }
 
-        iframe {
-            height: 100%;
-            width: 100%;
-            pointer-events: auto; /* Active at first */
-        }
+        iframe { height: 100%; width: 100%; }
 
-        /* The Ghost Scroller Layer */
         .interaction-overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 10;
-            background: transparent;
-            display: none; /* Only shows after first play */
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10; background: transparent;
+            display: none;
         }
 
         .video-info {
-            position: absolute;
-            bottom: 40px;
-            left: 20px;
-            z-index: 20;
-            max-width: 80%;
-            pointer-events: none;
+            position: absolute; bottom: 40px; left: 20px;
+            z-index: 20; max-width: 80%; pointer-events: none;
         }
         .video-info h3 { font-size: 1.1rem; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
         .video-info p { font-size: 0.8rem; color: var(--accent); font-weight: 800; }
@@ -118,6 +135,14 @@
     </style>
 </head>
 <body>
+
+<div id="unmute-splash">
+    <div class="splash-content">
+        <div style="font-size: 3.5rem; margin-bottom: 15px;">🔊</div>
+        <h2 style="color:white; font-size: 1.8rem; font-weight: 800;">TAP ANYWHERE</h2>
+        <p style="color:var(--accent); font-weight: 700; letter-spacing: 1.5px;">To Unmute & Enjoy</p>
+    </div>
+</div>
 
 <header class="navbar" id="mainNav">
     <div class="hamburger" id="openDrawer"><span></span><span></span><span></span></div>
@@ -147,8 +172,7 @@
     </nav>
 </aside>
 
-<div id="pishot-scroller">
-    </div>
+<div id="pishot-scroller"></div>
 
 <script src="https://www.youtube.com/iframe_api"></script>
 <script>
@@ -157,11 +181,9 @@
     let players = [];
     let isUserInteracted = false;
 
-    // 1. Get Category from URL
     const urlParams = new URLSearchParams(window.location.search);
     const category = urlParams.get('cat') || 'All';
 
-    /* --- THEME & DRAWER LOGIC --- */
     function applyTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
         document.getElementById('themeToggle').innerText = (theme === 'dark') ? '☀️' : '🌙';
@@ -175,24 +197,18 @@
     document.getElementById('openDrawer').onclick = () => sidebar.classList.add('open');
     document.getElementById('closeDrawer').onclick = () => sidebar.classList.remove('open');
 
-    /* --- VIDEO LOADING ENGINE --- */
     async function fetchShorts() {
         try {
             const res = await fetch(`${BASE_URL}/api/shorts/list?category=${encodeURIComponent(category)}`);
             const shorts = await res.json();
             renderShorts(shorts);
         } catch (e) {
-            console.error("Fetch failed, using static samples");
-            renderShorts([
-                {ytUrl: "https://youtube.com/shorts/50OQ-rJ4Hxw", title: "Introduction to Vedas", category: "Vedas", _id: "1"},
-                {ytUrl: "https://youtube.com/shorts/3Z8q0Hk29j4", title: "Math Trick #1", category: "Math", _id: "2"}
-            ]);
+            renderShorts([{ytUrl: "https://youtube.com/shorts/50OQ-rJ4Hxw", title: "Welcome to Pi-Shots", category: "Explore"}]);
         }
     }
 
     function renderShorts(shorts) {
         scroller.innerHTML = shorts.map((s, index) => {
-            const vidId = s.ytUrl.split('/').pop().split('?')[0];
             return `
                 <div class="video-card" id="card-${index}">
                     <div class="interaction-overlay" onclick="handleFirstPlay(${index})"></div>
@@ -204,8 +220,6 @@
                 </div>
             `;
         }).join('');
-
-        // Wait for YT API to be ready then init players
         initYTPlayers(shorts);
     }
 
@@ -215,35 +229,20 @@
                 const vidId = s.ytUrl.split('/').pop().split('?')[0];
                 players[index] = new YT.Player(`player-${index}`, {
                     videoId: vidId,
-                    playerVars: { 
-                        'autoplay': 0, 
-                        'controls': 0, 
-                        'rel': 0, 
-                        'loop': 1, 
-                        'modestbranding': 1,
-                        'playlist': vidId // Required for loop
-                    },
+                    playerVars: { 'autoplay': 0, 'controls': 0, 'rel': 0, 'loop': 1, 'playlist': vidId },
                     events: {
                         'onReady': onPlayerReady,
-                        'onStateChange': (e) => {
-                            // If player starts playing manually, activate overlay
-                            if(e.data === YT.PlayerState.PLAYING) activateOverlay();
-                        }
+                        'onStateChange': (e) => { if(e.data === YT.PlayerState.PLAYING) activateOverlay(); }
                     }
                 });
             });
         };
-        // Trigger manual call if API script loaded before fetch
         if (typeof YT !== 'undefined' && YT.loaded) window.onYouTubeIframeAPIReady();
     }
 
-    function onPlayerReady(event) {
-        setupIntersectionObserver();
-    }
+    function onPlayerReady(event) { setupIntersectionObserver(); }
 
-    /* --- SCROLL & PLAY LOGIC --- */
     function setupIntersectionObserver() {
-        const observerOptions = { threshold: 0.7 };
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 const index = entry.target.id.split('-')[1];
@@ -252,37 +251,48 @@
                         players[index].playVideo();
                         if(!isUserInteracted) players[index].mute();
                     }
-                } else {
-                    if(players[index] && players[index].pauseVideo) {
-                        players[index].pauseVideo();
-                    }
-                }
+                } else { if(players[index] && players[index].pauseVideo) players[index].pauseVideo(); }
             });
-        }, observerOptions);
-
+        }, { threshold: 0.7 });
         document.querySelectorAll('.video-card').forEach(card => observer.observe(card));
     }
 
     function handleFirstPlay(index) {
         isUserInteracted = true;
-        players[index].unMute();
-        players[index].playVideo();
+        if(players[index] && players[index].unMute) {
+            players[index].unMute();
+            players[index].setVolume(100);
+            players[index].playVideo();
+        }
+        document.getElementById('unmute-splash').classList.add('hidden-splash');
         activateOverlay();
     }
 
     function activateOverlay() {
         document.querySelectorAll('.interaction-overlay').forEach(el => el.style.display = 'block');
-        // Hide Nav on play to focus on content
         document.getElementById('mainNav').classList.add('hidden');
     }
 
-    // Show nav if user scrolls up significantly
+    // Splash Auto-Hide Timer
+    setTimeout(() => {
+        document.getElementById('unmute-splash').classList.add('hidden-splash');
+    }, 2500);
+
+    // Global tap-to-unmute
+    scroller.addEventListener('click', () => {
+        if(!isUserInteracted) {
+            const visibleCard = [...document.querySelectorAll('.video-card')].find(card => {
+                const rect = card.getBoundingClientRect();
+                return rect.top >= 0 && rect.top < window.innerHeight;
+            });
+            if(visibleCard) handleFirstPlay(visibleCard.id.split('-')[1]);
+        }
+    });
+
     let lastScroll = 0;
     scroller.onscroll = () => {
         let currentScroll = scroller.scrollTop;
-        if (currentScroll < lastScroll) {
-            document.getElementById('mainNav').classList.remove('hidden');
-        }
+        if (currentScroll < lastScroll) document.getElementById('mainNav').classList.remove('hidden');
         lastScroll = currentScroll;
     };
 
