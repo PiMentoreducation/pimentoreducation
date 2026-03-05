@@ -503,6 +503,13 @@
         loadOngoingCourses();
         loadActiveNotifs();
         addTeacherField(); // Initialize with one teacher field
+        loadOngoingCourses();
+        loadActiveNotifs();
+        addTeacherField();
+    
+        // 🔥 ADD THESE TWO LINES HERE
+        loadPishotCategories();
+        refreshPishotDeleteList();
     }
 
     /* --- THEME CONTROLLER --- */
@@ -892,81 +899,135 @@ async function loadCourseDetails() {
     document.body.removeChild(link);
 }
 /* --- PI-SHOT ADMIN LOGIC --- */
-    /* --- UPDATED INITIALIZATION --- */
-    function initAdmin() {
-        if (!token) {
-            alert("Admin session required. Redirecting to login...");
-            window.location.href = "login.html";
-            return;
-        }
-        const savedTheme = localStorage.getItem('pimentor-theme') || 'dark';
-        applyTheme(savedTheme);
-        loadOngoingCourses();
-        loadActiveNotifs();
-        addTeacherField(); 
+
+// Fetch categories to fill the dropdown
+/* --- PI-SHOT ADMIN LOGIC (FULLY SYNCED) --- */
+
+// 1. Initial Load of Dropdowns
+async function loadPishotCategories() {
+    console.log("Checking Pi-Shot Categories...");
+    try {
+        const res = await fetch(`${BASE_URL}/api/shorts/categories`, {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        const categories = await res.json();
+        const select = document.getElementById('pishotCatSelect');
         
-        // 🔥 ADD THESE TWO LINES TO LOAD PI-SHOT DATA ON STARTUP
-        loadPishotCategories();
-        refreshPishotDeleteList();
-    }
-
-    /* --- UPDATED PI-SHOT UPLOAD LOGIC --- */
-    async function uploadPishot() {
-        const dropdownCat = document.getElementById('pishotCatSelect').value;
-        const customCat = document.getElementById('pishotCustomCat').value.trim();
+        // Reset Dropdown
+        select.innerHTML = '<option value="">-- Select Existing Category --</option>';
         
-        // Priority: Use custom name if typed, otherwise use dropdown
-        const finalCategory = customCat || dropdownCat;
-
-        if(!finalCategory) return alert("Please select or type a category name.");
-
-        const payload = {
-            category: finalCategory,
-            title: document.getElementById('pishotTitle').value,
-            ytUrl: document.getElementById('pishotUrl').value,
-            // We pass the name as icon initially; backend defaults to 🚀 if not found
-            icon: document.getElementById('pishotCatIcon').value || "🚀" 
-        };
-
-        if(!payload.ytUrl) return alert("YouTube URL is mandatory.");
-
-        try {
-            const res = await fetch(`${BASE_URL}/api/shorts/upload`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-                body: JSON.stringify(payload)
-            });
-            const result = await res.json();
-            alert(result.message);
-            
-            // Clear inputs and refresh lists
-            document.getElementById('pishotCustomCat').value = "";
-            document.getElementById('pishotTitle').value = "";
-            document.getElementById('pishotUrl').value = "";
-            loadPishotCategories();
-            refreshPishotDeleteList();
-        } catch (e) { alert("Upload failed."); }
-    }
-
-    /* --- CATEGORY DROPDOWN LOADER --- */
-    async function loadPishotCategories() {
-        try {
-            const res = await fetch(`${BASE_URL}/api/shorts/categories`, {
-                headers: { "Authorization": "Bearer " + token }
-            });
-            const categories = await res.json();
-            const select = document.getElementById('pishotCatSelect');
-            // Keep the placeholder
-            select.innerHTML = '<option value="">-- Select Existing Category --</option>';
+        if (categories && categories.length > 0) {
             categories.forEach(cat => {
                 select.innerHTML += `<option value="${cat.name}">${cat.name} (${cat.videoCount})</option>`;
             });
-        } catch (e) { console.error("Pishot category load fail"); }
+        }
+    } catch (e) { 
+        console.error("Pishot category load fail", e); 
+    }
+}
+
+// 2. Manage Category (Now sends icon data for future use)
+async function managePishotCategory() {
+    const name = document.getElementById('pishotCatName').value.trim();
+    const icon = document.getElementById('pishotCatIcon').value.trim();
+    
+    if(!name) return alert("Category Name is required");
+
+    try {
+        const res = await fetch(`${BASE_URL}/api/shorts/manage-category`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+            body: JSON.stringify({ name, icon: icon || "🚀" })
+        });
+        const result = await res.json();
+        alert(result.message + "\nNote: Category appears in lists after first video upload.");
+        
+        // Clear fields
+        document.getElementById('pishotCatName').value = "";
+        document.getElementById('pishotCatIcon').value = "";
+        loadPishotCategories(); 
+    } catch (e) {
+        alert("Error saving category configuration.");
+    }
+}
+
+// 3. Smart Upload (Supports Dropdown OR New Manual Category)
+async function uploadPishot() {
+    const dropdownCat = document.getElementById('pishotCatSelect').value;
+    const customCat = document.getElementById('pishotCustomCat') ? document.getElementById('pishotCustomCat').value.trim() : "";
+    const title = document.getElementById('pishotTitle').value.trim();
+    const ytUrl = document.getElementById('pishotUrl').value.trim();
+
+    // Logic: Use manual input if provided, otherwise use dropdown
+    const finalCategory = customCat || dropdownCat;
+
+    if(!finalCategory || !ytUrl || !title) {
+        return alert("Error: Category, Title, and YouTube URL are all mandatory.");
     }
 
-    // Keep your managePishotCategory and deletePishot functions as they are!
+    const payload = {
+        category: finalCategory,
+        title: title,
+        ytUrl: ytUrl,
+        // Optional: you can fetch the icon from a hidden state or let backend handle it
+        icon: "🚀" 
+    };
 
+    try {
+        const res = await fetch(`${BASE_URL}/api/shorts/upload`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+            body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        alert(result.message);
+        
+        // Reset form
+        document.getElementById('pishotTitle').value = "";
+        document.getElementById('pishotUrl').value = "";
+        if(document.getElementById('pishotCustomCat')) document.getElementById('pishotCustomCat').value = "";
+        
+        // Sync UI
+        loadPishotCategories();
+        refreshPishotDeleteList();
+    } catch (e) {
+        alert("Deployment failed. Check server connection.");
+    }
+}
 
+/* --- PI-SHOT DELETE LOGIC --- */
+
+async function refreshPishotDeleteList() {
+    try {
+        const res = await fetch(`${BASE_URL}/api/shorts/list`, {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        const shorts = await res.json();
+        const delSelect = document.getElementById('pishotDeleteSelect');
+        delSelect.innerHTML = '<option value="">-- Select Short to Remove --</option>';
+        shorts.forEach(s => {
+            delSelect.innerHTML += `<option value="${s._id}">${s.category} | ${s.title}</option>`;
+        });
+    } catch (e) { console.error("Failed to load delete list"); }
+}
+
+async function deletePishot() {
+    const shotId = document.getElementById('pishotDeleteSelect').value;
+    if(!shotId) return alert("Please select a shot to delete.");
+    
+    if(!confirm("Are you sure you want to remove this Pi-Shot from the galaxy?")) return;
+
+    try {
+        const res = await fetch(`${BASE_URL}/api/shorts/delete/${shotId}`, {
+            method: "DELETE",
+            headers: { "Authorization": "Bearer " + token }
+        });
+        const result = await res.json();
+        alert(result.message);
+        refreshPishotDeleteList();
+        loadPishotCategories(); // Refresh hub counts
+    } catch (e) { alert("Deletion failed."); }
+}
 </script>
 </body>
 </html>
