@@ -11,6 +11,11 @@ const Course = require("./models/Course");
 const purchaseRoutes = require("./routes/purchaseRoutes");
 const Purchase = require("./models/Purchase");
 Purchase.syncIndexes();
+// ... existing imports ...
+const shortsRoutes = require("./routes/shortsRoutes"); // 1. Import the new route file
+
+// ... existing middleware ...
+app.use("/api/shorts", shortsRoutes); // 2. Mount the routes on /api/shorts
 
 // Initialize Environment Variables and Database
 dotenv.config();
