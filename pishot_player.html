@@ -230,28 +230,54 @@ function initYTPlayers(shorts) {
             players[index] = new YT.Player(`player-${index}`, {
                 videoId: vidId,
                 playerVars: { 
-                    'autoplay': 0, 
+                    'autoplay': 1, 
+                    'mute': 1, 
                     'controls': 0, 
                     'rel': 0, 
                     'loop': 1, 
                     'playlist': vidId,
-                    'playsinline': 1 // Crucial for WebViews to prevent full-screen hijacking
+                    'playsinline': 1, // 📱 ESSENTIAL for WebViews
+                    'modestbranding': 1,
+                    'enablejsapi': 1
                 },
                 events: {
-                    'onReady': onPlayerReady,
+                    'onReady': (e) => {
+                        e.target.mute();
+                        e.target.playVideo();
+                        onPlayerReady();
+                    },
                     'onStateChange': (e) => {
-                        // FIX: If the video pauses and the overlay is active, force it back to playing
-                        // 1 = Playing, 2 = Paused
-                        if (e.data === 2 && isUserInteracted) {
-                            players[index].playVideo();
+                        // 🛰️ WEBVIEW GUARD: If video is paused after user interacted, force it to play
+                        if (e.data === YT.PlayerState.PAUSED && isUserInteracted) {
+                            e.target.playVideo();
                         }
-                        if(e.data === 1) activateOverlay();
                     }
                 }
             });
         });
     };
     if (typeof YT !== 'undefined' && YT.loaded) window.onYouTubeIframeAPIReady();
+}
+
+function handleFirstPlay(index) {
+    if (!players[index]) return;
+
+    // 1. Mark interaction as true immediately
+    isUserInteracted = true;
+    
+    // 2. Clear the splash screen
+    document.getElementById('unmute-splash').classList.add('hidden-splash');
+
+    // 3. SURGICAL WEBVIEW UNMUTE: Unmute and then wait 50ms to force play
+    // This prevents the "Pause-on-Tap" glitch in mobile apps
+    players[index].unMute();
+    players[index].setVolume(100);
+    
+    setTimeout(() => {
+        players[index].playVideo();
+        // 4. Activate the transparent scroller only AFTER we ensure it's playing
+        activateOverlay();
+    }, 50); 
 }
     function onPlayerReady(event) { setupIntersectionObserver(); }
 
@@ -269,19 +295,6 @@ function initYTPlayers(shorts) {
         }, { threshold: 0.7 });
         document.querySelectorAll('.video-card').forEach(card => observer.observe(card));
     }
-
-function handleFirstPlay(index) {
-    isUserInteracted = true;
-    
-    if(players[index]) {
-        players[index].unMute();
-        players[index].setVolume(100);
-        players[index].playVideo(); // Force play on first tap
-    }
-    
-    document.getElementById('unmute-splash').classList.add('hidden-splash');
-    activateOverlay();
-}
 
     function activateOverlay() {
         document.querySelectorAll('.interaction-overlay').forEach(el => el.style.display = 'block');
