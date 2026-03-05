@@ -32,7 +32,7 @@
             width: 100vw;
         }
 
-        /* --- MASTER SENSOR SPLASH --- */
+        /* --- SPLASH SCREEN STYLES --- */
         #unmute-splash {
             position: fixed;
             top: 0;
@@ -41,18 +41,17 @@
             height: 100vh;
             background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(10px);
-            z-index: 9999; /* Highest priority to catch first tap */
+            z-index: 5000;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: opacity 0.6s ease;
-            cursor: pointer;
+            transition: opacity 0.6s ease, visibility 0.6s;
+            pointer-events: none;
         }
 
         .splash-content {
             text-align: center;
             animation: splashPulse 1.5s infinite;
-            pointer-events: none; /* Let the tap fall to the splash div */
         }
 
         @keyframes splashPulse {
@@ -61,7 +60,7 @@
             100% { transform: scale(1); opacity: 0.8; }
         }
 
-        .hidden-splash { opacity: 0; pointer-events: none; }
+        .hidden-splash { opacity: 0; visibility: hidden; }
 
         /* --- NAVBAR --- */
         .navbar {
@@ -113,12 +112,11 @@
 
         iframe { height: 100%; width: 100%; }
 
-        /* Ghost Scroller Layer - Starts Hidden */
         .interaction-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             z-index: 10; background: transparent;
-            display: none; 
+            display: none;
         }
 
         .video-info {
@@ -138,7 +136,7 @@
 </head>
 <body>
 
-<div id="unmute-splash" onclick="handleMasterTap()">
+<div id="unmute-splash">
     <div class="splash-content">
         <div style="font-size: 3.5rem; margin-bottom: 15px;">🔊</div>
         <h2 style="color:white; font-size: 1.8rem; font-weight: 800;">TAP ANYWHERE</h2>
@@ -191,12 +189,10 @@
         document.getElementById('themeToggle').innerText = (theme === 'dark') ? '☀️' : '🌙';
         localStorage.setItem('pimentor-theme', theme);
     }
-
     document.getElementById('themeToggle').onclick = () => {
         const current = document.documentElement.getAttribute('data-theme');
         applyTheme(current === 'dark' ? 'light' : 'dark');
     };
-
     const sidebar = document.getElementById('sidebar');
     document.getElementById('openDrawer').onclick = () => sidebar.classList.add('open');
     document.getElementById('closeDrawer').onclick = () => sidebar.classList.remove('open');
@@ -215,7 +211,7 @@
         scroller.innerHTML = shorts.map((s, index) => {
             return `
                 <div class="video-card" id="card-${index}">
-                    <div class="interaction-overlay" id="overlay-${index}"></div>
+                    <div class="interaction-overlay" onclick="handleFirstPlay(${index})"></div>
                     <div id="player-${index}"></div>
                     <div class="video-info">
                         <p>#${s.category}</p>
@@ -227,41 +223,37 @@
         initYTPlayers(shorts);
     }
 
-    function initYTPlayers(shorts) {
-        window.onYouTubeIframeAPIReady = () => {
-            shorts.forEach((s, index) => {
-                const vidId = s.ytUrl.split('/').pop().split('?')[0];
-                players[index] = new YT.Player(`player-${index}`, {
-                    videoId: vidId,
-                    playerVars: { 
-                        'autoplay': 1, // Start playing immediately (muted)
-                        'mute': 1, 
-                        'controls': 0, 
-                        'rel': 0, 
-                        'loop': 1, 
-                        'playlist': vidId,
-                        'playsinline': 1 
-                    },
-                    events: {
-                        'onReady': onPlayerReady,
-                        'onStateChange': (e) => {
-                            // Guard: if video pauses unexpectedly after interaction, resume it
-                            if (e.data === 2 && isUserInteracted) {
-                                e.target.playVideo();
-                            }
+function initYTPlayers(shorts) {
+    window.onYouTubeIframeAPIReady = () => {
+        shorts.forEach((s, index) => {
+            const vidId = s.ytUrl.split('/').pop().split('?')[0];
+            players[index] = new YT.Player(`player-${index}`, {
+                videoId: vidId,
+                playerVars: { 
+                    'autoplay': 0, 
+                    'controls': 0, 
+                    'rel': 0, 
+                    'loop': 1, 
+                    'playlist': vidId,
+                    'playsinline': 1 // Crucial for WebViews to prevent full-screen hijacking
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': (e) => {
+                        // FIX: If the video pauses and the overlay is active, force it back to playing
+                        // 1 = Playing, 2 = Paused
+                        if (e.data === 2 && isUserInteracted) {
+                            players[index].playVideo();
                         }
+                        if(e.data === 1) activateOverlay();
                     }
-                });
+                }
             });
-        };
-        if (typeof YT !== 'undefined' && YT.loaded) window.onYouTubeIframeAPIReady();
-    }
-
-    function onPlayerReady(event) { 
-        event.target.mute();
-        event.target.playVideo();
-        setupIntersectionObserver(); 
-    }
+        });
+    };
+    if (typeof YT !== 'undefined' && YT.loaded) window.onYouTubeIframeAPIReady();
+}
+    function onPlayerReady(event) { setupIntersectionObserver(); }
 
     function setupIntersectionObserver() {
         const observer = new IntersectionObserver((entries) => {
@@ -278,44 +270,39 @@
         document.querySelectorAll('.video-card').forEach(card => observer.observe(card));
     }
 
-    // MASTER SENSOR LOGIC
-    function handleMasterTap() {
-        if (isUserInteracted) return;
-        isUserInteracted = true;
-
-        // Find currently visible index
-        const visibleCard = [...document.querySelectorAll('.video-card')].find(card => {
-            const rect = card.getBoundingClientRect();
-            return rect.top >= -100 && rect.top <= 100;
-        });
-        const index = visibleCard ? visibleCard.id.split('-')[1] : 0;
-
-        // Unmute and Force Play
-        if(players[index] && players[index].unMute) {
-            players[index].unMute();
-            players[index].setVolume(100);
-            players[index].playVideo();
-        }
-
-        // Remove splash and activate scroller overlays
-        const splash = document.getElementById('unmute-splash');
-        splash.style.display = 'none';
-        
-        activateOverlay();
+function handleFirstPlay(index) {
+    isUserInteracted = true;
+    
+    if(players[index]) {
+        players[index].unMute();
+        players[index].setVolume(100);
+        players[index].playVideo(); // Force play on first tap
     }
+    
+    document.getElementById('unmute-splash').classList.add('hidden-splash');
+    activateOverlay();
+}
 
     function activateOverlay() {
         document.querySelectorAll('.interaction-overlay').forEach(el => el.style.display = 'block');
         document.getElementById('mainNav').classList.add('hidden');
     }
 
-    // Splash Auto-Hide Fallback
+    // Splash Auto-Hide Timer
     setTimeout(() => {
+        document.getElementById('unmute-splash').classList.add('hidden-splash');
+    }, 2500);
+
+    // Global tap-to-unmute
+    scroller.addEventListener('click', () => {
         if(!isUserInteracted) {
-            document.getElementById('unmute-splash').classList.add('hidden-splash');
-            // We don't display:none here because we want to catch the tap even if it's invisible
+            const visibleCard = [...document.querySelectorAll('.video-card')].find(card => {
+                const rect = card.getBoundingClientRect();
+                return rect.top >= 0 && rect.top < window.innerHeight;
+            });
+            if(visibleCard) handleFirstPlay(visibleCard.id.split('-')[1]);
         }
-    }, 3000);
+    });
 
     let lastScroll = 0;
     scroller.onscroll = () => {
