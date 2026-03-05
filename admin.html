@@ -436,6 +436,35 @@
         <p style="opacity:0.5; font-size:0.9rem;">Course queries will appear here after selection.</p>
     </div>
 </section>
+<section>
+    <h2>Step 3: Doubt Resolution Command</h2>
+    <div id="doubtsContainer">
+        <p style="opacity:0.5; font-size:0.9rem;">Course queries will appear here after selection.</p>
+    </div>
+</section>
+
+<section style="border: 2px solid var(--danger);">
+    <h2 style="color: var(--danger);">⚠️ Danger & Cleanup Zone</h2>
+    <div class="row">
+        <div class="col">
+            <span class="hint">Surgical Lecture Delete</span>
+            <select id="deleteLectureDropdown">
+                <option value="">-- Select Course in Step 2 First --</option>
+            </select>
+            <button class="btn-delete" style="background:var(--warning); color:black;" onclick="deleteLecture()">
+                Delete Selected Lecture
+            </button>
+        </div>
+
+        <div class="col">
+            <span class="hint">Total Course Wipe (Permanent)</span>
+            <input id="deleteCourseId" readonly style="background: rgba(220, 53, 69, 0.1);" placeholder="Select Course Above">
+            <button class="btn-delete" onclick="deleteCourse()">
+                Delete Entire Course & Content
+            </button>
+        </div>
+    </div>
+</section>
 <section style="border-left: 5px solid #00f2fe;">
     <h2 style="color: #00f2fe;">🚀 Pi-Shot Galaxy Control</h2>
     
