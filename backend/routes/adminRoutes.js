@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router(); 
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Models
 const User = require("../models/User");
@@ -8,6 +10,7 @@ const Purchase = require("../models/Purchase");
 const Lecture = require("../models/Lecture"); 
 const Doubt = require("../models/Doubt");
 const Notification = require("../models/Notification");
+const Quiz = require("../models/Quiz"); // 🔥 Correctly imported Quiz model
 
 // Middlewares
 const auth = require("../middleware/authMiddleware");
@@ -25,13 +28,13 @@ router.get("/all-courses", auth, admin, async (req, res) => {
   }
 });
 
-// Create or Update Course (Upsert) - UPDATED TO HANDLE DYNAMIC TEACHERS AND ROADMAP
+// Create or Update Course (Upsert)
 router.post("/course", auth, admin, async (req, res) => {
     try {
         const { 
             courseId, title, className, price, oldPrice, 
             description, course_roadmap, thumbnail, demo1, demo2, learningPoints, 
-            teachers, // 🔥 Now expecting an array from frontend
+            teachers, 
             liveValidityDate, recordedDurationDays 
         } = req.body;
         
@@ -41,12 +44,12 @@ router.post("/course", auth, admin, async (req, res) => {
             price: Number(price),
             oldPrice: Number(oldPrice),
             description,
-            course_roadmap, // Updated roadmap field
+            course_roadmap,
             thumbnail,
             demo1,
             demo2,
             learningPoints,
-            teachers, // 🔥 Stores the array of teacher objects
+            teachers,
             liveValidityDate: liveValidityDate ? new Date(liveValidityDate) : null,
             recordedDurationDays: parseInt(recordedDurationDays) || 365
         };
@@ -113,9 +116,65 @@ router.delete("/course/:courseId/lecture/:lectureId", auth, admin, async (req, r
     }
 });
 
-/* ================= DOUBT RESOLUTION ================= */
+/* ================= AI QUIZ PIPELINE (NEW) ================= */
 
-// Get pending doubts for a specific course
+// Route 1: Generate questions using Gemini
+router.post('/generate-quiz', auth, admin, async (req, res) => {
+    const { lectureId, courseId, transcript } = req.body;
+    
+    if(!transcript || transcript.length < 50) {
+        return res.status(400).json({ message: "Context too short to generate quality questions." });
+    }
+
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Using Flash for speed
+
+    const prompt = `
+        Analyze this lecture content: "${transcript}"
+        Generate exactly 5 high-quality Multiple Choice Questions.
+        Return ONLY a JSON array in this exact format:
+        [{"questionText": "Question string", "options": ["A", "B", "C", "D"], "correctAnswerIndex": 0}]
+        Strict rules: 
+        - No markdown, no backticks, no introductory text.
+        - correctAnswerIndex must be a number from 0 to 3.
+    `;
+
+    try {
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
+        
+        // Surgical cleaning to find the array even if AI adds extra text
+        const jsonMatch = text.match(/\[.*\]/s);
+        if (!jsonMatch) throw new Error("AI failed to provide a valid JSON array.");
+        
+        const quizData = JSON.parse(jsonMatch[0]);
+        res.json({ lectureId, courseId, quiz: quizData });
+    } catch (error) {
+        console.error("AI Generation Error:", error);
+        res.status(500).json({ message: "AI generation failed. Please try again." });
+    }
+});
+
+// Route 2: Commit quiz to Database
+router.post('/save-quiz', auth, admin, async (req, res) => {
+    const { courseId, lectureId, questions } = req.body;
+    
+    if(!lectureId || !questions) return res.status(400).json({ message: "Missing required quiz data." });
+
+    try {
+        await Quiz.findOneAndUpdate(
+            { lectureId },
+            { courseId, lectureId, questions, updatedAt: Date.now() },
+            { upsert: true, new: true }
+        );
+        res.json({ success: true, message: "Quiz deployed to cloud! 🚀" });
+    } catch (err) { 
+        console.error("DB Save Error:", err);
+        res.status(500).json({ message: "Database save failed" }); 
+    }
+});
+
+/* ================= DOUBT RESOLUTION & ANALYTICS (RETAINED) ================= */
+
 router.get("/doubts/:courseId", auth, admin, async (req, res) => {
     try {
         const { courseId } = req.params;
@@ -126,7 +185,6 @@ router.get("/doubts/:courseId", auth, admin, async (req, res) => {
     }
 });
 
-// Provide answer to a student doubt
 router.post("/resolve-doubt", auth, admin, async (req, res) => {
     try {
         const { doubtId, answer } = req.body;
@@ -136,50 +194,6 @@ router.post("/resolve-doubt", auth, admin, async (req, res) => {
         res.status(500).json({ message: "Error resolving doubt" });
     }
 });
-
-/* ================= NOTIFICATION PUSH ================= */
-
-router.post("/send-notification", auth, admin, async (req, res) => {
-    try {
-        const { heading, description, link, targetCourses } = req.body;
-        
-        if (!heading || !description) {
-            return res.status(400).json({ message: "Heading and description are required." });
-        }
-
-        const newNotif = new Notification({
-            heading,
-            description,
-            link: link || "",
-            targetCourses: targetCourses || []
-        });
-
-        await newNotif.save();
-        res.status(201).json({ success: true, message: "Broadcast Sent!" });
-    } catch (err) {
-        res.status(500).json({ message: "Server error during broadcast." });
-    }
-});
-
-router.get("/active-notifications", auth, admin, async (req, res) => {
-    try {
-        const list = await Notification.find().sort({ createdAt: -1 });
-        res.json(list);
-    } catch (err) {
-        res.status(500).json({ message: "Error fetching list" });
-    }
-});
-
-router.delete("/notification/:id", auth, admin, async (req, res) => {
-    try {
-        await Notification.findByIdAndDelete(req.params.id);
-        res.json({ message: "Notification removed!" });
-    } catch (err) {
-        res.status(500).json({ message: "Delete failed" });
-    }
-});
-
-/* ================= STUDENT ENROLLMENTS & ANALYTICS ================= */
 
 router.get("/course-enrollments/:courseId", auth, admin, async (req, res) => {
     try {
@@ -208,59 +222,34 @@ router.get("/course-enrollments/:courseId", auth, admin, async (req, res) => {
     }
 });
 
-/* ================= DATABASE MAINTENANCE (THE SYNC) ================= */
+/* ================= NOTIFICATION PUSH ================= */
 
-router.get("/force-sync-expiries", auth, admin, async (req, res) => {
+router.post("/send-notification", auth, admin, async (req, res) => {
     try {
-        const purchases = await Purchase.find({ expiryDate: { $exists: false } });
-        let updatedCount = 0;
-
-        for (let p of purchases) {
-            const course = await Course.findOne({ courseId: p.courseId });
-            if (course) {
-                const enrollMs = new Date(p.createdAt).getTime();
-                const liveLimitMs = course.liveValidityDate ? new Date(course.liveValidityDate).getTime() : 0;
-                
-                let expiry;
-                if (liveLimitMs > 0 && enrollMs <= liveLimitMs) {
-                    expiry = new Date(liveLimitMs);
-                } else {
-                    expiry = new Date(enrollMs);
-                    expiry.setDate(expiry.getDate() + (course.recordedDurationDays || 365));
-                }
-
-                const purge = new Date(expiry);
-                purge.setDate(purge.getDate() + 10);
-
-                // DIRECT WRITE BYPASS
-                await Purchase.collection.updateOne(
-                    { _id: p._id },
-                    { $set: { expiryDate: expiry, purgeAt: purge } }
-                );
-                updatedCount++;
-            }
-        }
-        res.json({ success: true, message: `Forced data into ${updatedCount} records.` });
+        const { heading, description, link, targetCourses } = req.body;
+        const newNotif = new Notification({ heading, description, link: link || "", targetCourses: targetCourses || [] });
+        await newNotif.save();
+        res.status(201).json({ success: true, message: "Broadcast Sent!" });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ message: "Server error during broadcast." });
     }
 });
 
-/* ================= PUBLIC COURSE DETAILS ================= */
-
-router.get("/course/:courseId", async (req, res) => {
+router.get("/active-notifications", auth, admin, async (req, res) => {
     try {
-        const { courseId } = req.params;
-        const course = await Course.findOne({ courseId: courseId.trim() });
-
-        if (!course) {
-            return res.status(404).json({ message: "Course not found" });
-        }
-
-        res.json(course);
+        const list = await Notification.find().sort({ createdAt: -1 });
+        res.json(list);
     } catch (err) {
-        console.error("Public Fetch Error:", err);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ message: "Error fetching list" });
+    }
+});
+
+router.delete("/notification/:id", auth, admin, async (req, res) => {
+    try {
+        await Notification.findByIdAndDelete(req.params.id);
+        res.json({ message: "Notification removed!" });
+    } catch (err) {
+        res.status(500).json({ message: "Delete failed" });
     }
 });
 

@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const Quiz = require("../models/Quiz");
 
 // 1. IMPORT CONTROLLER FUNCTIONS
 const { buyCourse, getMyCourses } = require("../controllers/purchaseController");
@@ -189,4 +190,11 @@ router.get("/notifications", authMiddleware, async (req, res) => {
     }
 });
 
+router.get("/quiz/fetch/:lectureId", authMiddleware, async (req, res) => {
+    try {
+        const quiz = await Quiz.findOne({ lectureId: req.params.lectureId });
+        if (!quiz) return res.status(404).json({ message: "No quiz found" });
+        res.json(quiz);
+    } catch (err) { res.status(500).json({ message: "Server error" }); }
+});
 module.exports = router;

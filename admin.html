@@ -396,6 +396,17 @@
         <input id="pdfNotes" placeholder="Notes URL (Drive/PDF)">
     </div>
     <input id="practiceMcq" placeholder="Quiz/Assessment URL">
+    <div class="ai-quiz-factory">
+    <h3>✨ AI MCQ Generator</h3>
+    <textarea id="transcriptInput" placeholder="Paste Lecture Transcript or Summary here..."></textarea>
+    <button onclick="triggerAI()" id="genBtn">🪄 Generate Questions</button>
+
+    <div id="quizPreview" style="display:none;">
+        <h4>Preview & Edit Questions:</h4>
+        <div id="questionsContainer"></div>
+        <button class="save-btn" onclick="saveQuizToDB()">🚀 Deploy Quiz to Course</button>
+    </div>
+</div>
     
     <button class="btn-lecture" onclick="addLecture()">Deploy Lecture to Cloud</button>
 </section>
@@ -668,30 +679,53 @@ async function loadCourseDetails() {
         alert("Failed to load course details.");
     }
 }
-    async function syncCourseSelection() {
-        const selectedId = document.getElementById("courseDropdown").value;
-        document.getElementById("targetCourseId").value = selectedId;
-        document.getElementById("deleteCourseId").value = selectedId;
-        if (!selectedId) return;
-        try {
-            const chapRes = await fetch(`${BASE_URL}/api/purchase/course-chapters/${selectedId}`, { 
-                headers: { "Authorization": "Bearer " + token } 
-            });
-            const chapters = await chapRes.json();
-            const chapDrop = document.getElementById('chapterDropdown');
-            chapDrop.innerHTML = '<option value="">-- Select Existing Chapter --</option>';
-            chapters.forEach(ch => { chapDrop.innerHTML += `<option value="${ch}">${ch}</option>`; });
-            const lecRes = await fetch(`${BASE_URL}/api/purchase/all-lectures-admin/${selectedId}`, { 
-                headers: { "Authorization": "Bearer " + token } 
-            });
-            const lectures = await lecRes.json();
-            const delDrop = document.getElementById("deleteLectureDropdown");
-            delDrop.innerHTML = '<option value="">-- Select Lecture --</option>';
-            lectures.forEach(lec => { delDrop.innerHTML += `<option value="${lec._id}">${lec.chapterName} > ${lec.title}</option>`; });
-            loadDoubts(selectedId);
-            loadEnrollments(selectedId);
-        } catch (error) { console.error("Sync Error:", error); }
-    }
+// --- GLOBAL STATE FOR AI QUIZ GENERATOR ---
+let selectedLecId = null; 
+let selectedCourseId = null;
+
+// --- UPDATED SYNC FUNCTION ---
+async function syncCourseSelection() {
+    const selectedId = document.getElementById("courseDropdown").value;
+    document.getElementById("targetCourseId").value = selectedId;
+    document.getElementById("deleteCourseId").value = selectedId;
+    selectedCourseId = selectedId;
+
+    if (!selectedId) return;
+
+    try {
+        const chapRes = await fetch(`${BASE_URL}/api/purchase/course-chapters/${selectedId}`, { 
+            headers: { "Authorization": "Bearer " + token } 
+        });
+        const chapters = await chapRes.json();
+        const chapDrop = document.getElementById('chapterDropdown');
+        chapDrop.innerHTML = '<option value="">-- Select Existing Chapter --</option>';
+        chapters.forEach(ch => { chapDrop.innerHTML += `<option value="${ch}">${ch}</option>`; });
+
+        const lecRes = await fetch(`${BASE_URL}/api/purchase/all-lectures-admin/${selectedId}`, { 
+            headers: { "Authorization": "Bearer " + token } 
+        });
+        const lectures = await lecRes.json();
+        const delDrop = document.getElementById("deleteLectureDropdown");
+        
+        delDrop.innerHTML = '<option value="">-- Select Lecture --</option>';
+        lectures.forEach(lec => { 
+            delDrop.innerHTML += `<option value="${lec._id}">${lec.chapterName} > ${lec.title}</option>`; 
+        });
+
+        // ✅ FIXED LOGIC START
+        delDrop.onchange = function() {
+            selectedLecId = this.value; 
+            console.log("Active Lecture set to:", selectedLecId);
+        };
+
+        // Initialize immediately so the first lecture is selected by default
+        selectedLecId = delDrop.value; 
+        // ✅ FIXED LOGIC END
+
+        loadDoubts(selectedId);
+        loadEnrollments(selectedId);
+    } catch (error) { console.error("Sync Error:", error); }
+}
 
     /* --- COURSE CREATION --- */
     async function addCourse() {
@@ -866,6 +900,9 @@ async function loadCourseDetails() {
     async function deleteLecture() {
         const lectureId = document.getElementById("deleteLectureDropdown").value;
         const currentCourseId = document.getElementById("targetCourseId").value;
+        document.getElementById("deleteLectureDropdown").onchange = function() {
+    selectedLecId = this.value;
+        };
         if (!lectureId || !confirm("Delete this lesson?")) return;
         const response = await fetch(`${BASE_URL}/api/admin/course/${currentCourseId}/lecture/${lectureId}`, { 
             method: "DELETE", headers: { "Authorization": "Bearer " + token } 
@@ -1036,6 +1073,80 @@ async function deletePishot() {
     });
     refreshPishotDeleteList();
     loadPishotCategories();
+}
+let stagedQuiz = null;
+
+async function triggerAI() {
+    const transcript = document.getElementById("transcriptInput").value;
+    const btn = document.getElementById("genBtn");
+    
+    btn.innerText = "Processing with Gemini...";
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(`${BASE_URL}/api/admin/generate-quiz`, {
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token 
+            },
+            body: JSON.stringify({ transcript, lectureId: selectedLecId, courseId: selectedCourseId })
+        });
+        
+        stagedQuiz = await res.json();
+        renderPreview(stagedQuiz.quiz);
+    } catch (err) {
+        alert("Generation failed. Check console.");
+    } finally {
+        btn.innerText = "🪄 Generate Questions";
+        btn.disabled = false;
+    }
+}
+
+function renderPreview(questions) {
+    const container = document.getElementById("questionsContainer");
+    container.innerHTML = questions.map((q, i) => `
+        <div class="preview-card" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 10px;">
+            <span class="hint">Question ${i+1}</span>
+            <input type="text" value="${q.question || q.questionText}" class="edit-q">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                ${q.options.map((opt, oi) => `
+                    <div style="font-size: 0.8rem; opacity: 0.8; padding: 5px; border: 1px solid ${oi === (q.correctIndex ?? q.correctAnswerIndex) ? 'var(--success)' : 'var(--card-border)'}; border-radius: 5px;">
+                        ${opt}
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+    document.getElementById("quizPreview").style.display = "block";
+}
+async function saveQuizToDB() {
+    if (!stagedQuiz || !selectedLecId || !selectedCourseId) return alert("Select a lecture and generate a quiz first!");
+
+    // Capture any manual edits made to inputs in the preview
+    const questionInputs = document.querySelectorAll('.edit-q');
+    const finalQuestions = stagedQuiz.quiz.map((q, i) => {
+        return {
+            questionText: questionInputs[i].value,
+            options: q.options,
+            correctAnswerIndex: q.correctAnswerIndex || q.correctIndex // Sync naming
+        };
+    });
+
+    try {
+        const res = await fetch(`${BASE_URL}/api/admin/save-quiz`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+            body: JSON.stringify({ 
+                courseId: selectedCourseId, 
+                lectureId: selectedLecId, 
+                questions: finalQuestions 
+            })
+        });
+        const result = await res.json();
+        alert(result.message);
+        document.getElementById("quizPreview").style.display = "none";
+    } catch (err) { alert("Save failed."); }
 }
 </script>
 </body>
