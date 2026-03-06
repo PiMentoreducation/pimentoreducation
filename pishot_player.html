@@ -30,6 +30,7 @@
             overflow: hidden; 
             height: 100vh;
             width: 100vw;
+            position: fixed; /* Prevents bounce scrolling on iOS */
         }
 
         /* --- MASTER SENSOR SPLASH --- */
@@ -58,7 +59,7 @@
             100% { transform: scale(1); opacity: 0.8; }
         }
 
-        /* --- NAVBAR & MOBILE OPTIMIZATION --- */
+        /* --- NAVBAR --- */
         .navbar {
             position: fixed; top: 0; width: 100%; height: 70px; z-index: 1000;
             display: flex; align-items: center; padding: 0 5%;
@@ -78,63 +79,56 @@
         .hamburger { cursor: pointer; display: flex; flex-direction: column; gap: 5px; margin-right: 15px; }
         .hamburger span { width: 25px; height: 2px; background: #fff; border-radius: 2px; }
 
-        /* Mobile Specific Layout */
         @media (max-width: 768px) {
-            .nav-links a { display: none; } /* Hide Home/Dashboard links */
+            .nav-links a { display: none; }
             .navbar { justify-content: space-between; }
-            .hamburger { order: 1; margin-right: 0; }
+            .hamburger { order: 1; }
             .brand { order: 2; margin-left: 10px; }
             #themeToggle { order: 3; margin-left: auto; }
         }
 
-        /* --- SIDEBAR --- */
-        .sidebar {
-            position: fixed; top: 0; left: -320px; width: 300px; height: 100%;
-            background: var(--glass); backdrop-filter: blur(25px);
-            z-index: 2000; transition: 0.4s ease; padding: 40px 30px; border-right: 1px solid var(--accent);
-        }
-        .sidebar.open { left: 0; }
-        .sidebar-links { display: flex; flex-direction: column; gap: 20px; margin-top: 30px; }
-        .sidebar-links a { color: var(--text); text-decoration: none; font-size: 1.1rem; font-weight: 700; }
-        
-        /* --- PLAYER ENGINE --- */
+        /* --- PLAYER ENGINE (SNAP-LOCK ENABLED) --- */
         #pishot-scroller {
-            height: 100vh; width: 100vw;
-            overflow-y: scroll; scroll-snap-type: y mandatory;
-            scroll-behavior: smooth; -webkit-overflow-scrolling: touch;
+            height: 100vh; 
+            width: 100vw;
+            overflow-y: scroll; 
+            scroll-snap-type: y mandatory; /* Forces 100% height snap */
+            scroll-behavior: smooth;
+            scrollbar-width: none; /* Hide scrollbar Firefox */
+            -ms-overflow-style: none; /* Hide scrollbar IE/Edge */
         }
+        #pishot-scroller::-webkit-scrollbar { display: none; } /* Hide scrollbar Chrome/Safari */
 
         .video-card {
-            height: 100vh; width: 100vw;
-            scroll-snap-align: start; position: relative;
-            background: #000; display: flex; align-items: center; justify-content: center;
+            height: 100vh; 
+            width: 100vw;
+            scroll-snap-align: start; 
+            scroll-snap-stop: always; /* Prevents skipping multiple videos */
+            position: relative;
+            background: #000; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        /* YouTube Button Shield Overlay */
+        /* Shield to prevent YT interactions */
         .interaction-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 10; background: transparent;
-            display: block; 
-            /* Linear gradient ensures we block the top/bottom 15% where YT buttons live */
-            background: linear-gradient(to bottom, 
-                rgba(0,0,0,0.01) 0%, 
-                rgba(0,0,0,0) 15%, 
-                rgba(0,0,0,0) 85%, 
-                rgba(0,0,0,0.01) 100%);
+            z-index: 10; pointer-events: none;
         }
 
-        iframe { height: 100%; width: 100%; pointer-events: none; } 
+        iframe { height: 100%; width: 100%; pointer-events: none; border: none; } 
 
         .video-info {
-            position: absolute; bottom: 40px; left: 20px;
+            position: absolute; bottom: 50px; left: 20px;
             z-index: 20; max-width: 80%; pointer-events: none;
         }
         .video-info h3 { font-size: 1.1rem; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
         .video-info p { font-size: 0.8rem; color: var(--accent); font-weight: 800; }
 
         @media (min-width: 900px) {
-            iframe { width: 450px; height: 800px; border-radius: 20px; border: 5px solid var(--card-border); }
+            iframe { width: 450px; height: 85%; border-radius: 20px; border: 4px solid var(--card-border); }
         }
     </style>
 </head>
@@ -161,21 +155,6 @@
     </nav>
 </header>
 
-<aside class="sidebar" id="sidebar">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div class="logo-text" style="color:var(--text)">Pi-Shot Menu</div>
-        <button id="closeDrawer" style="background:none; border:none; color:inherit; font-size:2.5rem; cursor:pointer;">&times;</button>
-    </div>
-    <nav class="sidebar-links">
-        <a href="index.html">Home</a>
-        <a href="dashboard.html">Dashboard</a>
-        <a href="courses.html">All Courses</a>
-        <a href="community.html">Community</a>
-        <a href="about.html">About Us</a>
-        <a href="terms.html">Terms & Conditions</a>
-    </nav>
-</aside>
-
 <div id="pishot-scroller"></div>
 
 <script src="https://www.youtube.com/iframe_api"></script>
@@ -188,30 +167,13 @@
     const urlParams = new URLSearchParams(window.location.search);
     const category = urlParams.get('cat') || 'All';
 
-    function applyTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
-        const btn = document.getElementById('themeToggle');
-        if(btn) btn.innerText = (theme === 'dark') ? '☀️' : '🌙';
-        localStorage.setItem('pimentor-theme', theme);
-    }
-
-    document.getElementById('themeToggle').onclick = (e) => {
-        e.stopPropagation();
-        const current = document.documentElement.getAttribute('data-theme');
-        applyTheme(current === 'dark' ? 'light' : 'dark');
-    };
-
-    const sidebar = document.getElementById('sidebar');
-    document.getElementById('openDrawer').onclick = (e) => { e.stopPropagation(); sidebar.classList.add('open'); }
-    document.getElementById('closeDrawer').onclick = (e) => { e.stopPropagation(); sidebar.classList.remove('open'); }
-
     async function fetchShorts() {
         try {
             const res = await fetch(`${BASE_URL}/api/shorts/list?category=${encodeURIComponent(category)}`);
             const shorts = await res.json();
             renderShorts(shorts);
         } catch (e) {
-            renderShorts([{ytUrl: "https://youtube.com/shorts/50OQ-rJ4Hxw", title: "Welcome to Pi-Shots", category: "Explore"}]);
+            renderShorts([{ytUrl: "https://youtube.com/embed/50OQ-rJ4Hxw", title: "Explore PiMentor", category: "Shorts"}]);
         }
     }
 
@@ -237,26 +199,12 @@
                 const vidId = s.ytUrl.split('/').pop().split('?')[0];
                 players[index] = new YT.Player(`player-${index}`, {
                     videoId: vidId,
-                    playerVars: { 
-                        'autoplay': 1, 
-                        'mute': 1, 
-                        'controls': 0, 
-                        'rel': 0, 
-                        'loop': 1, 
-                        'playlist': vidId,
-                        'playsinline': 1,
-                        'enablejsapi': 1
-                    },
+                    playerVars: { 'autoplay': 1, 'mute': 1, 'controls': 0, 'rel': 0, 'loop': 1, 'playlist': vidId, 'playsinline': 1, 'enablejsapi': 1 },
                     events: {
-                        'onReady': (e) => {
-                            e.target.mute();
-                            e.target.playVideo();
-                            if(index === 0) setupIntersectionObserver();
-                        },
-                        'onStateChange': (e) => {
-                            if (e.data === 2 && isUserInteracted) {
-                                e.target.playVideo();
-                            }
+                        'onReady': (e) => { 
+                            e.target.mute(); 
+                            e.target.playVideo(); 
+                            if(index === 0) setupIntersectionObserver(); 
                         }
                     }
                 });
@@ -269,36 +217,48 @@
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 const index = entry.target.id.split('-')[1];
+                const player = players[index];
+                
                 if (entry.isIntersecting) {
-                    if(players[index] && players[index].playVideo) {
+                    console.log("Playing:", index);
+                    if(player && player.playVideo) {
                         if(isUserInteracted) {
-                            players[index].unMute();
-                            players[index].setVolume(100);
-                        } else {
-                            players[index].mute();
+                            player.unMute();
+                            player.setVolume(100);
                         }
-                        players[index].playVideo();
+                        player.playVideo();
                     }
-                    // Hide Navbar immediately when swiping to new video
                     document.getElementById('mainNav').classList.add('hidden');
-                } else { 
-                    if(players[index] && players[index].pauseVideo) players[index].pauseVideo(); 
+                } else {
+                    // 🔥 PAUSE AND RESET video when it leaves 100% of the screen
+                    if(player && player.pauseVideo) {
+                        player.pauseVideo();
+                        player.seekTo(0); // Optional: Reset to start so it's ready for next visit
+                    }
                 }
             });
-        }, { threshold: 0.6 });
+        }, { 
+            threshold: 0.8 // 🔥 Strict: Only play if 80% of the video is visible
+        });
         document.querySelectorAll('.video-card').forEach(card => observer.observe(card));
     }
 
     function handleMasterTap() {
         if (isUserInteracted) return;
         isUserInteracted = true;
-        console.log("Audio Unlocked & Splash Cleared");
+        
+        // Find visible video to unmute only that one first
+        const visibleCard = [...document.querySelectorAll('.video-card')].find(card => {
+            const rect = card.getBoundingClientRect();
+            return rect.top >= -50 && rect.top <= 50;
+        });
+        const index = visibleCard ? visibleCard.id.split('-')[1] : 0;
 
-        players.forEach((p) => {
+        players.forEach((p, i) => {
             if (p && p.unMute) {
                 p.unMute();
                 p.setVolume(100);
-                p.playVideo();
+                if(i == index) p.playVideo(); else p.pauseVideo();
             }
         });
 
@@ -307,41 +267,20 @@
             splash.style.opacity = '0';
             setTimeout(() => { splash.style.display = 'none'; }, 600); 
         }
-
-        document.getElementById('mainNav').classList.add('hidden');
-        
-        // Finalize UI State
         document.querySelectorAll('iframe').forEach(el => el.style.pointerEvents = 'auto');
-        // Overlay is set to pointer-events: none so it blocks top/bottom buttons but allows swipes
-        document.querySelectorAll('.interaction-overlay').forEach(el => {
-            el.style.pointerEvents = 'none';
-        });
     }
 
-    // Auto-hide splash message after 1 second, but keep sensor active
-    setTimeout(() => {
-        if(!isUserInteracted) {
-            const splash = document.getElementById('unmute-splash');
-            if(splash) splash.style.opacity = '0';
-        }
-    }, 1000);
-
+    // Navbar Scroll Logic
     let lastScroll = 0;
     scroller.onscroll = () => {
         let currentScroll = scroller.scrollTop;
         const nav = document.getElementById('mainNav');
-        
-        // Logic: Show nav only on significant scroll UP (>15px)
-        if (lastScroll - currentScroll > 15) {
-            nav.classList.remove('hidden');
-        } else if (currentScroll - lastScroll > 15) {
-            nav.classList.add('hidden');
-        }
+        if (lastScroll - currentScroll > 50) nav.classList.remove('hidden');
+        else if (currentScroll - lastScroll > 50) nav.classList.add('hidden');
         lastScroll = currentScroll;
     };
 
     document.addEventListener("DOMContentLoaded", () => {
-        applyTheme(localStorage.getItem('pimentor-theme') || 'dark');
         fetchShorts();
     });
 </script>
