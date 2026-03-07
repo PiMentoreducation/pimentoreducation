@@ -401,36 +401,58 @@ function renderQuizQuestions(questions) {
     
     const healLaTeX = (str) => {
         if (!str) return "";
+        
         let fixed = str
-            // 1. Fix common "swallowed" backslash patterns (ext -> \text, det -> \det)
+            // 1. Fix the "ext{...}" and "et(A)" issues immediately
             .replace(/ext\s*\{/g, '\\text{')
             .replace(/et\s*\(A\)/g, '\\det(A)')
             .replace(/race\s*\(/g, '\\text{trace}(')
-            // 2. Add backslashes to keywords if they are missing
-            .replace(/(?<!\\)\b(lambda|sum|det|trace|prod|times|sqrt|frac|dots|alpha|beta|gamma|theta|I)\b/g, '\\$1')
-            // 3. Clean up formatting
-            .replace(/\\+/g, '\\') 
-            .replace(/\s+/g, ' ')
-            .replace(/\$/g, ''); // Remove all $ temporarily to re-evaluate
+            
+            // 2. Clean up any quadruple or double backslashes into single ones
+            // This prevents the "extra \" from appearing after rendering
+            .replace(/\\\\+/g, '\\') 
+            
+            // 3. Find LaTeX keywords and wrap them (and their arguments) in $
+            // This targets: \command, \command{...}, or symbols like ^ and _
+            .replace(/(\\[a-zA-Z]+(\{.*?\})?|[\^_{}\d=])/g, (match) => {
+                // If it's already inside $ (double check), don't wrap again
+                return `$${match}$`;
+            })
+            
+            // 4. Cleanup: Remove double $$ created by the previous step
+            .replace(/\$\$/g, '$')
+            // 5. Cleanup: Ensure no stray backslashes are left hanging
+            .replace(/\\(?!\w|text|det|sum|lambda|dots)/g, '');
 
-        // 4. INTELLIGENT WRAPPING:
-        // If the string contains multiple spaces, it's a sentence. 
-        // We only wrap parts that look like math.
-        const words = fixed.split(' ');
-        if (words.length > 2) {
-            return words.map(word => {
-                // If the word contains math symbols, wrap just that word
-                if (word.includes('\\') || word.includes('_') || word.includes('^') || word.includes('=') || (word.length === 1 && /[A-Z]/.test(word))) {
-                    return `$${word}$`;
-                }
-                return word;
-            }).join(' ');
-        } else {
-            // It's a single formula or short phrase, wrap the whole thing
-            return `$${fixed}$`;
-        }
+        return fixed;
     };
 
+    area.innerHTML = questions.map((q, i) => {
+        return `
+            <div class="quiz-q-box" style="margin-bottom: 35px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
+                <p style="font-weight:bold; margin-bottom:18px; font-size: 1.1rem; line-height: 1.6;">
+                    ${i + 1}. ${healLaTeX(q.questionText)}
+                </p>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    ${q.options.map((opt, oi) => {
+                        return `
+                            <label style="display:block; cursor:pointer; background: rgba(255,255,255,0.05); padding: 14px; border-radius: 12px; transition: 0.3s;">
+                                <input type="radio" name="q${i}" value="${oi}" style="margin-right: 10px; accent-color: var(--accent);"> 
+                                <span>${healLaTeX(opt)}</span>
+                            </label>
+                        `;
+                    }).join('')}
+                </div>
+            </div>`;
+    }).join('');
+
+    // Trigger MathJax
+    if (window.MathJax && window.MathJax.typesetPromise) {
+        setTimeout(() => {
+            MathJax.typesetPromise([area]).catch((err) => console.log('MathJax Error:', err));
+        }, 200);
+    }
+}
     area.innerHTML = questions.map((q, i) => {
         const repairedQ = healLaTeX(q.questionText);
         
