@@ -401,20 +401,29 @@ function renderQuizQuestions(questions) {
     
     const healLaTeX = (str) => {
         if (!str) return "";
-        let fixed = str
-            // 1. Fix the "ext{...}" by restoring the full \text command
-            .replace(/ext\{/g, '\\text{')
-            // 2. Fix the "et(A)" or "et (A)" issue for determinant
-            .replace(/et\s*\(/g, '\\det(')
-            // 3. Remove accidental DOUBLE slashes (\\\\ -> \)
-            .replace(/\\+/g, '\\')
-            // 4. Remove any existing $ signs so we can wrap the whole thing cleanly
-            .replace(/\$/g, '');
 
-        // 5. THE MASTER FIX: Wrap the entire string in $ delimiters
-        // This forces MathJax to render EVERYTHING inside as math, 
-        // which removes the raw "\" and makes \text work.
-        return `$ ${fixed} $`;
+        // 1. First, fix the "broken" commands that lost their backslash
+        let fixed = str
+            .replace(/ext\{/g, '\\text{')
+            .replace(/et\s*\(/g, '\\det(')
+            .replace(/race\s*\(/g, '\\text{trace}(')
+            .replace(/\\+/g, '\\') // Collapse multiple slashes
+            .replace(/\$/g, '');   // Clean existing $ signs
+
+        // 2. THE NEW LOGIC: Selective Wrapping
+        // We split the string by spaces and check each word.
+        // If a word contains a backslash, an underscore, or a caret, wrap only that word.
+        return fixed.split(' ').map(word => {
+            // Check if the word is a LaTeX command or math symbol
+            const isMath = /[\\]|[_]|[\^]|[=]/.test(word);
+            
+            if (isMath) {
+                // If it's a math word, wrap it in delimiters
+                return `$${word}$`;
+            }
+            // Otherwise, return as normal text (preserving the space)
+            return word;
+        }).join(' ');
     };
 
     area.innerHTML = questions.map((q, i) => {
@@ -439,7 +448,6 @@ function renderQuizQuestions(questions) {
             </div>`;
     }).join('');
 
-    // Trigger MathJax
     if (window.MathJax && window.MathJax.typesetPromise) {
         setTimeout(() => {
             MathJax.typesetPromise([area]).catch((err) => console.log('MathJax Error:', err));
