@@ -399,41 +399,42 @@
 function renderQuizQuestions(questions) {
     const area = document.getElementById("questionArea");
     
+    // Aggressive healer for the specific errors in your screenshots
     const healLaTeX = (str) => {
         if (!str) return "";
-        return str
-            // 1. Fix the "ext{...}" issue by restoring the backslash
-            .replace(/ext{/g, '\\text{')
-            // 2. Re-attach slashes to common keywords if they are missing
-            // This fixes cases like "det(A)", "sum", "lambda", etc.
-            .replace(/(?<!\\)\b(lambda|sum|det|trace|prod|times|sqrt|frac|dots|alpha|beta|gamma|theta|I)\b/g, '\\$1')
-            // 3. Clean up any unintended double slashes or double dollars
-            .replace(/\\+/g, '\\')
-            .replace(/\$\$/g, '$');
+        let fixed = str
+            // 1. Repair common "swallowed" backslash patterns (ext -> \text, det -> \det)
+            .replace(/ext\s*\{/g, '\\text{')
+            .replace(/et\s*\(A\)/g, '\\det(A)')
+            .replace(/race\s*\(/g, '\\trace(')
+            // 2. Add backslashes to keywords if they are missing
+            .replace(/(?<!\\)\b(lambda|sum|det|trace|prod|times|sqrt|frac|dots|alpha|beta|theta|I)\b/g, '\\$1')
+            // 3. Clean up formatting (double slashes or unintended characters)
+            .replace(/\\+/g, '\\') 
+            .replace(/\s+/g, ' ');
+
+        // 4. Force wrap in $ delimiters if MathJax tags are missing but symbols exist
+        if ((fixed.includes('\\') || fixed.includes('_') || fixed.includes('^')) && !fixed.includes('$')) {
+            fixed = `$${fixed}$`;
+        }
+        return fixed;
     };
 
     area.innerHTML = questions.map((q, i) => {
         const repairedQ = healLaTeX(q.questionText);
-        // Ensure question is wrapped in $ if it contains math
-        const finalQ = repairedQ.includes('\\') && !repairedQ.includes('$') 
-            ? `$${repairedQ}$` : repairedQ;
-
+        
         return `
             <div class="quiz-q-box" style="margin-bottom: 35px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
                 <p style="font-weight:bold; margin-bottom:18px; font-size: 1.1rem; line-height: 1.6;">
-                    ${i + 1}. ${finalQ}
+                    ${i + 1}. ${repairedQ}
                 </p>
                 <div style="display: flex; flex-direction: column; gap: 12px;">
                     ${q.options.map((opt, oi) => {
                         const repairedO = healLaTeX(opt);
-                        const finalO = (repairedO.includes('\\') || repairedO.includes('_') || repairedO.includes('^'))
-                            ? (repairedO.includes('$') ? repairedO : `$${repairedO}$`)
-                            : repairedO;
-                        
                         return `
                             <label style="display:block; cursor:pointer; background: rgba(255,255,255,0.05); padding: 14px; border-radius: 12px; transition: 0.3s;">
                                 <input type="radio" name="q${i}" value="${oi}" style="margin-right: 10px; accent-color: var(--accent);"> 
-                                <span>${finalO}</span>
+                                <span>${repairedO}</span>
                             </label>
                         `;
                     }).join('')}
@@ -441,7 +442,7 @@ function renderQuizQuestions(questions) {
             </div>`;
     }).join('');
 
-    // Trigger MathJax with a sufficient delay
+    // Trigger MathJax with a sufficient delay to ensure DOM is ready
     if (window.MathJax && window.MathJax.typesetPromise) {
         setTimeout(() => {
             MathJax.typesetPromise([area]).catch((err) => console.log('MathJax Error:', err));
