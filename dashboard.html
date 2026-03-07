@@ -444,7 +444,7 @@
         } catch (e) { container.innerHTML = "<p>Support inbox temporarily offline.</p>"; }
     }
 
-    // --- NEW: MODAL LOGIC FUNCTIONS ---
+// --- UPDATED: MODAL LOGIC WITH HEADINGS ---
     async function openProgressModal(courseId, title) {
         const modal = document.getElementById('progressModal');
         const modalBody = document.getElementById('modalBody');
@@ -467,7 +467,16 @@
                 return;
             }
 
-            modalBody.innerHTML = lectures.map(lec => {
+            // 1. Create the Heading Row
+            let htmlContent = `
+                <div class="lecture-stat-row" style="border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-bottom: 10px; opacity: 0.9;">
+                    <div style="font-weight: 800; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Lectures</div>
+                    <div style="font-weight: 800; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; text-align: right; min-width: 80px;">Quiz Score</div>
+                </div>
+            `;
+
+            // 2. Map the data rows
+            htmlContent += lectures.map(lec => {
                 const stat = progressData.find(p => p.lectureId === lec._id);
                 return `
                     <div class="lecture-stat-row">
@@ -477,17 +486,18 @@
                                 ${stat?.isVideoCompleted ? '✅ Finished' : '⭕ Pending'}
                             </small>
                         </div>
-                        <div style="font-weight:bold; color:var(--accent);">
-                            ${stat?.isQuizAttempted ? stat.highestQuizScore*10 + '%' : '--'}
+                        <div style="font-weight:bold; color:var(--accent); text-align: right; min-width: 80px;">
+                            ${stat?.isQuizAttempted ? (stat.highestQuizScore * 10) + '%' : '--'}
                         </div>
                     </div>`;
             }).join('');
+
+            modalBody.innerHTML = htmlContent;
 
         } catch (err) {
             modalBody.innerHTML = '<p style="color:var(--danger); text-align:center;">Failed to sync progress.</p>';
         }
     }
-
     document.getElementById('closeModal').onclick = () => document.getElementById('progressModal').style.display = 'none';
     window.onclick = (e) => { 
         if(e.target == document.getElementById('progressModal')) document.getElementById('progressModal').style.display = 'none'; 
