@@ -193,11 +193,15 @@
             <div id="questionArea"></div>
             <button id="submitQuizBtn" onclick="calculateScore()" class="btn-res btn-mcq" style="margin-top: 20px;">Submit Answers</button>
         </div>
-        <div id="quizResult" style="display:none; text-align:center;">
-            <h1 id="resultScore" style="font-size: 3rem; margin-bottom: 10px;">0/0</h1>
-            <p id="resultFeedback" style="margin-bottom: 20px;"></p>
-            <button onclick="closeQuizModal()" class="btn-res btn-pdf">Back to Lecture</button>
-        </div>
+<div id="quizResult" style="display:none; text-align:center;">
+    <h1 id="resultScore" style="font-size: 3rem; margin-bottom: 10px; color: var(--accent);">0/0</h1>
+    <p id="resultFeedback" style="margin-bottom: 20px; font-weight: bold;"></p>
+    
+    <div id="quizReview" style="text-align: left; margin-top: 30px; border-top: 1px solid var(--card-border); padding-top: 20px; max-height: 400px; overflow-y: auto;">
+    </div>
+
+    <button onclick="closeQuizModal()" class="btn-res btn-pdf" style="margin-top: 20px;">Back to Lecture</button>
+</div>
     </div>
 </div>
 
@@ -419,21 +423,62 @@
         }
     }
 
-    async function calculateScore() {
-        let score = 0;
-        currentQuizData.forEach((q, i) => {
-            const selected = document.querySelector(`input[name="q${i}"]:checked`);
-            if (selected && parseInt(selected.value) === q.correctAnswerIndex) score++;
-        });
-        document.getElementById("quizContainer").style.display = "none";
-        document.getElementById("quizResult").style.display = "block";
-        document.getElementById("resultScore").innerText = `${score} / ${currentQuizData.length}`;
-        await fetch(`${BASE_URL}/api/progress/submit-quiz`, {
-            method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-            body: JSON.stringify({ courseId: courseId, lectureId: activeLectureId, score: score })
-        });
-        await fetchLeaderboard();
+async function calculateScore() {
+    let score = 0;
+    let reviewHtml = '<h3 style="color:var(--accent); margin-bottom:15px;">Review Answers:</h3>';
+
+    currentQuizData.forEach((q, i) => {
+        const selectedOption = document.querySelector(`input[name="q${i}"]:checked`);
+        const selectedIndex = selectedOption ? parseInt(selectedOption.value) : null;
+        const isCorrect = selectedIndex === q.correctAnswerIndex;
+        
+        if (isCorrect) score++;
+
+        // Format Review Row
+        const cleanText = q.questionText.includes('$') ? q.questionText : `$${q.questionText}$`;
+        const correctText = q.options[q.correctAnswerIndex].includes('$') ? q.options[q.correctAnswerIndex] : `$${q.options[q.correctAnswerIndex]}$`;
+        const chosenText = selectedIndex !== null 
+            ? (q.options[selectedIndex].includes('$') ? q.options[selectedIndex] : `$${q.options[selectedIndex]}$`)
+            : "No option selected";
+
+        reviewHtml += `
+            <div style="margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 12px; border-left: 4px solid ${isCorrect ? '#2ecc71' : '#ff4d4d'};">
+                <p style="font-weight:bold; margin-bottom:8px;">${i + 1}. ${cleanText}</p>
+                <p style="font-size:0.9rem; color: #2ecc71;">✅ Correct: ${correctText}</p>
+                <p style="font-size:0.9rem; color: ${isCorrect ? '#2ecc71' : '#ff4d4d'};">
+                    ${isCorrect ? '✨ You nailed it!' : '❌ Your Answer: ' + chosenText}
+                </p>
+            </div>`;
+    });
+
+    // Update UI
+    document.getElementById("quizContainer").style.display = "none";
+    const resultDiv = document.getElementById("quizResult");
+    resultDiv.style.display = "block";
+    
+    document.getElementById("resultScore").innerText = `${score} / ${currentQuizData.length}`;
+    document.getElementById("quizReview").innerHTML = reviewHtml;
+    
+    // Feedback text
+    const feedback = document.getElementById("resultFeedback");
+    if (score === currentQuizData.length) feedback.innerText = "Perfect Score! You are a Master! 🏆";
+    else if (score >= currentQuizData.length * 0.7) feedback.innerText = "Great job! Almost perfect. 🌟";
+    else feedback.innerText = "Good effort! Review the notes and try again. 📖";
+
+    // Trigger MathJax for the Review content
+    if (window.MathJax && window.MathJax.typesetPromise) {
+        setTimeout(() => MathJax.typesetPromise([document.getElementById("quizReview")]), 100);
     }
+
+    // Sync to Backend
+    await fetch(`${BASE_URL}/api/progress/submit-quiz`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({ courseId: courseId, lectureId: activeLectureId, score: score })
+    });
+    
+    await fetchLeaderboard();
+}
 
     function closeQuizModal() { document.getElementById("quizModal").style.display = "none"; }
 
