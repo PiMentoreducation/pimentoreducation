@@ -689,13 +689,19 @@ let selectedCourseId = null;
 // --- UPDATED SYNC FUNCTION ---
 async function syncCourseSelection() {
     const selectedId = document.getElementById("courseDropdown").value;
+    
+    // 1. Immediately lock in the Course IDs
     document.getElementById("targetCourseId").value = selectedId;
     document.getElementById("deleteCourseId").value = selectedId;
-    selectedCourseId = selectedId;
+    selectedCourseId = selectedId; 
 
-    if (!selectedId) return;
+    if (!selectedId) {
+        selectedLecId = null;
+        return;
+    }
 
     try {
+        // 2. Load Chapters for UI
         const chapRes = await fetch(`${BASE_URL}/api/purchase/course-chapters/${selectedId}`, { 
             headers: { "Authorization": "Bearer " + token } 
         });
@@ -704,30 +710,34 @@ async function syncCourseSelection() {
         chapDrop.innerHTML = '<option value="">-- Select Existing Chapter --</option>';
         chapters.forEach(ch => { chapDrop.innerHTML += `<option value="${ch}">${ch}</option>`; });
 
+        // 3. Load Lectures into the Selection Dropdown
         const lecRes = await fetch(`${BASE_URL}/api/purchase/all-lectures-admin/${selectedId}`, { 
             headers: { "Authorization": "Bearer " + token } 
         });
         const lectures = await lecRes.json();
         const delDrop = document.getElementById("deleteLectureDropdown");
         
-        delDrop.innerHTML = '<option value="">-- Select Lecture --</option>';
+        delDrop.innerHTML = '<option value="">-- Select Lecture for Quiz --</option>';
         lectures.forEach(lec => { 
             delDrop.innerHTML += `<option value="${lec._id}">${lec.chapterName} > ${lec.title}</option>`; 
         });
 
-        // ✅ FIXED LOGIC START
+        // 4. THE FIX: Attach listener to update selectedLecId whenever the dropdown changes
         delDrop.onchange = function() {
             selectedLecId = this.value; 
-            console.log("Active Lecture set to:", selectedLecId);
+            console.log("Lecture ID locked for Quiz Injection:", selectedLecId);
         };
 
-        // Initialize immediately so the first lecture is selected by default
+        // 5. Initial Sync: Set the ID to whatever the dropdown currently shows
         selectedLecId = delDrop.value; 
-        // ✅ FIXED LOGIC END
 
+        // 6. Refresh background data
         loadDoubts(selectedId);
         loadEnrollments(selectedId);
-    } catch (error) { console.error("Sync Error:", error); }
+
+    } catch (error) { 
+        console.error("Sync Selection Error:", error); 
+    }
 }
 
     /* --- COURSE CREATION --- */
