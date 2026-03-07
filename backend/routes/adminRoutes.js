@@ -253,20 +253,14 @@ router.delete("/notification/:id", auth, admin, async (req, res) => {
     }
 });
 // NEW: Fetch single course details by courseId for the Admin Panel
-router.get("/course/:courseId", auth, admin, async (req, res) => {
-    try {
-        const { courseId } = req.params;
-        // Search for the custom courseId (e.g., 'math_10_01')
-        const course = await Course.findOne({ courseId: courseId.trim() });
-        
-        if (!course) {
-            return res.status(404).json({ message: "Course details not found in the galaxy." });
-        }
-        
-        res.json(course);
-    } catch (err) {
-        console.error("FETCH COURSE ERROR:", err);
-        res.status(500).json({ message: "Server error fetching course details" });
-    }
+// adminRoutes.js
+router.get("/all-courses", auth, admin, async (req, res) => {
+  try {
+    // REMOVE the restricted fields list so we get full course data for the dropdowns
+    const courses = await Course.find({}).sort({ createdAt: -1 });
+    res.json(courses);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching courses" });
+  }
 });
 module.exports = router;

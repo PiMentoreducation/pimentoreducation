@@ -573,7 +573,10 @@
             return;
         }
         try {
-            const response = await fetch(`${BASE_URL}/api/admin/course/${selectedId}`, { headers: { "Authorization": "Bearer " + token } });
+// admin.html inside loadCourseDetails function
+        const response = await fetch(`${BASE_URL}/api/admin/course/${selectedId.trim()}`, { 
+        headers: { "Authorization": "Bearer " + token } 
+            });
             const course = await response.json();
             document.getElementById("courseId").value = course.courseId || "";
             document.getElementById("title").value = course.title || "";
