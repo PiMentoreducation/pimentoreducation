@@ -379,7 +379,6 @@ function renderQuizQuestions(questions) {
     // 1. Inject the HTML
     area.innerHTML = questions.map((q, i) => `
         <div class="quiz-q-box" style="margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
-            // Ensure the question text and options are wrapped in $ symbols for MathJax
 <p style="font-weight:bold; margin-bottom:18px;">
     ${i + 1}. ${q.questionText.includes('$') ? q.questionText : '$' + q.questionText + '$'}
 </p>
