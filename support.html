@@ -16,7 +16,7 @@
             --drawer-bg: #0d1117;
         }
 
-        /* Fixed Light Theme: Greenish Tree Shade */
+        /* Restored Green Tree Light Theme */
         [data-theme="light"] {
             --space-bg: linear-gradient(180deg, #87CEEB 0%, #E0F7FA 40%, #A8E063 100%);
             --text: #1b4332;
@@ -27,7 +27,7 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--space-bg); background-attachment: fixed; color: var(--text); min-height: 100vh; line-height: 1.6; transition: 0.5s; }
+        body { background: var(--space-bg); background-attachment: fixed; color: var(--text); min-height: 100vh; line-height: 1.6; transition: 0.5s; overflow-x: hidden; }
 
         /* Navigation Bar */
         .nav-bar {
@@ -37,7 +37,7 @@
             border-bottom: 1px solid var(--card-border);
         }
 
-        /* Logo Branding Fix */
+        /* Circular Logo Styling */
         .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; z-index: 1001; }
         .logo-img { 
             height: 45px; width: 45px; border-radius: 50%; 
@@ -46,7 +46,7 @@
         }
         .logo-text { font-size: 1.3rem; font-weight: 800; color: var(--text); }
 
-        /* Desktop Links */
+        /* Desktop Navigation */
         .nav-links { display: flex; gap: 10px; align-items: center; }
         .nav-btn {
             text-decoration: none; color: var(--text); font-size: 0.8rem; font-weight: 700;
@@ -54,48 +54,37 @@
         }
         .nav-btn:hover, .nav-btn.active { background: var(--accent); color: white !important; }
 
-        /* Mobile Menu Toggle */
+        /* Hamburger Icon */
         .menu-toggle {
             display: none; background: none; border: none; color: var(--text);
             font-size: 1.8rem; cursor: pointer; z-index: 1002;
         }
 
-        /* Mobile Sidebar Drawer */
+        /* Sidebar Drawer */
         .nav-drawer {
-            position: fixed; top: 0; right: -100%; width: 280px; height: 100%;
+            position: fixed; top: 0; left: -100%; width: 280px; height: 100%;
             background: var(--drawer-bg); z-index: 1001; padding: 100px 30px;
             display: flex; flex-direction: column; gap: 20px;
             transition: 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+            border-right: 1px solid var(--card-border);
         }
-        .nav-drawer.open { right: 0; }
+        .nav-drawer.open { left: 0; }
         .drawer-btn {
             text-decoration: none; color: var(--text); font-size: 1.1rem; 
-            font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--card-border);
+            font-weight: 700; padding: 12px 0; border-bottom: 1px solid var(--card-border);
         }
 
-        /* Main Content Container */
+        /* Layout Adjustments */
         .container { max-width: 1100px; margin: 0 auto; padding: 120px 20px 50px; }
-        
         .hero { text-align: center; margin-bottom: 60px; }
         .hero h1 { font-size: 3rem; font-weight: 800; margin-bottom: 10px; }
-
         .support-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; }
-        .card { 
-            background: var(--glass); border: 1px solid var(--card-border); padding: 30px; 
-            border-radius: 24px; backdrop-filter: blur(10px);
-        }
+        .card { background: var(--glass); border: 1px solid var(--card-border); padding: 30px; border-radius: 24px; backdrop-filter: blur(10px); }
 
         /* QR Section */
-        .qr-section { 
-            display: flex; align-items: center; gap: 40px; background: var(--glass); 
-            padding: 40px; border-radius: 30px; border: 1px solid var(--accent); 
-            margin-top: 40px; flex-wrap: wrap; justify-content: center; 
-        }
-        .qr-img { 
-            width: 220px; height: 220px; border-radius: 20px; 
-            border: 5px solid white; box-shadow: 0 0 20px var(--accent-glow); 
-        }
+        .qr-section { display: flex; align-items: center; gap: 40px; background: var(--glass); padding: 40px; border-radius: 30px; border: 1px solid var(--accent); margin-top: 40px; flex-wrap: wrap; justify-content: center; }
+        .qr-img { width: 220px; height: 220px; border-radius: 20px; border: 5px solid white; box-shadow: 0 0 20px var(--accent-glow); }
 
         /* FAQ Styling */
         .faq-item { margin-bottom: 15px; border-radius: 15px; background: rgba(255,255,255,0.02); border: 1px solid var(--card-border); }
@@ -103,17 +92,21 @@
         .faq-answer { padding: 0 25px; max-height: 0; overflow: hidden; transition: 0.3s; opacity: 0; }
         .faq-item.open .faq-answer { padding: 10px 25px 25px; max-height: 200px; opacity: 1; }
 
+        /* Responsive Mobile Behavior */
         @media (max-width: 900px) {
             .nav-links { display: none; }
-            .menu-toggle { display: block; }
-            .hero h1 { font-size: 2.2rem; }
+            .menu-toggle { display: block; order: -1; } /* Hamburger to the far left */
+            .brand { order: 1; margin-left: auto; } /* Logo and Brand to the far right */
             .nav-bar { padding: 0 20px; }
+            .hero h1 { font-size: 2.2rem; }
         }
     </style>
 </head>
 <body>
 
 <nav class="nav-bar">
+    <button class="menu-toggle" onclick="toggleDrawer()">☰</button>
+
     <a href="/index.html" class="brand">
         <img src="/images/OUR_LOGO.png" alt="Logo" class="logo-img">
         <span class="logo-text">PiMentor</span>
@@ -124,12 +117,9 @@
         <a href="/courses.html" class="nav-btn">COURSES</a>
         <a href="/pishot.html" class="nav-btn">PISHOT</a>
         <a href="/support.html" class="nav-btn active">COMMUNITY</a>
-        </div>
-
-    <div style="display: flex; gap: 15px; align-items: center;">
-        <button onclick="toggleTheme()" id="themeBtn" style="background:none; border:none; cursor:pointer; font-size:1.3rem;">🌙</button>
-        <button class="menu-toggle" onclick="toggleDrawer()">☰</button>
     </div>
+
+    <button onclick="toggleTheme()" id="themeBtn" style="background:none; border:none; cursor:pointer; font-size:1.3rem; order: 2; margin-left: 15px;">🌙</button>
 </nav>
 
 <div class="nav-drawer" id="mobileDrawer">
@@ -148,40 +138,40 @@
 
     <div class="support-grid">
         <div class="card">
-            <h3 style="color: var(--accent); margin-bottom: 15px;">🚀 Features & How-To</h3>
+            <h3 style="color: var(--accent); margin-bottom: 15px;">🚀 Key Features</h3>
             <ul style="list-style: none; font-size: 0.9rem;">
-                <li>🔹 <b>Dashboard:</b> View enrolled courses and resume learning.</li>
-                <li>🔹 <b>PiShot:</b> Quick revision shorts for key concepts.</li>
-                <li>🔹 <b>Quizzes:</b> Complete MCQs to unlock the next chapter.</li>
-                <li>🔹 <b>Doubt Desk:</b> Use the player sidebar to ask mentors directly.</li>
+                <li>🔹 <b>Dynamic Quiz Player:</b> Interactive MCQs with real-time LaTeX math rendering.</li>
+                <li>🔹 <b>Progress Tracking:</b> Leaderboards that update as you master each lecture.</li>
+                <li>🔹 <b>Doubt Transmitting:</b> Ask mentors questions directly while watching videos.</li>
+                <li>🔹 <b>Resource Library:</b> Access PDF notes and reading materials in one click.</li>
             </ul>
         </div>
 
         <div class="card">
             <h3 style="margin-bottom: 20px;">❓ FAQs</h3>
             <div class="faq-item">
-                <div class="faq-question" onclick="toggleFaq(this)">Symbol Rendering Issues? <span>+</span></div>
-                <div class="faq-answer">Wait for MathJax to load or refresh the page if symbols appear as raw code.</div>
+                <div class="faq-question" onclick="toggleFaq(this)">How do I track my progress? <span>+</span></div>
+                <div class="faq-answer">Progress is saved when you watch 85% of a video or pass a lecture quiz.</div>
             </div>
             <div class="faq-item">
-                <div class="faq-question" onclick="toggleFaq(this)">Forgot Password? <span>+</span></div>
-                <div class="faq-answer">Click "Login" and select "Forgot Password" to receive a reset link via email.</div>
+                <div class="faq-question" onclick="toggleFaq(this)">Math symbols aren't loading? <span>+</span></div>
+                <div class="faq-answer">Wait a few seconds for MathJax to render, or refresh the page.</div>
             </div>
         </div>
     </div>
 
     <div class="qr-section">
         <div style="flex: 1; min-width: 280px;">
-            <h2>Join Student Community</h2>
-            <p style="margin: 15px 0; opacity: 0.8;">Scan the QR code to join our official WhatsApp group for instant peer support and updates.</p>
-            <p>Support Email: <b style="color:var(--accent)">pimentor.education@gmail.com</b></p>
+            <h2>Join the Community</h2>
+            <p style="margin: 15px 0; opacity: 0.8;">Scan the QR code to join our official WhatsApp group for student support.</p>
+            <p>Email: <b style="color:var(--accent)">pimentor.education@gmail.com</b></p>
         </div>
-        <img src="/images/whatsapp_qr.jpg" alt="WhatsApp QR" class="qr-img">
+        <img src="/images/whatsapp_qr.png" alt="WhatsApp QR" class="qr-img">
     </div>
 </div>
 
 <script>
-    // Theme Logic with Greenish Light Mode
+    // Theme Logic with Green Tree Shade
     function applyTheme(theme) {
         document.documentElement.setAttribute("data-theme", theme);
         document.getElementById("themeBtn").innerText = theme === "dark" ? "☀️" : "🌙";
@@ -193,7 +183,7 @@
         applyTheme(current === "dark" ? "light" : "dark"); 
     }
 
-    // Nav Logic: Injects Dashboard/Login based on Auth
+    // Navigation Injection (Auth Check)
     function updateNav() {
         const desktop = document.getElementById("desktopNav");
         const drawer = document.getElementById("drawerDynamic");
@@ -234,6 +224,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", updateNav);
+
     // Close drawer when clicking outside
     document.addEventListener('click', (e) => {
         const drawer = document.getElementById("mobileDrawer");
