@@ -401,37 +401,44 @@ function renderQuizQuestions(questions) {
     
     const healLaTeX = (str) => {
         if (!str) return "";
+        
         let fixed = str
-            // 1. Fix the "ext{...}" by restoring the full \text command
-            .replace(/ext\{/g, '\\text{')
-            // 2. Fix the "et(A)" or "et (A)" issue for determinant
-            .replace(/et\s*\(/g, '\\det(')
-            // 3. Remove accidental DOUBLE slashes (\\\\ -> \)
-            .replace(/\\+/g, '\\')
-            // 4. Remove any existing $ signs so we can wrap the whole thing cleanly
-            .replace(/\$/g, '');
+            // 1. Fix the "ext{...}" and "et(A)" issues immediately
+            .replace(/ext\s*\{/g, '\\text{')
+            .replace(/et\s*\(A\)/g, '\\det(A)')
+            .replace(/race\s*\(/g, '\\text{trace}(')
+            
+            // 2. Clean up any quadruple or double backslashes into single ones
+            // This prevents the "extra \" from appearing after rendering
+            .replace(/\\\\+/g, '\\') 
+            
+            // 3. Find LaTeX keywords and wrap them (and their arguments) in $
+            // This targets: \command, \command{...}, or symbols like ^ and _
+            .replace(/(\\[a-zA-Z]+(\{.*?\})?|[\^_{}\d=])/g, (match) => {
+                // If it's already inside $ (double check), don't wrap again
+                return `$${match}$`;
+            })
+            
+            // 4. Cleanup: Remove double $$ created by the previous step
+            .replace(/\$\$/g, '$')
+            // 5. Cleanup: Ensure no stray backslashes are left hanging
+            .replace(/\\(?!\w|text|det|sum|lambda|dots)/g, '');
 
-        // 5. THE MASTER FIX: Wrap the entire string in $ delimiters
-        // This forces MathJax to render EVERYTHING inside as math, 
-        // which removes the raw "\" and makes \text work.
-        return `$ ${fixed} $`;
+        return fixed;
     };
 
     area.innerHTML = questions.map((q, i) => {
-        const repairedQ = healLaTeX(q.questionText);
-        
         return `
             <div class="quiz-q-box" style="margin-bottom: 35px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
                 <p style="font-weight:bold; margin-bottom:18px; font-size: 1.1rem; line-height: 1.6;">
-                    ${i + 1}. ${repairedQ}
+                    ${i + 1}. ${healLaTeX(q.questionText)}
                 </p>
                 <div style="display: flex; flex-direction: column; gap: 12px;">
                     ${q.options.map((opt, oi) => {
-                        const repairedO = healLaTeX(opt);
                         return `
                             <label style="display:block; cursor:pointer; background: rgba(255,255,255,0.05); padding: 14px; border-radius: 12px; transition: 0.3s;">
                                 <input type="radio" name="q${i}" value="${oi}" style="margin-right: 10px; accent-color: var(--accent);"> 
-                                <span>${repairedO}</span>
+                                <span>${healLaTeX(opt)}</span>
                             </label>
                         `;
                     }).join('')}
