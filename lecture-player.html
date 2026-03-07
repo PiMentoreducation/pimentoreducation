@@ -10,7 +10,6 @@
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
     <style>
-        /* --- 1. THEME VARIABLES --- */
         :root {
             --space-bg: radial-gradient(circle at top, #0d1117 0%, #010409 100%);
             --accent: #7c4dff;
@@ -19,6 +18,7 @@
             --text: #ffffff;
             --card-border: rgba(255, 255, 255, 0.1);
             --danger: #ff4d4d;
+            --success: #2ecc71;
             --transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
         }
 
@@ -81,9 +81,13 @@
             padding: 14px; border-radius: 12px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05);
             font-size: 0.9rem; transition: 0.3s; display: flex; justify-content: space-between; margin-bottom: 8px;
             background: rgba(255,255,255,0.02);
+            align-items: center;
         }
         .lecture-item:hover { background: var(--accent); color: white; transform: translateX(5px); }
         .active-lecture { background: var(--accent) !important; color: white !important; font-weight: 700; box-shadow: 0 5px 15px var(--accent-glow); }
+
+        /* Style for the completion mark */
+        .complete-mark { color: #2ecc71; font-weight: bold; font-size: 1rem; margin-left: 8px; }
 
         .btn-res { 
             display: block; width: 100%; padding: 12px; margin-top: 10px; border-radius: 12px; 
@@ -146,29 +150,15 @@
             <p id="chapterNameDisplay" style="opacity: 0.6; font-size: 0.8rem; margin-top: 8px;"></p>
         </div>
     </div>
-    <div id="quizModal" class="modal-overlay">
-    <div class="modal-content" style="background: var(--space-bg); padding: 30px; color: white; border: 1px solid var(--accent); overflow-y: auto;">
-        <div id="quizContainer">
-            <h2 id="quizTitle" style="color: var(--accent); margin-bottom: 20px;">Knowledge Check</h2>
-            <div id="questionArea">
-                </div>
-            <button id="submitQuizBtn" onclick="calculateScore()" class="btn-res btn-mcq" style="margin-top: 20px;">Submit Answers</button>
-        </div>
-        
-        <div id="quizResult" style="display:none; text-align:center;">
-            <h1 id="resultScore" style="font-size: 3rem; margin-bottom: 10px;">0/0</h1>
-            <p id="resultFeedback" style="margin-bottom: 20px;"></p>
-            <button onclick="closeQuizModal()" class="btn-res btn-pdf">Back to Lecture</button>
-        </div>
-    </div>
-</div>
-<div class="sidebar-card">
-    <h3 style="font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent);">🏆 Progress Leaders</h3>
-    <div id="leaderboardList" style="margin-top: 15px;">
-        <p style="font-size: 0.8rem; opacity: 0.5; text-align: center;">Loading rankings...</p>
-    </div>
-</div>
+    
     <div class="sidebar">
+        <div class="sidebar-card">
+            <h3 style="font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent);">🏆 Progress Leaders</h3>
+            <div id="leaderboardList" style="margin-top: 15px;">
+                <p style="font-size: 0.8rem; opacity: 0.5; text-align: center;">Loading rankings...</p>
+            </div>
+        </div>
+
         <div class="sidebar-card">
             <h3 style="font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Resources</h3>
             <button id="pdfBtn" class="btn-res btn-pdf" style="display:none;" onclick="openResourceModal(this.dataset.url)">📄 View PDF Notes</button>
@@ -189,12 +179,26 @@
     </div>
 </div>
 
+<div id="quizModal" class="modal-overlay">
+    <div class="modal-content" style="background: var(--space-bg); padding: 30px; color: white; border: 1px solid var(--accent); overflow-y: auto;">
+        <div id="quizContainer">
+            <h2 id="quizTitle" style="color: var(--accent); margin-bottom: 20px;">Knowledge Check</h2>
+            <div id="questionArea"></div>
+            <button id="submitQuizBtn" onclick="calculateScore()" class="btn-res btn-mcq" style="margin-top: 20px;">Submit Answers</button>
+        </div>
+        <div id="quizResult" style="display:none; text-align:center;">
+            <h1 id="resultScore" style="font-size: 3rem; margin-bottom: 10px;">0/0</h1>
+            <p id="resultFeedback" style="margin-bottom: 20px;"></p>
+            <button onclick="closeQuizModal()" class="btn-res btn-pdf">Back to Lecture</button>
+        </div>
+    </div>
+</div>
+
 <div id="resourceModal" class="modal-overlay">
     <span class="close-modal" onclick="closeModal()" title="Back to Video">&times;</span>
     <div class="modal-content">
         <iframe id="resourceIframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
     </div>
-    <p style="color: white; margin-top: 20px; font-size: 0.9rem; font-weight: bold;">Click the RED button to return to the lecture.</p>
 </div>
 
 <script src="https://www.youtube.com/iframe_api"></script>
@@ -210,28 +214,9 @@
     let ytPlayer = null;
     let watchTimer = null;
     let isVideoFlaggedComplete = false;
-    window.MathJax = {
-    tex: {
-        inlineMath: [['$', '$'], ['\\(', '\\)']],
-        displayMath: [['$$', '$$'], ['\\[', '\\]']],
-        processEscapes: true
-    },
-    options: {
-        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
-    }
-};
+    let studentProgress = []; // Store progress locally
 
-    // --- THEME LOGIC ---
-    function applyTheme(theme) {
-        document.documentElement.setAttribute("data-theme", theme);
-        const btn = document.getElementById("themeBtn");
-        if(btn) btn.innerText = theme === "dark" ? "☀️" : "🌙";
-        localStorage.setItem("pimentor-theme", theme);
-    }
-    applyTheme(localStorage.getItem("pimentor-theme") || "dark");
-    function toggleTheme() { applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark"); }
-
-    // --- PLAYER INITIALIZATION (RETAINED YOUR WORKING VERSION) ---
+    // --- PLAYER INITIALIZATION (UPDATED TO FETCH PROGRESS) ---
     async function initPlayer() {
         if (!courseId || !chapter) {
             window.location.href = "dashboard.html";
@@ -242,34 +227,64 @@
         document.getElementById("chapterNameDisplay").innerText = "CHAPTER: " + chapter;
 
         try {
-            const res = await fetch(`${BASE_URL}/api/purchase/course-content/${courseId}/${encodeURIComponent(chapter)}`, {
-                headers: { "Authorization": "Bearer " + token }
-            });
-            const lectures = await res.json();
-            const list = document.getElementById("lectureList");
+            // Fetch both lectures and user progress in parallel
+            const [lecRes, progRes] = await Promise.all([
+                fetch(`${BASE_URL}/api/purchase/course-content/${courseId}/${encodeURIComponent(chapter)}`, {
+                    headers: { "Authorization": "Bearer " + token }
+                }),
+                fetch(`${BASE_URL}/api/progress/course-details/${courseId}`, {
+                    headers: { "Authorization": "Bearer " + token }
+                })
+            ]);
+
+            const lectures = await lecRes.json();
+            studentProgress = await progRes.json();
+            
+            renderLectureList(lectures);
 
             if (lectures.length > 0) {
-                list.innerHTML = lectures.map((l, index) => `
-                    <div class="lecture-item" id="lec-${l._id}" onclick='playLecture(${JSON.stringify(l).replace(/'/g, "&apos;")})'>
-                        <span>${index + 1}. ${l.title}</span>
-                    </div>
-                `).join('');
                 playLecture(lectures[0]);
             } else {
-                list.innerHTML = "<p style='text-align:center; opacity:0.5;'>No lectures found.</p>";
+                document.getElementById("lectureList").innerHTML = "<p style='text-align:center; opacity:0.5;'>No lectures found.</p>";
             }
             await fetchLeaderboard(); 
         } catch (err) { console.error(err); }
     }
 
-    function onYouTubeIframeAPIReady() { console.log("YouTube API Ready"); }
-
-    function extractVideoId(url) {
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-        const match = url.match(regExp);
-        return (match && match[2].length === 11) ? match[2] : null;
+    function renderLectureList(lectures) {
+        const list = document.getElementById("lectureList");
+        list.innerHTML = lectures.map((l, index) => {
+            // Check if this specific lecture is in the progress data as completed
+            const isFinished = studentProgress.find(p => p.lectureId === l._id && p.isVideoCompleted);
+            
+            return `
+                <div class="lecture-item" id="lec-${l._id}" onclick='playLecture(${JSON.stringify(l).replace(/'/g, "&apos;")})'>
+                    <span>${index + 1}. ${l.title}</span>
+                    <span id="mark-${l._id}" class="complete-mark">${isFinished ? '✅' : ''}</span>
+                </div>
+            `;
+        }).join('');
     }
 
+    // --- SYNC PROGRESS (UPDATED TO MARK UI IMMEDIATELY) ---
+    async function syncProgress() {
+        try {
+            const res = await fetch(`${BASE_URL}/api/progress/update-progress`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+                body: JSON.stringify({ courseId: courseId, lectureId: activeLectureId, isVideoCompleted: true })
+            });
+
+            if(res.ok) {
+                // Update UI mark immediately
+                const mark = document.getElementById(`mark-${activeLectureId}`);
+                if(mark) mark.innerText = '✅';
+                await fetchLeaderboard(); // Update leaderboard ranking
+            }
+        } catch (err) { console.error("Progress sync error:", err); }
+    }
+
+    // --- REST OF THE WORKING FUNCTIONS (RETAINED) ---
     function playLecture(lec) {
         activeLectureId = lec._id;
         isVideoFlaggedComplete = false; 
@@ -283,17 +298,11 @@
         document.getElementById("topicDisplay").innerText = "TOPIC: " + (lec.topicName || "General");
 
         const videoId = extractVideoId(lec.videoUrl);
-
         if (!ytPlayer) {
             ytPlayer = new YT.Player('mainIframe', {
-                height: '100%',
-                width: '100%',
-                videoId: videoId,
-                playerVars: { 'playsinline': 1, 'rel': 0, 'modestbranding': 1 },
-                events: {
-                    'onReady': onPlayerReady,
-                    'onStateChange': onPlayerStateChange
-                }
+                height: '100%', width: '100%', videoId: videoId,
+                playerVars: { 'playsinline': 1, 'rel': 0, 'modestbranding': 1, 'origin': window.location.origin },
+                events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange }
             });
         } else {
             ytPlayer.loadVideoById(videoId);
@@ -303,17 +312,7 @@
         const mBtn = document.getElementById("mcqBtn");
         if(lec.pdfNotes) { pBtn.style.display = "block"; pBtn.dataset.url = lec.pdfNotes; } 
         else { pBtn.style.display = "none"; }
-        
-        // Show MCQ button for every lecture so it can check DB for quiz
         mBtn.style.display = "block"; 
-    }
-
-    function onPlayerReady(event) { startWatchdog(); }
-
-    function onPlayerStateChange(event) {
-        if (event.data === YT.PlayerState.PLAYING) {
-            startWatchdog();
-        }
     }
 
     function startWatchdog() {
@@ -322,139 +321,86 @@
             if (ytPlayer && ytPlayer.getCurrentTime && !isVideoFlaggedComplete) {
                 const currentTime = ytPlayer.getCurrentTime();
                 const duration = ytPlayer.getDuration();
-                if (duration > 0) {
-                    const ratio = currentTime / duration;
-                    if (ratio >= 0.85) {
-                        isVideoFlaggedComplete = true;
-                        clearInterval(watchTimer);
-                        await syncProgress();
-                    }
+                if (duration > 0 && (currentTime / duration) >= 0.85) {
+                    isVideoFlaggedComplete = true;
+                    clearInterval(watchTimer);
+                    await syncProgress();
                 }
             }
         }, 5000); 
     }
 
-    async function syncProgress() {
-        try {
-            await fetch(`${BASE_URL}/api/progress/update-progress`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-                body: JSON.stringify({ courseId: courseId, lectureId: activeLectureId, isVideoCompleted: true })
-            });
-        } catch (err) { console.error("Progress sync error:", err); }
+    function onYouTubeIframeAPIReady() { console.log("YouTube API Ready"); }
+    function extractVideoId(url) {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
     }
-
-    function openResourceModal(url) {
-        document.getElementById("resourceIframe").src = url;
-        document.getElementById("resourceModal").style.display = "flex";
-    }
-
-    function closeModal() {
-        document.getElementById("resourceModal").style.display = "none";
-        document.getElementById("resourceIframe").src = "";
-    }
+    function onPlayerReady(event) { startWatchdog(); }
+    function onPlayerStateChange(event) { if (event.data === YT.PlayerState.PLAYING) startWatchdog(); }
+    function openResourceModal(url) { document.getElementById("resourceIframe").src = url; document.getElementById("resourceModal").style.display = "flex"; }
+    function closeModal() { document.getElementById("resourceModal").style.display = "none"; document.getElementById("resourceIframe").src = ""; }
 
     async function submitDoubt() {
         const question = document.getElementById("doubtText").value;
-        const status = document.getElementById("doubtStatus");
         if(!question.trim()) return alert("Please type your question.");
         try {
             const res = await fetch(`${BASE_URL}/api/purchase/ask-doubt`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+                method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
                 body: JSON.stringify({ lectureId: activeLectureId, question: question })
             });
             if(res.ok) {
                 document.getElementById("doubtText").value = "";
-                status.innerText = "Doubt transmitted successfully! 🚀";
-                setTimeout(() => status.innerText = "", 3000);
+                document.getElementById("doubtStatus").innerText = "Doubt transmitted successfully! 🚀";
+                setTimeout(() => document.getElementById("doubtStatus").innerText = "", 3000);
             }
         } catch (err) { console.error(err); }
     }
 
-    document.addEventListener("DOMContentLoaded", initPlayer);
-
-    // --- QUIZ LOGIC (UPDATED PATH TO MATCH BACKEND) ---
-    let currentQuizData = [];
-
-// 1. ADD THIS AT THE TOP OF YOUR <script> TAG (Once)
-window.MathJax = {
-  tex: {
-    inlineMath: [['$', '$'], ['\\(', '\\)']]
-  }
-};
-
-// 2. UPDATED openQuiz FUNCTION
-async function openQuiz() {
-    try {
-        const res = await fetch(`${BASE_URL}/api/purchase/quiz/fetch/${activeLectureId}`, {
-            headers: { "Authorization": "Bearer " + token }
-        });
-        const data = await res.json();
-        
-        if (!data || !data.questions || data.questions.length === 0) {
-            return alert("No quiz available for this lecture yet.");
-        }
-
-        currentQuizData = data.questions;
-        renderQuizQuestions(data.questions);
-        
-        // Open Modal
-        document.getElementById("quizModal").style.display = "flex";
-        document.getElementById("quizContainer").style.display = "block";
-        document.getElementById("quizResult").style.display = "none";
-        
-        // Trigger MathJax Refresh
-        if (window.MathJax && window.MathJax.typesetPromise) {
-            setTimeout(() => {
-                MathJax.typesetPromise().catch((err) => console.log('MathJax Error:', err));
-            }, 100);
-        }
-    } catch (err) {
-        alert("Deployment Error: Could not connect to quiz database.");
+    async function openQuiz() {
+        try {
+            const res = await fetch(`${BASE_URL}/api/purchase/quiz/fetch/${activeLectureId}`, {
+                headers: { "Authorization": "Bearer " + token }
+            });
+            const data = await res.json();
+            if (!data || !data.questions || data.questions.length === 0) return alert("No quiz available for this lecture yet.");
+            currentQuizData = data.questions;
+            renderQuizQuestions(data.questions);
+            document.getElementById("quizModal").style.display = "flex";
+            document.getElementById("quizContainer").style.display = "block";
+            document.getElementById("quizResult").style.display = "none";
+            if (window.MathJax && window.MathJax.typesetPromise) setTimeout(() => MathJax.typesetPromise(), 100);
+        } catch (err) { alert("Error connecting to quiz database."); }
     }
-}
 
-function renderQuizQuestions(questions) {
-    const area = document.getElementById("questionArea");
-    area.innerHTML = questions.map((q, qIndex) => `
-        <div class="quiz-q-box" style="margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
-            <p style="font-weight:bold; margin-bottom:18px; font-size: 1.15rem; line-height: 1.5;">
-                <span class="math-text">${qIndex + 1}. ${q.questionText}</span>
-            </p>
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                ${q.options.map((opt, oIndex) => `
-                    <label style="display:block; cursor:pointer; background: rgba(255,255,255,0.05); padding: 14px; border-radius: 10px; transition: 0.2s; border: 1px solid transparent;" 
-                           onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='var(--accent)'" 
-                           onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='transparent'">
-                        <input type="radio" name="q${qIndex}" value="${oIndex}" style="margin-right: 10px; accent-color: var(--accent);"> 
-                        <span class="math-text" style="font-size: 1.05rem;">${opt}</span>
-                    </label>
-                `).join('')}
-            </div>
-        </div>
-    `).join('');
-}
+    function renderQuizQuestions(questions) {
+        document.getElementById("questionArea").innerHTML = questions.map((q, i) => `
+            <div class="quiz-q-box" style="margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
+                <p style="font-weight:bold; margin-bottom:18px;">${i + 1}. ${q.questionText}</p>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    ${q.options.map((opt, oi) => `
+                        <label style="display:block; cursor:pointer; background: rgba(255,255,255,0.05); padding: 14px; border-radius: 10px;">
+                            <input type="radio" name="q${i}" value="${oi}" style="margin-right: 10px;"> ${opt}
+                        </label>
+                    `).join('')}
+                </div>
+            </div>`).join('');
+    }
+
     async function calculateScore() {
         let score = 0;
         currentQuizData.forEach((q, i) => {
             const selected = document.querySelector(`input[name="q${i}"]:checked`);
-            if (selected && parseInt(selected.value) === q.correctAnswerIndex) {
-                score++;
-            }
+            if (selected && parseInt(selected.value) === q.correctAnswerIndex) score++;
         });
-
         document.getElementById("quizContainer").style.display = "none";
         document.getElementById("quizResult").style.display = "block";
         document.getElementById("resultScore").innerText = `${score} / ${currentQuizData.length}`;
-        
-        const res = await fetch(`${BASE_URL}/api/progress/submit-quiz`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        await fetch(`${BASE_URL}/api/progress/submit-quiz`, {
+            method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
             body: JSON.stringify({ courseId: courseId, lectureId: activeLectureId, score: score })
         });
-        
-        if(res.ok) await fetchLeaderboard();
+        await fetchLeaderboard();
     }
 
     function closeQuizModal() { document.getElementById("quizModal").style.display = "none"; }
@@ -466,22 +412,19 @@ function renderQuizQuestions(questions) {
             });
             const data = await res.json();
             const list = document.getElementById("leaderboardList");
-
             if (data.length > 0) {
                 list.innerHTML = data.map((user, index) => `
                     <div style="display:flex; justify-content:space-between; align-items:center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <span style="font-size: 0.85rem;">
-                            <b style="color:var(--accent)">#${index + 1}</b> ${user.name.split(' ')[0]}
-                        </span>
-                        <span class="stat-badge" style="background:var(--accent); color:white; padding:2px 8px; border-radius:10px; font-size:0.7rem;">
-                            ${user.masteredCount} Mastered
-                        </span>
+                        <span style="font-size: 0.85rem;"><b style="color:var(--accent)">#${index + 1}</b> ${user.name.split(' ')[0]}</span>
+                        <span style="background:var(--accent); color:white; padding:2px 8px; border-radius:10px; font-size:0.7rem;">${user.masteredCount} Mastered</span>
                     </div>`).join('');
             } else {
                 list.innerHTML = "<p style='font-size:0.8rem; opacity:0.5; text-align:center;'>Be the first to master a lecture!</p>";
             }
-        } catch (err) { console.error("Leaderboard fetch failed", err); }
+        } catch (err) { console.error(err); }
     }
+
+    document.addEventListener("DOMContentLoaded", initPlayer);
 </script>
 </body>
 </html>
