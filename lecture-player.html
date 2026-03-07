@@ -399,46 +399,33 @@
 function renderQuizQuestions(questions) {
     const area = document.getElementById("questionArea");
     
-    // Internal function to restore LaTeX commands that JSON often strips
-    const fixLaTeX = (str) => {
+    // This function adds the slash back if it was lost in transit
+    const repairSlashes = (str) => {
         if (!str) return "";
-        return str
-            .replace(/ext{/g, '\\text{')  // Fixes the "ext{trace}" issue
-            .replace(/lambda/g, '\\lambda')
-            .replace(/dots/g, '\\dots')
-            .replace(/sum/g, '\\sum')
-            .replace(/prod/g, '\\prod')
-            .replace(/times/g, '\\times')
-            .replace(/det/g, '\\det');
+        // Look for common LaTeX words that are missing their leading slash
+        return str.replace(/(?<!\\)(lambda|text|sum|det|trace|prod|times|sqrt|frac|dots)/g, '\\$1');
     };
 
     area.innerHTML = questions.map((q, i) => {
-        // Apply fix and ensure $ delimiters exist
-        const repairedText = fixLaTeX(q.questionText);
-        const finalMainText = repairedText.includes('$') ? repairedText : `$${repairedText}$`;
+        const repairedQ = repairSlashes(q.questionText);
+        const finalQ = repairedQ.includes('$') ? repairedQ : `$${repairedQ}$`;
 
         return `
-            <div class="quiz-q-box" style="margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
-                <p style="font-weight:bold; margin-bottom:18px; font-size: 1.1rem;">${i + 1}. ${finalMainText}</p>
-                <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div class="quiz-q-box" style="margin-bottom: 30px;">
+                <p><strong>${i + 1}. ${finalQ}</strong></p>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
                     ${q.options.map((opt, oi) => {
-                        const repairedOpt = fixLaTeX(opt);
-                        const finalOpt = repairedOpt.includes('$') ? repairedOpt : `$${repairedOpt}$`;
-                        return `
-                            <label style="display:block; cursor:pointer; background: rgba(255,255,255,0.05); padding: 14px; border-radius: 10px;">
-                                <input type="radio" name="q${i}" value="${oi}" style="margin-right: 10px;"> ${finalOpt}
-                            </label>
-                        `;
+                        const repairedO = repairSlashes(opt);
+                        const finalO = repairedO.includes('$') ? repairedO : `$${repairedO}$`;
+                        return `<label><input type="radio" name="q${i}" value="${oi}"> ${finalO}</label>`;
                     }).join('')}
                 </div>
             </div>`;
     }).join('');
 
-    // Re-trigger MathJax
-    if (window.MathJax && window.MathJax.typesetPromise) {
-        setTimeout(() => {
-            MathJax.typesetPromise([area]).catch((err) => console.log('MathJax Error:', err));
-        }, 100);
+    // Trigger MathJax
+    if (window.MathJax) {
+        MathJax.typesetPromise([area]);
     }
 }
 async function calculateScore() {
