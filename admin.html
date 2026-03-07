@@ -40,7 +40,6 @@
             min-height: 100vh;
         }
         
-        /* --- STARDUST BACKGROUND --- */
         body::before {
             content: ""; 
             position: fixed; 
@@ -53,7 +52,6 @@
             z-index: -1;
         }
 
-        /* --- HEADER & NAVIGATION --- */
         .header { 
             max-width: 1100px; 
             margin: 0 auto 30px; 
@@ -103,7 +101,6 @@
             box-shadow: 0 4px 15px rgba(124, 77, 255, 0.3);
         }
 
-        /* --- SECTION BOXES --- */
         section { 
             max-width: 1100px; 
             margin: 0 auto 25px; 
@@ -137,7 +134,6 @@
             min-width: 280px; 
         }
 
-        /* --- FORM ELEMENTS --- */
         input, textarea, select { 
             width: 100%; 
             margin-bottom: 18px; 
@@ -200,7 +196,6 @@
             text-decoration: underline;
         }
 
-        /* Multi-Teacher Styles */
         .teacher-box {
             background: rgba(255,255,255,0.03);
             border: 1px solid var(--card-border);
@@ -226,7 +221,6 @@
             justify-content: center;
         }
 
-        /* --- DATA PRESENTATION --- */
         .doubt-card { 
             border: 1px solid var(--card-border); 
             padding: 20px; 
@@ -291,12 +285,9 @@
     <input id="notifHeading" placeholder="Message Title (e.g. Test Scheduled)">
     <textarea id="notifDesc" placeholder="Detailed description of the update..." rows="3"></textarea>
     <input id="notifLink" placeholder="External Action Link (Optional)">
-    
     <span class="hint">Target Groups (Hold Ctrl to select multiple)</span>
     <select id="notifCourseSelect" multiple style="height: 120px;"></select>
-    
     <button class="btn-broadcast" onclick="broadcastNotification()">Send Push Notification</button>
-
     <div id="adminNotifList" style="margin-top:25px;">
         <p style="opacity:0.5; font-size:0.8rem;">Loading active broadcasts...</p>
     </div>
@@ -304,7 +295,7 @@
 
 <section>
     <h2>Step 1: Course Configuration & Details</h2>
-        <div class="row">
+    <div class="row">
         <div class="col">
             <span class="hint">Load Existing Course (Optional)</span>
             <select id="courseConfigDropdown" onchange="loadCourseDetails()">
@@ -330,19 +321,15 @@
             <input id="recordedDurationDays" type="number" value="365">
         </div>
     </div>
-    
     <span class="hint">Marketing Description</span>
     <textarea id="description" placeholder="Short course subline for the banner..." rows="2"></textarea>
     <textarea id="course_roadmap" placeholder="Course_Roadmap" rows="2"></textarea>
     <textarea id="learningPoints" placeholder="Learning Objectives (Separate with commas, e.g. Daily Quizzes, 1:1 Doubt Solving, Board Prep)"></textarea>
-
     <div style="margin-top: 25px; border-top: 1px solid var(--card-border); padding-top: 25px;">
         <h3 style="font-size: 0.9rem; color: var(--primary); margin-bottom: 15px;">👨‍🏫 TEACHER PROFILES</h3>
-        <div id="teachersContainer">
-            </div>
+        <div id="teachersContainer"></div>
         <button class="btn-add-teacher" onclick="addTeacherField()">+ Add Another Teacher</button>
     </div>
-
     <button class="btn-create" onclick="addCourse()">Save / Update Course Settings</button>
 </section>
 
@@ -360,7 +347,6 @@
             <input id="targetCourseId" readonly style="opacity:0.6; background: rgba(0,0,0,0.2);">
         </div>
     </div>
-    
     <div class="row">
         <div class="col">
             <span class="hint">Organizational Unit</span>
@@ -377,7 +363,6 @@
             <input id="topicName" placeholder="Sub-topic Heading">
         </div>
     </div>
-
     <div class="row">
         <div class="col" style="flex:2;">
             <span class="hint">Lesson Name</span>
@@ -388,7 +373,6 @@
             <input id="order" type="number" value="1">
         </div>
     </div>
-
     <span class="hint">Content Links</span>
     <input id="videoUrl" placeholder="YouTube Video URL (Standard or Embed)">
     <div class="row">
@@ -396,36 +380,23 @@
         <input id="pdfNotes" placeholder="Notes URL (Drive/PDF)">
     </div>
     <input id="practiceMcq" placeholder="Quiz/Assessment URL">
-<section style="border-top: 3px solid var(--primary); margin-top: 40px;">
-    <h2>📝 Direct JSON Quiz Injector</h2>
-    <span class="hint">1. Generate JSON using Gemini Pro</span>
-    <span class="hint">2. Paste the result array below:</span>
-    
-    <textarea id="manualJsonInput" 
-              placeholder='[{"questionText": "...", "options": ["A", "B", "C", "D"], "correctAnswerIndex": 0}]' 
-              rows="12" 
-              style="font-family: monospace; font-size: 0.85rem; background: rgba(0,0,0,0.3);"></textarea>
-    
-    <button class="btn-lecture" onclick="deployManualQuiz()" id="injectBtn">
-        🚀 Deploy Quiz to Cloud
-    </button>
-</section>
-    
+    <section style="border-top: 3px solid var(--primary); margin-top: 40px; padding: 20px; background: rgba(0,0,0,0.1);">
+        <h2>📝 Direct JSON Quiz Injector</h2>
+        <span class="hint">1. Generate JSON using Gemini Pro</span>
+        <span class="hint">2. Paste the result array below:</span>
+        <textarea id="manualJsonInput" placeholder='[{"questionText": "...", "options": ["A", "B", "C", "D"], "correctAnswerIndex": 0}]' rows="12" style="font-family: monospace; font-size: 0.85rem; background: rgba(0,0,0,0.3);"></textarea>
+        <button class="btn-lecture" onclick="deployManualQuiz()" id="injectBtn">🚀 Deploy Quiz to Cloud</button>
+    </section>
     <button class="btn-lecture" onclick="addLecture()">Deploy Lecture to Cloud</button>
 </section>
-<section>
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
-        <h2>Student Registry (<span id="enrollmentCount">0</span>)</h2>
-        <div style="display: flex; gap: 10px;">
-            <button onclick="downloadEmails()" style="width:auto; padding:10px 20px; background:var(--success); color:white; font-size:0.85rem;">📥 Download Emails</button>
-            <input type="text" id="studentSearch" placeholder="🔍 Search..." onkeyup="filterStudentTable()" style="width:250px; margin-bottom:0;">
-        </div>
-    </div>
-    </section>
+
 <section>
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
         <h2>Enrolled Student Registry (<span id="enrollmentCount">0</span>)</h2>
-        <input type="text" id="studentSearch" placeholder="🔍 Search Name or Email..." onkeyup="filterStudentTable()" style="width:280px; margin-bottom:0;">
+        <div style="display: flex; gap: 10px;">
+            <button onclick="downloadEmails()" style="width:auto; padding:10px 20px; background:var(--success); color:white; font-size:0.85rem;">📥 Download Emails</button>
+            <input type="text" id="studentSearch" placeholder="🔍 Search Name or Email..." onkeyup="filterStudentTable()" style="width:280px; margin-bottom:0;">
+        </div>
     </div>
     <div style="overflow-x: auto; max-height: 450px;">
         <table id="enrollmentTable">
@@ -450,12 +421,6 @@
         <p style="opacity:0.5; font-size:0.9rem;">Course queries will appear here after selection.</p>
     </div>
 </section>
-<section>
-    <h2>Step 3: Doubt Resolution Command</h2>
-    <div id="doubtsContainer">
-        <p style="opacity:0.5; font-size:0.9rem;">Course queries will appear here after selection.</p>
-    </div>
-</section>
 
 <section style="border: 2px solid var(--danger);">
     <h2 style="color: var(--danger);">⚠️ Danger & Cleanup Zone</h2>
@@ -465,27 +430,21 @@
             <select id="deleteLectureDropdown">
                 <option value="">-- Select Course in Step 2 First --</option>
             </select>
-            <button class="btn-delete" style="background:var(--warning); color:black;" onclick="deleteLecture()">
-                Delete Selected Lecture
-            </button>
+            <button class="btn-delete" style="background:var(--warning); color:black;" onclick="deleteLecture()">Delete Selected Lecture</button>
         </div>
-
         <div class="col">
             <span class="hint">Total Course Wipe (Permanent)</span>
             <input id="deleteCourseId" readonly style="background: rgba(220, 53, 69, 0.1);" placeholder="Select Course Above">
-            <button class="btn-delete" onclick="deleteCourse()">
-                Delete Entire Course & Content
-            </button>
+            <button class="btn-delete" onclick="deleteCourse()">Delete Entire Course & Content</button>
         </div>
     </div>
 </section>
+
 <section style="border-left: 5px solid #00f2fe;">
     <h2 style="color: #00f2fe;">🚀 Pi-Shot Galaxy Control</h2>
-    
     <div class="row">
         <div class="col">
             <span class="hint">Upload Pi-Shot (Auto-Creates Category)</span>
-            
             <div style="display: flex; gap: 10px; margin-bottom: 18px;">
                 <select id="pishotCatSelect" style="flex: 2; margin-bottom: 0;">
                     <option value="">-- Select Existing Category --</option>
@@ -493,14 +452,11 @@
                 <input id="pishotCustomCat" placeholder="OR New Category Name" style="flex: 2; margin-bottom: 0;">
                 <input id="pishotCatIcon" placeholder="Emoji (e.g. 🕉️)" style="flex: 1; margin-bottom: 0;">
             </div>
-
             <input id="pishotTitle" placeholder="Short Title (e.g. Intro to Rigveda)">
             <input id="pishotUrl" placeholder="YouTube Shorts URL (Direct Paste allowed)">
-            
             <button class="btn-create" onclick="uploadPishot()">Deploy to Galaxy</button>
         </div>
     </div>
-
     <div class="row" style="margin-top: 30px; padding-top: 25px; border-top: 1px dashed var(--card-border);">
         <div class="col">
             <span class="hint">Surgical Delete (Filter by Category)</span>
@@ -518,12 +474,12 @@
 </section>
 
 <script>
-    /* --- CONFIGURATION --- */
     const BASE_URL = "https://pimentor-project.onrender.com";
     const token = localStorage.getItem("token");
     let isNewChapter = false;
+    let selectedLecId = null; 
+    let selectedCourseId = null;
 
-    /* --- INITIALIZATION --- */
     function initAdmin() {
         if (!token) {
             alert("Admin session required. Redirecting to login...");
@@ -534,17 +490,11 @@
         applyTheme(savedTheme);
         loadOngoingCourses();
         loadActiveNotifs();
-        addTeacherField(); // Initialize with one teacher field
-        loadOngoingCourses();
-        loadActiveNotifs();
         addTeacherField();
-    
-        // 🔥 ADD THESE TWO LINES HERE
         loadPishotCategories();
         refreshPishotDeleteList();
     }
 
-    /* --- THEME CONTROLLER --- */
     function applyTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
         const btn = document.getElementById('themeBtn');
@@ -557,7 +507,7 @@
         applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
     }
 
-    /* --- MULTI-TEACHER LOGIC --- */
+    // --- FIX: UPDATED TO POPULATE INPUTS WITH DATA ---
     function addTeacherField(data = null) {
         const container = document.getElementById('teachersContainer');
         const teacherDiv = document.createElement('div');
@@ -566,12 +516,12 @@
             <button class="remove-teacher" onclick="this.parentElement.remove()">×</button>
             <div class="row">
                 <div class="col">
-                    <input class="teacher-name" placeholder="Faculty Name" value="${data ? data.name : ''}">
-                    <input class="teacher-img" placeholder="Faculty Photo URL" value="${data ? data.image : ''}">
+                    <input class="teacher-name" placeholder="Faculty Name" value="${data ? (data.name || '') : ''}">
+                    <input class="teacher-img" placeholder="Faculty Photo URL" value="${data ? (data.image || '') : ''}">
                 </div>
                 <div class="col">
-                    <input class="teacher-qual" placeholder="Qualifications" value="${data ? data.qual : ''}">
-                    <input class="teacher-achieve" placeholder="Achievements" value="${data ? data.achieve : ''}">
+                    <input class="teacher-qual" placeholder="Qualifications" value="${data ? (data.qual || '') : ''}">
+                    <input class="teacher-achieve" placeholder="Achievements" value="${data ? (data.achieve || '') : ''}">
                 </div>
             </div>
         `;
@@ -592,155 +542,88 @@
         return teachers;
     }
 
-    /* --- DATA LOADING LOGIC --- */
-async function loadOngoingCourses() {
-    try {
-        const response = await fetch(`${BASE_URL}/api/admin/all-courses`, { 
-            headers: { "Authorization": "Bearer " + token } 
-        });
-        const courses = await response.json();
-
-        const mainDropdown = document.getElementById("courseDropdown");
-        const notifDropdown = document.getElementById("notifCourseSelect");
-        const configDropdown = document.getElementById("courseConfigDropdown");
-
-        mainDropdown.innerHTML = '<option value="">-- Select a Course --</option>';
-        notifDropdown.innerHTML = '<option value="all" style="font-weight:bold; color:var(--primary);">🌍 BROADCAST TO ALL</option>'; 
-        
-        if (configDropdown) {
+    async function loadOngoingCourses() {
+        try {
+            const response = await fetch(`${BASE_URL}/api/admin/all-courses`, { headers: { "Authorization": "Bearer " + token } });
+            const courses = await response.json();
+            const mainDropdown = document.getElementById("courseDropdown");
+            const notifDropdown = document.getElementById("notifCourseSelect");
+            const configDropdown = document.getElementById("courseConfigDropdown");
+            mainDropdown.innerHTML = '<option value="">-- Select a Course --</option>';
+            notifDropdown.innerHTML = '<option value="all">🌍 BROADCAST TO ALL</option>'; 
             configDropdown.innerHTML = '<option value="">-- Create New Course --</option>';
-        }
-
-        courses.forEach(function(course) {
-            const optionHtml = `<option value="${course.courseId}">${course.title} (${course.courseId})</option>`;
-            mainDropdown.innerHTML += optionHtml;
-            notifDropdown.innerHTML += optionHtml;
-            if (configDropdown) {
+            courses.forEach(course => {
+                const optionHtml = `<option value="${course.courseId}">${course.title} (${course.courseId})</option>`;
+                mainDropdown.innerHTML += optionHtml;
+                notifDropdown.innerHTML += optionHtml;
                 configDropdown.innerHTML += optionHtml;
-            }
-        });
-
-    } catch (error) { 
-        console.error("Course Load Error:", error); 
-    }
-}
-async function loadCourseDetails() {
-    const selectedId = document.getElementById("courseConfigDropdown").value;
-
-    if (!selectedId) {
-        // Reset all fields for new course
-        document.getElementById("courseId").value = "";
-        document.getElementById("title").value = "";
-        document.getElementById("className").value = "";
-        document.getElementById("description").value = "";
-        document.getElementById("course_roadmap").value = "";
-        document.getElementById("price").value = "";
-        document.getElementById("oldPrice").value = "";
-        document.getElementById("thumbnail").value = "";
-        document.getElementById("demo1").value = "";
-        document.getElementById("demo2").value = "";
-        document.getElementById("learningPoints").value = "";
-        document.getElementById("liveValidityDate").value = "";
-        document.getElementById("recordedDurationDays").value = 365;
-        document.getElementById("teachersContainer").innerHTML = "";
-        addTeacherField();
-        return;
+            });
+        } catch (error) { console.error("Course Load Error:", error); }
     }
 
-    try {
-        const response = await fetch(`${BASE_URL}/api/admin/course/${selectedId}`, {
-            headers: { "Authorization": "Bearer " + token }
-        });
-
-        const course = await response.json();
-
-        document.getElementById("courseId").value = course.courseId || "";
-        document.getElementById("title").value = course.title || "";
-        document.getElementById("className").value = course.className || "";
-        document.getElementById("description").value = course.description || "";
-        document.getElementById("course_roadmap").value = course.course_roadmap || "";
-        document.getElementById("price").value = course.price || 0;
-        document.getElementById("oldPrice").value = course.oldPrice || 0;
-        document.getElementById("thumbnail").value = course.thumbnail || "";
-        document.getElementById("demo1").value = course.demo1 || "";
-        document.getElementById("demo2").value = course.demo2 || "";
-        document.getElementById("learningPoints").value = course.learningPoints || "";
-        document.getElementById("liveValidityDate").value = course.liveValidityDate ? course.liveValidityDate.split("T")[0] : "";
-        document.getElementById("recordedDurationDays").value = course.recordedDurationDays || 365;
-
-        // Load teachers
-        const container = document.getElementById("teachersContainer");
-        container.innerHTML = "";
-        if (course.teachers && course.teachers.length > 0) {
-            course.teachers.forEach(t => addTeacherField(t));
-        } else {
+    // --- FIX: UPDATED TO CLEAR AND REFILL TEACHERS ---
+    async function loadCourseDetails() {
+        const selectedId = document.getElementById("courseConfigDropdown").value;
+        if (!selectedId) {
+            const fields = ["courseId", "title", "className", "description", "course_roadmap", "price", "oldPrice", "thumbnail", "demo1", "demo2", "learningPoints", "liveValidityDate"];
+            fields.forEach(id => { const el = document.getElementById(id); if(el) el.value = ""; });
+            document.getElementById("recordedDurationDays").value = 365;
+            document.getElementById("teachersContainer").innerHTML = "";
             addTeacherField();
+            return;
         }
+        try {
+            const response = await fetch(`${BASE_URL}/api/admin/course/${selectedId}`, { headers: { "Authorization": "Bearer " + token } });
+            const course = await response.json();
+            document.getElementById("courseId").value = course.courseId || "";
+            document.getElementById("title").value = course.title || "";
+            document.getElementById("className").value = course.className || "";
+            document.getElementById("description").value = course.description || "";
+            document.getElementById("course_roadmap").value = course.course_roadmap || "";
+            document.getElementById("price").value = course.price || 0;
+            document.getElementById("oldPrice").value = course.oldPrice || 0;
+            document.getElementById("thumbnail").value = course.thumbnail || "";
+            document.getElementById("demo1").value = course.demo1 || "";
+            document.getElementById("demo2").value = course.demo2 || "";
+            document.getElementById("learningPoints").value = course.learningPoints || "";
+            if (course.liveValidityDate) document.getElementById("liveValidityDate").value = course.liveValidityDate.split("T")[0];
+            document.getElementById("recordedDurationDays").value = course.recordedDurationDays || 365;
 
-    } catch (error) {
-        console.error("Error loading course details:", error);
-        alert("Failed to load course details.");
+            // Handle Teachers
+            const container = document.getElementById("teachersContainer");
+            container.innerHTML = "";
+            if (course.teachers && course.teachers.length > 0) {
+                course.teachers.forEach(t => addTeacherField(t));
+            } else {
+                addTeacherField();
+            }
+        } catch (error) { alert("Failed to load course details."); }
     }
-}
-// --- GLOBAL STATE FOR AI QUIZ GENERATOR ---
-let selectedLecId = null; 
-let selectedCourseId = null;
 
-// --- UPDATED SYNC FUNCTION ---
-async function syncCourseSelection() {
-    const selectedId = document.getElementById("courseDropdown").value;
-    
-    // 1. Immediately lock in the Course IDs
-    document.getElementById("targetCourseId").value = selectedId;
-    document.getElementById("deleteCourseId").value = selectedId;
-    selectedCourseId = selectedId; 
-
-    if (!selectedId) {
-        selectedLecId = null;
-        return;
+    async function syncCourseSelection() {
+        const selectedId = document.getElementById("courseDropdown").value;
+        document.getElementById("targetCourseId").value = selectedId;
+        document.getElementById("deleteCourseId").value = selectedId;
+        selectedCourseId = selectedId; 
+        if (!selectedId) { selectedLecId = null; return; }
+        try {
+            const chapRes = await fetch(`${BASE_URL}/api/purchase/course-chapters/${selectedId}`, { headers: { "Authorization": "Bearer " + token } });
+            const chapters = await chapRes.json();
+            const chapDrop = document.getElementById('chapterDropdown');
+            chapDrop.innerHTML = '<option value="">-- Select Existing Chapter --</option>';
+            chapters.forEach(ch => { chapDrop.innerHTML += `<option value="${ch}">${ch}</option>`; });
+            const lecRes = await fetch(`${BASE_URL}/api/purchase/all-lectures-admin/${selectedId}`, { headers: { "Authorization": "Bearer " + token } });
+            const lectures = await lecRes.json();
+            const delDrop = document.getElementById("deleteLectureDropdown");
+            delDrop.innerHTML = '<option value="">-- Select Lecture for Quiz --</option>';
+            lectures.forEach(lec => { delDrop.innerHTML += `<option value="${lec._id}">${lec.chapterName} > ${lec.title}</option>`; });
+            delDrop.onchange = function() { selectedLecId = this.value; };
+            selectedLecId = delDrop.value; 
+            loadEnrollments(selectedId);
+            loadDoubts(selectedId);
+        } catch (error) { console.error("Sync Error:", error); }
     }
 
-    try {
-        // 2. Load Chapters for UI
-        const chapRes = await fetch(`${BASE_URL}/api/purchase/course-chapters/${selectedId}`, { 
-            headers: { "Authorization": "Bearer " + token } 
-        });
-        const chapters = await chapRes.json();
-        const chapDrop = document.getElementById('chapterDropdown');
-        chapDrop.innerHTML = '<option value="">-- Select Existing Chapter --</option>';
-        chapters.forEach(ch => { chapDrop.innerHTML += `<option value="${ch}">${ch}</option>`; });
-
-        // 3. Load Lectures into the Selection Dropdown
-        const lecRes = await fetch(`${BASE_URL}/api/purchase/all-lectures-admin/${selectedId}`, { 
-            headers: { "Authorization": "Bearer " + token } 
-        });
-        const lectures = await lecRes.json();
-        const delDrop = document.getElementById("deleteLectureDropdown");
-        
-        delDrop.innerHTML = '<option value="">-- Select Lecture for Quiz --</option>';
-        lectures.forEach(lec => { 
-            delDrop.innerHTML += `<option value="${lec._id}">${lec.chapterName} > ${lec.title}</option>`; 
-        });
-
-        // 4. THE FIX: Attach listener to update selectedLecId whenever the dropdown changes
-        delDrop.onchange = function() {
-            selectedLecId = this.value; 
-            console.log("Lecture ID locked for Quiz Injection:", selectedLecId);
-        };
-
-        // 5. Initial Sync: Set the ID to whatever the dropdown currently shows
-        selectedLecId = delDrop.value; 
-
-        // 6. Refresh background data
-        loadDoubts(selectedId);
-        loadEnrollments(selectedId);
-
-    } catch (error) { 
-        console.error("Sync Selection Error:", error); 
-    }
-}
-
-    /* --- COURSE CREATION --- */
     async function addCourse() {
         const payload = {
             courseId: document.getElementById("courseId").value.trim(),
@@ -754,26 +637,21 @@ async function syncCourseSelection() {
             demo1: document.getElementById("demo1").value,
             demo2: document.getElementById("demo2").value,
             learningPoints: document.getElementById("learningPoints").value,
-            teachers: getTeacherData(), // 🔥 Pushing multiple teachers
+            teachers: getTeacherData(),
             liveValidityDate: document.getElementById("liveValidityDate").value,
             recordedDurationDays: Number(document.getElementById("recordedDurationDays").value)
         };
-
-        if (!payload.courseId || !payload.title) return alert("Course ID and Title are mandatory.");
-
         try {
             const response = await fetch(`${BASE_URL}/api/admin/course`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+                method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
                 body: JSON.stringify(payload)
             });
             const result = await response.json();
             alert(result.message);
             loadOngoingCourses();
-        } catch (error) { alert("Network Error during course creation"); }
+        } catch (error) { alert("Network Error"); }
     }
 
-    /* --- NOTIFICATION LOGIC --- */
     async function broadcastNotification() {
         const select = document.getElementById("notifCourseSelect");
         const selectedOptions = Array.from(select.selectedOptions).map(opt => opt.value);
@@ -785,19 +663,16 @@ async function syncCourseSelection() {
         };
         try {
             const response = await fetch(`${BASE_URL}/api/admin/send-notification`, {
-                method: "POST", 
-                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+                method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
                 body: JSON.stringify(payload)
             });
             if (response.ok) { alert("Broadcast sent!"); loadActiveNotifs(); }
-        } catch (error) { console.error("Broadcast Fail:", error); }
+        } catch (error) { console.error("Broadcast Fail"); }
     }
 
     async function loadActiveNotifs() {
         try {
-            const response = await fetch(`${BASE_URL}/api/admin/active-notifications`, { 
-                headers: { "Authorization": "Bearer " + token } 
-            });
+            const response = await fetch(`${BASE_URL}/api/admin/active-notifications`, { headers: { "Authorization": "Bearer " + token } });
             const notifications = await response.json();
             const listDiv = document.getElementById("adminNotifList");
             listDiv.innerHTML = notifications.map(n => `
@@ -807,29 +682,23 @@ async function syncCourseSelection() {
                     <br><small style="opacity:0.6;">Targets: ${n.targetCourses.join(', ')}</small>
                 </div>
             `).join('');
-        } catch (error) { console.error("Notif Load Error"); }
+        } catch (error) { console.error("Notif Error"); }
     }
 
     async function deleteNotif(notifId) {
-        if (!confirm("Remove this broadcast?")) return;
-        const response = await fetch(`${BASE_URL}/api/admin/notification/${notifId}`, { 
-            method: "DELETE", headers: { "Authorization": "Bearer " + token } 
-        });
+        if (!confirm("Remove broadcast?")) return;
+        const response = await fetch(`${BASE_URL}/api/admin/notification/${notifId}`, { method: "DELETE", headers: { "Authorization": "Bearer " + token } });
         if (response.ok) loadActiveNotifs();
     }
 
-    /* --- LECTURE LOGIC --- */
     async function addLecture() {
         const targetId = document.getElementById("targetCourseId").value;
         const finalChapterName = isNewChapter ? document.getElementById("chapterNameInput").value : document.getElementById("chapterDropdown").value;
         const payload = {
             lectureTitle: document.getElementById("lectureTitle").value,
-            chapterName: finalChapterName, 
-            topicName: document.getElementById("topicName").value,
-            order: document.getElementById("order").value, 
-            videoUrl: document.getElementById("videoUrl").value,
-            duration: document.getElementById("duration").value, 
-            pdfNotes: document.getElementById("pdfNotes").value,
+            chapterName: finalChapterName, topicName: document.getElementById("topicName").value,
+            order: document.getElementById("order").value, videoUrl: document.getElementById("videoUrl").value,
+            duration: document.getElementById("duration").value, pdfNotes: document.getElementById("pdfNotes").value,
             practiceMcq: document.getElementById("practiceMcq").value
         };
         const response = await fetch(`${BASE_URL}/api/admin/course/${targetId}/lecture`, {
@@ -841,18 +710,12 @@ async function syncCourseSelection() {
         syncCourseSelection();
     }
 
-    /* --- DOUBT HUB --- */
     async function loadDoubts(courseId) {
         const container = document.getElementById("doubtsContainer");
         try {
-            const response = await fetch(`${BASE_URL}/api/admin/doubts/${courseId}`, { 
-                headers: { "Authorization": "Bearer " + token } 
-            });
+            const response = await fetch(`${BASE_URL}/api/admin/doubts/${courseId}`, { headers: { "Authorization": "Bearer " + token } });
             const doubts = await response.json();
-            if (doubts.length === 0) {
-                container.innerHTML = "<p style='opacity:0.5;'>All doubts resolved.</p>";
-                return;
-            }
+            if (doubts.length === 0) { container.innerHTML = "<p style='opacity:0.5;'>All doubts resolved.</p>"; return; }
             container.innerHTML = doubts.map(d => `
                 <div class="doubt-card">
                     <div style="font-size:0.85rem; margin-bottom:10px;"><b>${d.studentName}</b> asked on <i>${d.lectureTitle}</i></div>
@@ -874,23 +737,15 @@ async function syncCourseSelection() {
         if (response.ok) { alert("Doubt resolved!"); syncCourseSelection(); }
     }
 
-    /* --- STUDENT REGISTRY --- */
     async function loadEnrollments(courseId) {
         const body = document.getElementById("enrollmentBody");
         const countSpan = document.getElementById("enrollmentCount");
         try {
-            const response = await fetch(`${BASE_URL}/api/admin/course-enrollments/${courseId}`, { 
-                headers: { "Authorization": "Bearer " + token } 
-            });
+            const response = await fetch(`${BASE_URL}/api/admin/course-enrollments/${courseId}`, { headers: { "Authorization": "Bearer " + token } });
             const students = await response.json();
             countSpan.innerText = students.length;
-            if (students.length === 0) {
-                body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:30px;">No explorers found.</td></tr>';
-                return;
-            }
-            body.innerHTML = students.map(s => `
-                <tr><td>${s.name}</td><td>${s.email}</td><td>${s.studentClass}</td><td>${new Date(s.enrolledAt).toLocaleDateString()}</td></tr>
-            `).join('');
+            if (students.length === 0) { body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:30px;">No explorers found.</td></tr>'; return; }
+            body.innerHTML = students.map(s => `<tr><td>${s.name}</td><td>${s.email}</td><td>${s.studentClass}</td><td>${new Date(s.enrolledAt).toLocaleDateString()}</td></tr>`).join('');
         } catch (error) { body.innerHTML = '<tr><td colspan="4">Error retrieving student registry.</td></tr>'; }
     }
 
@@ -913,235 +768,106 @@ async function syncCourseSelection() {
     async function deleteLecture() {
         const lectureId = document.getElementById("deleteLectureDropdown").value;
         const currentCourseId = document.getElementById("targetCourseId").value;
-        document.getElementById("deleteLectureDropdown").onchange = function() {
-    selectedLecId = this.value;
-        };
-        if (!lectureId || !confirm("Delete this lesson?")) return;
-        const response = await fetch(`${BASE_URL}/api/admin/course/${currentCourseId}/lecture/${lectureId}`, { 
-            method: "DELETE", headers: { "Authorization": "Bearer " + token } 
-        });
-        const result = await response.json();
-        alert(result.message);
-        syncCourseSelection();
+        if (!lectureId || !confirm("Delete lesson?")) return;
+        const response = await fetch(`${BASE_URL}/api/admin/course/${currentCourseId}/lecture/${lectureId}`, { method: "DELETE", headers: { "Authorization": "Bearer " + token } });
+        const result = await response.json(); alert(result.message); syncCourseSelection();
     }
 
     async function deleteCourse() {
         const deleteId = document.getElementById("deleteCourseId").value;
-        if (!deleteId || !confirm("CRITICAL: Wipe course?")) return;
-        const response = await fetch(`${BASE_URL}/api/admin/course/${deleteId}`, { 
-            method: "DELETE", headers: { "Authorization": "Bearer " + token } 
-        });
-        const result = await response.json();
-        alert(result.message);
-        loadOngoingCourses();
+        if (!deleteId || !confirm("Wipe course?")) return;
+        const response = await fetch(`${BASE_URL}/api/admin/course/${deleteId}`, { method: "DELETE", headers: { "Authorization": "Bearer " + token } });
+        const result = await response.json(); alert(result.message); loadOngoingCourses();
     }
+
     function downloadEmails() {
-    const rows = document.getElementById("enrollmentBody").querySelectorAll("tr");
-    const emails = [];
-    
-    // Header for CSV
-    emails.push("Email Address");
-
-    rows.forEach(row => {
-        const emailCell = row.cells[1]; // Index 1 is the Email column
-        if (emailCell && emailCell.innerText.includes("@")) {
-            emails.push(emailCell.innerText.trim());
-        }
-    });
-
-    if (emails.length <= 1) {
-        return alert("No student emails found to download. Select a course first!");
+        const rows = document.getElementById("enrollmentBody").querySelectorAll("tr");
+        const emails = ["Email Address"];
+        rows.forEach(row => {
+            const emailCell = row.cells[1];
+            if (emailCell && emailCell.innerText.includes("@")) emails.push(emailCell.innerText.trim());
+        });
+        if (emails.length <= 1) return alert("No student emails found.");
+        const csvContent = "data:text/csv;charset=utf-8," + emails.join("\n");
+        const link = document.createElement("a");
+        link.setAttribute("href", encodeURI(csvContent));
+        link.setAttribute("download", `Emails.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
-    // Create the CSV file
-    const csvContent = "data:text/csv;charset=utf-8," + emails.join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    
-    const courseId = document.getElementById("targetCourseId").value || "students";
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `PiMentor_${courseId}_Emails.csv`);
-    document.body.appendChild(link);
-    
-    link.click();
-    document.body.removeChild(link);
-}
-/* --- PI-SHOT ADMIN LOGIC --- */
+    async function loadPishotCategories() {
+        try {
+            const res = await fetch(`${BASE_URL}/api/shorts/categories`, { headers: { "Authorization": "Bearer " + token } });
+            const categories = await res.json();
+            const select = document.getElementById('pishotCatSelect');
+            const deleteFilter = document.getElementById('pishotDeleteFilter');
+            const options = categories.map(c => `<option value="${c.name}">${c.icon} ${c.name} (${c.videoCount})</option>`).join('');
+            select.innerHTML = '<option value="">-- Select Existing Category --</option>' + options;
+            deleteFilter.innerHTML = '<option value="">-- All Categories --</option>' + options;
+        } catch (e) { console.error("Pishot category load fail"); }
+    }
 
-// Fetch categories to fill the dropdown
-/* --- PI-SHOT ADMIN LOGIC (FULLY SYNCED) --- */
-
-// 1. Initial Load of Dropdowns
-async function loadPishotCategories() {
-    console.log("Checking Pi-Shot Categories...");
-    try {
-        const res = await fetch(`${BASE_URL}/api/shorts/categories`, {
-            headers: { "Authorization": "Bearer " + token }
-        });
-        const categories = await res.json();
-        const select = document.getElementById('pishotCatSelect');
-        
-        // Reset Dropdown
-        select.innerHTML = '<option value="">-- Select Existing Category --</option>';
-        
-        if (categories && categories.length > 0) {
-            categories.forEach(cat => {
-                select.innerHTML += `<option value="${cat.name}">${cat.name} (${cat.videoCount})</option>`;
+    async function uploadPishot() {
+        const dropdownCat = document.getElementById('pishotCatSelect').value;
+        const customCat = document.getElementById('pishotCustomCat').value.trim();
+        const icon = document.getElementById('pishotCatIcon').value.trim();
+        const title = document.getElementById('pishotTitle').value.trim();
+        let rawUrl = document.getElementById('pishotUrl').value.trim();
+        const finalCategory = customCat || dropdownCat;
+        if(!finalCategory || !title || !rawUrl) return alert("Error: Category, Title, and URL are required.");
+        let videoId = "";
+        if (rawUrl.includes("shorts/")) videoId = rawUrl.split("shorts/")[1].split("?")[0];
+        else if (rawUrl.includes("v=")) videoId = rawUrl.split("v=")[1].split("&")[0];
+        else videoId = rawUrl.split("/").pop().split("?")[0];
+        const payload = { category: finalCategory, icon: icon || "🚀", title: title, ytUrl: `https://www.youtube.com/embed/${videoId}` };
+        try {
+            const res = await fetch(`${BASE_URL}/api/shorts/upload`, {
+                method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+                body: JSON.stringify(payload)
             });
-        }
-    } catch (e) { 
-        console.error("Pishot category load fail", e); 
-    }
-}
-      
-/* --- UPDATED PI-SHOT LOGIC --- */
-
-// 1. Unified Upload & Category/Emoji Logic
-async function uploadPishot() {
-    const dropdownCat = document.getElementById('pishotCatSelect').value;
-    const customCat = document.getElementById('pishotCustomCat').value.trim();
-    const icon = document.getElementById('pishotCatIcon').value.trim();
-    const title = document.getElementById('pishotTitle').value.trim();
-    let rawUrl = document.getElementById('pishotUrl').value.trim();
-
-    const finalCategory = customCat || dropdownCat;
-    
-    if(!finalCategory || !title || !rawUrl) {
-        return alert("Error: Category, Title, and URL are required.");
+            const result = await res.json(); alert(result.message);
+            document.getElementById('pishotCustomCat').value = ""; document.getElementById('pishotTitle').value = "";
+            document.getElementById('pishotUrl').value = ""; loadPishotCategories(); refreshPishotDeleteList();
+        } catch (e) { alert("Deployment failed."); }
     }
 
-    // Surgical URL Cleaning (Shorts -> Embed)
-    let videoId = "";
-    if (rawUrl.includes("shorts/")) videoId = rawUrl.split("shorts/")[1].split("?")[0];
-    else if (rawUrl.includes("v=")) videoId = rawUrl.split("v=")[1].split("&")[0];
-    else videoId = rawUrl.split("/").pop().split("?")[0];
-
-    const payload = {
-        category: finalCategory,
-        icon: icon || "🚀", // Uses your typed emoji or a rocket default
-        title: title,
-        ytUrl: `https://www.youtube.com/embed/${videoId}`
-    };
-
-    try {
-        const res = await fetch(`${BASE_URL}/api/shorts/upload`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-            body: JSON.stringify(payload)
-        });
-        const result = await res.json();
-        alert(result.message);
-        
-        // Reset and Refresh
-        document.getElementById('pishotCustomCat').value = "";
-        document.getElementById('pishotCatIcon').value = "";
-        document.getElementById('pishotTitle').value = "";
-        document.getElementById('pishotUrl').value = "";
-        loadPishotCategories();
-        refreshPishotDeleteList();
-    } catch (e) { alert("Deployment failed."); }
-}
-
-// 2. Load Categories into BOTH Select Dropdowns
-async function loadPishotCategories() {
-    try {
-        const res = await fetch(`${BASE_URL}/api/shorts/categories`, {
-            headers: { "Authorization": "Bearer " + token }
-        });
-        const categories = await res.json();
-        
-        const uploadSelect = document.getElementById('pishotCatSelect');
-        const deleteFilter = document.getElementById('pishotDeleteFilter');
-        
-        const options = categories.map(c => `<option value="${c.name}">${c.icon} ${c.name} (${c.videoCount})</option>`).join('');
-        
-        uploadSelect.innerHTML = '<option value="">-- Select Existing Category --</option>' + options;
-        deleteFilter.innerHTML = '<option value="">-- All Categories --</option>' + options;
-    } catch (e) { console.error("Category sync error"); }
-}
-
-// 3. Filtered Delete List
-async function refreshPishotDeleteList() {
-    const filterCat = document.getElementById('pishotDeleteFilter').value;
-    try {
-        const res = await fetch(`${BASE_URL}/api/shorts/list?category=${encodeURIComponent(filterCat)}`, {
-            headers: { "Authorization": "Bearer " + token }
-        });
-        const shorts = await res.json();
-        const delSelect = document.getElementById('pishotDeleteSelect');
-        
-        delSelect.innerHTML = shorts.length ? 
-            shorts.map(s => `<option value="${s._id}">${s.title}</option>`).join('') :
-            '<option value="">-- No shorts in this category --</option>';
-    } catch (e) { console.error("List refresh fail"); }
-}
-
-async function deletePishot() {
-    const shotId = document.getElementById('pishotDeleteSelect').value;
-    if(!shotId) return alert("Select a shot first.");
-    if(!confirm("Wipe this shot?")) return;
-
-    await fetch(`${BASE_URL}/api/shorts/delete/${shotId}`, {
-        method: "DELETE", headers: { "Authorization": "Bearer " + token }
-    });
-    refreshPishotDeleteList();
-    loadPishotCategories();
-}
-async function deployManualQuiz() {
-    let jsonInput = document.getElementById("manualJsonInput").value.trim();
-    const btn = document.getElementById("injectBtn");
-
-    if (!selectedLecId || !selectedCourseId) {
-        return alert("❌ Error: Please select a Course and a specific Lecture first!");
+    async function refreshPishotDeleteList() {
+        const filterCat = document.getElementById('pishotDeleteFilter').value;
+        try {
+            const res = await fetch(`${BASE_URL}/api/shorts/list?category=${encodeURIComponent(filterCat)}`, { headers: { "Authorization": "Bearer " + token } });
+            const shorts = await res.json();
+            const delSelect = document.getElementById('pishotDeleteSelect');
+            delSelect.innerHTML = shorts.length ? shorts.map(s => `<option value="${s._id}">${s.title}</option>`).join('') : '<option value="">-- No shorts --</option>';
+        } catch (e) { console.error("List refresh fail"); }
     }
 
-    if (!jsonInput) {
-        return alert("❌ Error: Please paste the JSON array.");
+    async function deletePishot() {
+        const shotId = document.getElementById('pishotDeleteSelect').value;
+        if(!shotId || !confirm("Wipe shot?")) return;
+        await fetch(`${BASE_URL}/api/shorts/delete/${shotId}`, { method: "DELETE", headers: { "Authorization": "Bearer " + token } });
+        refreshPishotDeleteList(); loadPishotCategories();
     }
 
-    try {
-        // 1. Remove markdown backticks if present
-        jsonInput = jsonInput.replace(/```json|```/g, "").trim();
-
-        // 2. THE SECRET SAUCE: Automatically fix single backslashes for Math/LaTeX
-        // This looks for backslashes that aren't already escaped and doubles them
-        const fixedJson = jsonInput.replace(/\\(?![\\"\/bfnrtu]|u[0-9a-fA-F]{4})/g, "\\\\");
-
-        // 3. Parse the cleaned JSON
-        const questionsArray = JSON.parse(fixedJson);
-
-        btn.innerText = "⏳ Deploying...";
-        btn.disabled = true;
-
-        const res = await fetch(`${BASE_URL}/api/admin/save-quiz`, {
-            method: "POST",
-            headers: { 
-                "Content-Type": "application/json", 
-                "Authorization": "Bearer " + token 
-            },
-            body: JSON.stringify({ 
-                courseId: selectedCourseId, 
-                lectureId: selectedLecId, 
-                questions: questionsArray 
-            })
-        });
-
-        if (res.ok) {
-            alert("✅ Success: Eigenvalue Quiz is now live!");
-            document.getElementById("manualJsonInput").value = "";
-        } else {
-            const errData = await res.json();
-            alert("❌ Server Error: " + errData.message);
-        }
-
-    } catch (err) {
-        alert("⚠️ JSON Error: " + err.message + "\n\nTip: Make sure you copied the entire array from [ to ].");
-        console.error("Original Input:", jsonInput);
-    } finally {
-        btn.innerText = "🚀 Deploy Quiz to Cloud";
-        btn.disabled = false;
+    async function deployManualQuiz() {
+        let jsonInput = document.getElementById("manualJsonInput").value.trim();
+        const btn = document.getElementById("injectBtn");
+        if (!selectedLecId || !selectedCourseId) return alert("❌ Error: Select a Course and a Lecture first!");
+        if (!jsonInput) return alert("❌ Error: Paste the JSON array.");
+        try {
+            jsonInput = jsonInput.replace(/```json|```/g, "").trim();
+            const fixedJson = jsonInput.replace(/\\(?![\\"\/bfnrtu]|u[0-9a-fA-F]{4})/g, "\\\\");
+            const questionsArray = JSON.parse(fixedJson);
+            btn.innerText = "⏳ Deploying..."; btn.disabled = true;
+            const res = await fetch(`${BASE_URL}/api/admin/save-quiz`, {
+                method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+                body: JSON.stringify({ courseId: selectedCourseId, lectureId: selectedLecId, questions: questionsArray })
+            });
+            if (res.ok) { alert("✅ Success: Quiz is live!"); document.getElementById("manualJsonInput").value = ""; }
+            else { const errData = await res.json(); alert("❌ Server Error: " + errData.message); }
+        } catch (err) { alert("⚠️ JSON Error: " + err.message); } finally { btn.innerText = "🚀 Deploy Quiz to Cloud"; btn.disabled = false; }
     }
-}
 </script>
 </body>
 </html>
