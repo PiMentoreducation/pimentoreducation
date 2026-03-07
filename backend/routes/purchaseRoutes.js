@@ -12,6 +12,9 @@ const Course = require("../models/Course");
 const Lecture = require("../models/Lecture");
 const User = require("../models/User");
 const Doubt = require("../models/Doubt");
+const Progress = require("../models/Progress");
+
+// GET Leaderboard for a specific course
 const Notification = require("../models/Notification"); // Standard import
 
 /* ================= CORE PURCHASE & DASHBOARD ================= */
@@ -196,5 +199,30 @@ router.get("/quiz/fetch/:lectureId", authMiddleware, async (req, res) => {
         if (!quiz) return res.status(404).json({ message: "No quiz found" });
         res.json(quiz);
     } catch (err) { res.status(500).json({ message: "Server error" }); }
+});
+
+router.get("/leaderboard/:courseId", authMiddleware, async (req, res) => {
+    try {
+        const stats = await Progress.aggregate([
+            { $match: { courseId: req.params.courseId, isMastered: true } },
+            { $group: { 
+                _id: "$studentEmail", 
+                name: { $first: "$studentName" }, 
+                masteredCount: { $sum: 1 } 
+            }},
+            { $sort: { masteredCount: -1 } },
+            { $limit: 10 }
+        ]);
+        
+        // Format for frontend
+        const leaderboard = stats.map(s => ({
+            name: s.name,
+            masteredCount: s.masteredCount
+        }));
+
+        res.json(leaderboard);
+    } catch (err) {
+        res.status(500).json({ message: "Leaderboard error" });
+    }
 });
 module.exports = router;

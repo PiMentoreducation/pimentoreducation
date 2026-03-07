@@ -1,7 +1,7 @@
 const dns = require("node:dns/promises");
 // Manually setting DNS prevents Render's internal lookup delays
 dns.setServers(["1.1.1.1", "8.8.8.8"]);
-
+const app = express(); // Initialize app before using it!
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
@@ -12,13 +12,16 @@ const purchaseRoutes = require("./routes/purchaseRoutes");
 const shortsRoutes = require("./routes/shortsRoutes"); // 1. Import the new route file
 const Purchase = require("./models/Purchase");
 const Notification = require("./models/Notification"); // Import the model
-
+// 1. Import the progress routes file
+const progressRoutes = require("./routes/progressRoutes");
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 // Initialize Environment Variables and Database
 dotenv.config();
 connectDB();
 Purchase.syncIndexes();
 
-const app = express(); // Initialize app before using it!
+
 
 // --- SIMPLIFIED CORS CONFIGURATION ---
 // This version is more reliable for cloud handshakes
@@ -43,15 +46,14 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
 // --- API ROUTES ---
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/purchase", purchaseRoutes);
 app.use("/api/payment", require("./routes/paymentRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/shorts", shortsRoutes); // 2. Mount the routes on /api/shorts
+// 2. Mount the routes so /api/progress/ works
+app.use("/api/progress", progressRoutes);
 
 // --- RENDER KEEP-ALIVE LOGIC ---
 
