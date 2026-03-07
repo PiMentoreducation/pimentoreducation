@@ -66,7 +66,6 @@
             display: flex; flex-direction: row; gap: 40px; 
         }
 
-        /* --- LEFT COLUMN --- */
         .main-content { flex: 1; min-width: 0; }
         .main-content h1 { font-size: 3rem; font-weight: 800; line-height: 1.2; margin-bottom: 20px; }
         .badge-row { display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; }
@@ -82,53 +81,36 @@
         .grid-list { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .list-item { display: flex; gap: 10px; font-size: 0.95rem; opacity: 0.9; }
 
-        /* --- SUCCESS STORIES (ONE BY ONE SCROLL) --- */
         .success-slider {
             display: flex; overflow-x: auto; gap: 20px; padding: 10px 5px 25px;
-            scroll-snap-type: x mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x mandatory; scroll-behavior: smooth;
         }
-        .success-slider::-webkit-scrollbar { height: 6px; }
-        .success-slider::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
-
         .success-card {
-            flex: 0 0 100%; /* Snap one card at a time */
-            background: rgba(255, 255, 255, 0.03);
+            flex: 0 0 100%; background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--card-border); border-radius: 20px; padding: 25px;
             scroll-snap-align: start; text-align: center;
         }
-        .student-img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent); margin-bottom: 15px; }
-        .student-name { font-weight: 800; font-size: 1.1rem; color: var(--text); margin-bottom: 5px; }
-        .student-saying { font-size: 0.85rem; opacity: 0.8; font-style: italic; line-height: 1.5; }
+        .student-img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--accent); margin-bottom: 15px; object-fit: cover; }
 
-        /* --- FAQ --- */
-        .faq-card { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--card-border); border-radius: 15px; margin-bottom: 12px; overflow: hidden; transition: var(--transition); }
+        .faq-card { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--card-border); border-radius: 15px; margin-bottom: 12px; overflow: hidden; }
         .faq-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: 800; color: var(--accent); }
         .faq-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; background: rgba(0, 0, 0, 0.1); }
-        .faq-content { padding: 20px; font-size: 0.9rem; opacity: 0.8; line-height: 1.6; }
         .faq-card.active .faq-body { max-height: 300px; }
-        .faq-card.active .faq-icon { transform: rotate(45deg); }
 
-        /* --- RIGHT SIDEBAR --- */
         .sticky-sidebar { width: 400px; flex-shrink: 0; position: sticky; top: 100px; height: fit-content; }
-        .pricing-card { background: var(--glass); border: 2px solid var(--accent); border-radius: 30px; padding: 30px; backdrop-filter: blur(20px); text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
-        .thumbnail-img { width: 100%; border-radius: 20px; margin-bottom: 20px; border: 1px solid var(--card-border); }
+        .pricing-card { background: var(--glass); border: 2px solid var(--accent); border-radius: 30px; padding: 30px; text-align: center; }
+        .thumbnail-img { width: 100%; border-radius: 20px; margin-bottom: 20px; }
         .original-price { text-decoration: line-through; opacity: 0.5; font-size: 1.2rem; }
         .current-price { font-size: 2.8rem; font-weight: 800; color: #2ecc71; margin-bottom: 5px; }
-        .discount-tag { color: var(--accent); font-weight: 800; margin-bottom: 20px; display: block; }
         
-        .buy-now-btn { width: 100%; padding: 20px; background: var(--accent); border: none; border-radius: 18px; color: white; font-weight: 800; font-size: 1.2rem; cursor: pointer; transition: 0.3s; margin-bottom: 20px; box-shadow: 0 10px 30px var(--accent-glow); }
-        .buy-now-btn:hover { transform: scale(1.02); filter: brightness(1.1); }
+        .buy-now-btn { width: 100%; padding: 20px; background: var(--accent); border: none; border-radius: 18px; color: white; font-weight: 800; font-size: 1.2rem; cursor: pointer; }
 
-        /* MULTI-TEACHER CSS */
         .instructor-card { display: flex; align-items: center; gap: 20px; text-align: left; margin-top: 20px; border-top: 1px solid var(--card-border); padding-top: 20px; }
         .instructor-img { width: 75px; height: 75px; border-radius: 50%; border: 2px solid var(--accent); object-fit: cover; }
 
         @media (max-width: 1100px) {
             .desc-container { flex-direction: column; }
-            .sticky-sidebar { width: 100%; order: -1; position: relative; top: 0; }
-            .main-content h1 { font-size: 2.2rem; }
-            .demo-grid { grid-template-columns: 1fr; }
-            .grid-list { grid-template-columns: 1fr; }
+            .sticky-sidebar { width: 100%; position: relative; top: 0; }
         }
     </style>
 </head>
@@ -165,7 +147,8 @@
             <div class="video-wrapper"><iframe id="demo1" allowfullscreen></iframe></div>
             <div class="video-wrapper"><iframe id="demo2" allowfullscreen></iframe></div>
         </div>
-                <div class="content-section">
+
+        <div class="content-section">
             <h2 class="section-title">Course Description</h2>
             <div class="grid-list" id="description"></div>
         </div>
@@ -173,7 +156,6 @@
             <h2 class="section-title">What You'll Master</h2>
             <div class="grid-list" id="learningList"></div>
         </div>
-
         <div class="content-section">
             <h2 class="section-title">Course Roadmap</h2>
             <div id="course_roadmap"></div>
@@ -191,11 +173,6 @@
                     <img src="/images/student2.jpg" class="student-img" alt="S2">
                     <div class="student-name">Sneha Kapoor</div>
                     <div class="student-saying">"I was struggling with Physics, but spontaneous demos made it easy."</div>
-                </div>
-                <div class="success-card">
-                    <img src="/images/student3.jpg" class="student-img" alt="S3">
-                    <div class="student-name">Rahul Singh</div>
-                    <div class="student-saying">"The 24/7 doubt support is amazing. I never felt lost."</div>
                 </div>
             </div>
         </div>
@@ -220,13 +197,10 @@
                 <p>📄 Downloadable PDF Mindmaps</p>
                 <p>🎯 Daily Practice MCQ & DPPs</p>
                 <p>♾️ Unlimited Access for 1 Year</p>
-                <p>💻 Multi-device Support</p>
             </div>
-
-            <div id="teachersListContainer">
-                </div>
+            <div id="teachersListContainer"></div>
         </div>
-        <a href="courses.html" style="display: block; text-align: center; margin-top: 20px; color: inherit; text-decoration: none; font-weight: 700; font-size: 0.9rem;">Explore Other Courses →</a>
+        <a href="courses.html" style="display: block; text-align: center; margin-top: 20px; color: inherit; text-decoration: none; font-weight: 700;">Explore Other Courses →</a>
     </div>
 </main>
 
@@ -240,7 +214,6 @@
             <a href="index.html">Home</a>
             <a href="dashboard.html">Dashboard</a>
             <a href="courses.html">All Courses</a>
-            <a href="#">Community</a>
             ${token ? '' : '<a href="login.html">Login</a><a href="register.html" class="btn-cta">Get Started</a>'}
             <button onclick="toggleTheme()" style="background:none; border:none; color:inherit; cursor:pointer; font-size:1.2rem;">🌙</button>
         `;
@@ -250,8 +223,12 @@
 
     async function loadData() {
         if (!courseId) return window.location.href = "courses.html";
+        const token = localStorage.getItem("token");
         try {
-            const res = await fetch(`${BASE_URL}/api/admin/course/${courseId}`);
+            // FIX: Added Authorization Header for Admin Routes
+            const res = await fetch(`${BASE_URL}/api/admin/course/${courseId}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
             if (!res.ok) throw new Error("Galaxy data missing.");
             const d = await res.json();
 
@@ -274,16 +251,14 @@
                 document.getElementById("learningList").innerHTML = lp.map(x => `<div class="list-item">✨ ${x.trim()}</div>`).join('');
             }
 
-            // --- TEACHER LOOP LOGIC ---
-            const teachersContainer = document.getElementById("teachersListContainer");
             if (d.teachers && d.teachers.length > 0) {
-                teachersContainer.innerHTML = d.teachers.map(t => `
+                document.getElementById("teachersListContainer").innerHTML = d.teachers.map(t => `
                     <div class="instructor-card">
                         <img src="${t.image || '/images/teacher-default.png'}" class="instructor-img">
                         <div>
-                            <h4 style="margin-bottom: 2px; font-size:0.95rem;">${t.name}</h4>
-                            <p style="font-size: 0.75rem; font-weight: 700; color: var(--accent);">${t.qual}</p>
-                            <p style="font-size: 0.7rem; opacity: 0.7; margin-top: 4px;">${t.achieve}</p>
+                            <h4 style="font-size:0.95rem;">${t.name}</h4>
+                            <p style="font-size: 0.75rem; color: var(--accent);">${t.qual}</p>
+                            <p style="font-size: 0.7rem; opacity: 0.7;">${t.achieve}</p>
                         </div>
                     </div>
                 `).join('');
@@ -293,7 +268,7 @@
             if(discount > 0) document.getElementById("discountTxt").innerText = `SAVE ${discount}% TODAY`;
 
             document.getElementById("course_roadmap").innerHTML = `<p>${d.course_roadmap || 'Roadmap coming soon.'}</p>`;
-            document.getElementById("description").innerHTML = `<p>${d.description || 'Roadmap coming soon.'}</p>`;
+            document.getElementById("description").innerHTML = `<p>${d.description || 'Description coming soon.'}</p>`;
             renderFAQs();
 
         } catch (err) { 
@@ -306,14 +281,12 @@
         const faqs = [
             { q: "🚀 How long will I have access?", a: "Unlimited access till the course validity." },
             { q: "📱 Can I watch on my mobile?", a: "Yes, fully optimized for all devices." },
-            { q: "❓ How do I clear my doubts?", a: "Dedicated 'Ask Doubt' section below every video." },
-            { q: "📄 Are the notes downloadable?", a: "Yes, PDF Mindmaps can be downloaded for offline use." },
-            { q: "💳 Is the payment secure?", a: "Transactions via Razorpay with encrypted UPI/Card support." }
+            { q: "❓ How do I clear my doubts?", a: "Dedicated 'Ask Doubt' section below every video." }
         ];
         document.getElementById("faqList").innerHTML = faqs.map((f, i) => `
             <div class="faq-card" id="faq-${i}">
                 <div class="faq-header" onclick="toggleFaq(${i})">
-                    <span>${f.q}</span><span class="faq-icon">+</span>
+                    <span>${f.q}</span><span>+</span>
                 </div>
                 <div class="faq-body"><div class="faq-content">${f.a}</div></div>
             </div>
@@ -328,8 +301,7 @@
     }
 
     function handleEnrollment() {
-        const token = localStorage.getItem("token");
-        if (!token) { window.location.href = "login.html"; return; }
+        if (!localStorage.getItem("token")) { window.location.href = "login.html"; return; }
         window.location.href = `courses.html?renew=${courseId}`;
     }
 
