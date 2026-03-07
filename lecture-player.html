@@ -5,10 +5,12 @@
     <title>Learning Player | PiMentor</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700;800&display=swap" rel="stylesheet">
+    
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    
+
     <style>
+        /* --- 1. THEME VARIABLES --- */
         :root {
             --space-bg: radial-gradient(circle at top, #0d1117 0%, #010409 100%);
             --accent: #7c4dff;
@@ -92,17 +94,28 @@
         .btn-mcq { background: rgba(40, 167, 69, 0.15); color: #2ecc71; border: 1px solid rgba(40, 167, 69, 0.3); }
         .btn-res:hover { transform: translateY(-3px); filter: brightness(1.1); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
 
+        /* Preservation of your Doubt Box Style */
+        #doubtText {
+            width: 100%; height: 80px; margin-top: 15px; border-radius: 12px; 
+            border: 1px solid var(--card-border); padding: 12px; background: rgba(255,255,255,0.05);
+            color: var(--text); resize: none;
+        }
+        [data-theme="light"] #doubtText { background: #fff; }
+
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center;
-            backdrop-filter: blur(10px);
+            flex-direction: column; backdrop-filter: blur(10px);
         }
-        .modal-content { width: 90%; max-width: 600px; max-height: 85vh; background: var(--space-bg); padding: 30px; border-radius: 20px; overflow-y: auto; border: 1px solid var(--accent); position: relative; }
+        .modal-content { width: 90%; height: 85%; background: white; border-radius: 20px; overflow: hidden; position: relative; }
         
         .close-modal { 
-            position: absolute; top: 20px; right: 20px; font-size: 30px; color: white; 
-            cursor: pointer; z-index: 2002;
+            position: absolute; top: 20px; right: 30px; font-size: 35px; color: white; 
+            cursor: pointer; z-index: 2002; background: var(--danger); 
+            width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; 
+            border-radius: 50%; transition: 0.3s; box-shadow: 0 0 20px rgba(255, 77, 77, 0.5);
         }
+        .close-modal:hover { transform: scale(1.1) rotate(90deg); }
 
         @media (max-width: 900px) { 
             .player-layout { grid-template-columns: 1fr; padding-top: 80px; } 
@@ -110,7 +123,7 @@
         }
     </style>
 </head>
-<body onload="initPlayer()">
+<body>
 
 <header class="player-header">
     <a href="/dashboard.html" class="brand">
@@ -135,6 +148,23 @@
         </div>
     </div>
 
+    <div id="quizModal" class="modal-overlay">
+        <div class="modal-content" style="background: var(--space-bg); padding: 30px; color: white; border: 1px solid var(--accent); height: auto; max-height: 85vh; overflow-y: auto;">
+            <span class="close-modal" onclick="closeQuizModal()" style="top: 10px; right: 10px; width: 35px; height: 35px; font-size: 20px;">&times;</span>
+            <div id="quizContainer">
+                <h2 id="quizTitle" style="color: var(--accent); margin-bottom: 20px;">Knowledge Check</h2>
+                <div id="questionArea"></div>
+                <button id="submitQuizBtn" onclick="calculateScore()" class="btn-res btn-mcq" style="margin-top: 20px;">Submit Answers</button>
+            </div>
+            
+            <div id="quizResult" style="display:none; text-align:center;">
+                <h1 id="resultScore" style="font-size: 3rem; margin-bottom: 10px; color: var(--accent);">0/0</h1>
+                <p id="resultFeedback" style="margin-bottom: 20px;"></p>
+                <button onclick="closeQuizModal()" class="btn-res btn-pdf">Back to Lecture</button>
+            </div>
+        </div>
+    </div>
+
     <div class="sidebar">
         <div class="sidebar-card">
             <h3 style="font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent);">🏆 Progress Leaders</h3>
@@ -145,7 +175,7 @@
 
         <div class="sidebar-card">
             <h3 style="font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Resources</h3>
-            <button id="pdfBtn" class="btn-res btn-pdf" style="display:none;" onclick="openPdfModal(this.dataset.url)">📄 View PDF Notes</button>
+            <button id="pdfBtn" class="btn-res btn-pdf" style="display:none;" onclick="openResourceModal(this.dataset.url)">📄 View PDF Notes</button>
             <button id="mcqBtn" class="btn-res btn-mcq" style="display:none;" onclick="openQuiz()">📝 Take Quiz</button>
         </div>
 
@@ -164,26 +194,11 @@
 </div>
 
 <div id="resourceModal" class="modal-overlay">
-    <span class="close-modal" onclick="closeModal()">&times;</span>
-    <div class="modal-content" style="width: 90%; height: 85%; max-width: none;">
+    <span class="close-modal" onclick="closeModal()" title="Back to Video">&times;</span>
+    <div class="modal-content">
         <iframe id="resourceIframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
     </div>
-</div>
-
-<div id="quizModal" class="modal-overlay">
-    <div class="modal-content">
-        <span class="close-modal" onclick="closeQuizModal()">&times;</span>
-        <div id="quizContainer">
-            <h2 id="quizTitle" style="color: var(--accent); margin-bottom: 20px;">Knowledge Check</h2>
-            <div id="questionArea"></div>
-            <button id="submitQuizBtn" onclick="calculateScore()" class="btn-res btn-mcq" style="margin-top: 20px;">Submit Answers</button>
-        </div>
-        <div id="quizResult" style="display:none; text-align:center;">
-            <h1 id="resultScore" style="font-size: 3rem; margin-bottom: 10px; color: var(--accent);">0/0</h1>
-            <p id="resultFeedback" style="margin-bottom: 20px; font-weight: bold;"></p>
-            <button onclick="closeQuizModal()" class="btn-res btn-pdf">Back to Lecture</button>
-        </div>
-    </div>
+    <p style="color: white; margin-top: 20px; font-size: 0.9rem; font-weight: bold;">Click the RED button to return to the lecture.</p>
 </div>
 
 <script src="https://www.youtube.com/iframe_api"></script>
@@ -201,9 +216,23 @@
     let isVideoFlaggedComplete = false;
     let currentQuizData = [];
 
-    // --- INITIALIZATION ---
+    // --- THEME LOGIC ---
+    function applyTheme(theme) {
+        document.documentElement.setAttribute("data-theme", theme);
+        const btn = document.getElementById("themeBtn");
+        if(btn) btn.innerText = theme === "dark" ? "☀️" : "🌙";
+        localStorage.setItem("pimentor-theme", theme);
+    }
+    applyTheme(localStorage.getItem("pimentor-theme") || "dark");
+    function toggleTheme() { applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark"); }
+
+    // --- PLAYER INITIALIZATION ---
     async function initPlayer() {
-        if (!courseId || !chapter) { window.location.href = "dashboard.html"; return; }
+        if (!courseId || !chapter) {
+            window.location.href = "dashboard.html";
+            return;
+        }
+
         document.getElementById("backBtn").href = `course-structure.html?id=${courseId}`;
         document.getElementById("chapterNameDisplay").innerText = "CHAPTER: " + chapter;
 
@@ -221,12 +250,21 @@
                     </div>
                 `).join('');
                 playLecture(lectures[0]);
+            } else {
+                list.innerHTML = "<p style='text-align:center; opacity:0.5;'>No lectures found.</p>";
             }
             await fetchLeaderboard();
         } catch (err) { console.error(err); }
     }
 
-    // --- PLAYER LOGIC ---
+    function onYouTubeIframeAPIReady() { console.log("YouTube API Ready"); }
+
+    function extractVideoId(url) {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    }
+
     function playLecture(lec) {
         activeLectureId = lec._id;
         isVideoFlaggedComplete = false;
@@ -239,30 +277,28 @@
         document.getElementById("lectureTitle").innerText = lec.title;
         document.getElementById("topicDisplay").innerText = "TOPIC: " + (lec.topicName || "General");
 
-        const vId = extractVideoId(lec.videoUrl);
+        const videoId = extractVideoId(lec.videoUrl);
+
         if (!ytPlayer) {
             ytPlayer = new YT.Player('mainIframe', {
-                height: '100%', width: '100%', videoId: vId,
+                height: '100%', width: '100%', videoId: videoId,
                 playerVars: { 'playsinline': 1, 'rel': 0, 'modestbranding': 1 },
-                events: { 'onReady': startWatchdog, 'onStateChange': onPlayerStateChange }
+                events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange }
             });
         } else {
-            ytPlayer.loadVideoById(vId);
+            ytPlayer.loadVideoById(videoId);
         }
 
-        // Show buttons based on database data
-        document.getElementById("pdfBtn").style.display = lec.pdfNotes ? "block" : "none";
-        document.getElementById("pdfBtn").dataset.url = lec.pdfNotes || "";
+        const pBtn = document.getElementById("pdfBtn");
+        const mBtn = document.getElementById("mcqBtn");
+        if(lec.pdfNotes) { pBtn.style.display = "block"; pBtn.dataset.url = lec.pdfNotes; } 
+        else { pBtn.style.display = "none"; }
         
-        // Always show the MCQ button if user selected it in Admin
-        document.getElementById("mcqBtn").style.display = "block";
+        // Ensure the MCQ button is visible if logic requires
+        mBtn.style.display = "block";
     }
 
-    function extractVideoId(url) {
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-        const match = url.match(regExp);
-        return (match && match[2].length === 11) ? match[2] : null;
-    }
+    function onPlayerReady(event) { startWatchdog(); }
 
     function onPlayerStateChange(event) {
         if (event.data === YT.PlayerState.PLAYING) startWatchdog();
@@ -289,22 +325,17 @@
                 headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
                 body: JSON.stringify({ courseId, lectureId: activeLectureId, isVideoCompleted: true })
             });
-            console.log("Progress Synced: 85% Unlocked!");
-        } catch (err) { console.error(err); }
+        } catch (err) { console.error("Progress sync error:", err); }
     }
 
-    // --- QUIZ LOGIC ---
+    // --- QUIZ HANDLERS ---
     async function openQuiz() {
         try {
-            // Note: Ensure your backend route for fetching quiz JSON matches this!
-            const res = await fetch(`${BASE_URL}/api/purchase/fetch-quiz/${activeLectureId}`, {
+            const res = await fetch(`${BASE_URL}/api/quiz/fetch/${activeLectureId}`, {
                 headers: { "Authorization": "Bearer " + token }
             });
             const data = await res.json();
-            
-            if (!data || !data.questions || data.questions.length === 0) {
-                return alert("No knowledge mission assigned to this lecture yet.");
-            }
+            if (!data || !data.questions || data.questions.length === 0) return alert("No quiz available yet.");
 
             currentQuizData = data.questions;
             renderQuizQuestions(data.questions);
@@ -312,20 +343,19 @@
             document.getElementById("quizContainer").style.display = "block";
             document.getElementById("quizResult").style.display = "none";
             
-            // Re-run MathJax to render symbols in the modal
+            // Re-render MathJax
             if (window.MathJax) MathJax.typesetPromise();
-
-        } catch (err) { alert("Deployment error. Check connection."); }
+        } catch (err) { alert("Error loading quiz."); }
     }
 
     function renderQuizQuestions(questions) {
         const area = document.getElementById("questionArea");
         area.innerHTML = questions.map((q, qIndex) => `
-            <div style="margin-bottom: 25px; border-bottom: 1px solid var(--card-border); padding-bottom: 15px;">
-                <p style="font-weight:bold; margin-bottom:15px; font-size: 1rem;">${qIndex + 1}. ${q.questionText}</p>
+            <div class="quiz-q-box" style="margin-bottom: 25px; border-bottom: 1px solid var(--card-border); padding-bottom: 15px;">
+                <p style="font-weight:bold; margin-bottom:15px; font-size: 1.1rem;">${qIndex + 1}. ${q.questionText}</p>
                 <div style="display: flex; flex-direction: column; gap: 10px;">
                     ${q.options.map((opt, oIndex) => `
-                        <label style="padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor:pointer;">
+                        <label style="display:block; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor:pointer;">
                             <input type="radio" name="q${qIndex}" value="${oIndex}"> ${opt}
                         </label>
                     `).join('')}
@@ -344,19 +374,37 @@
         document.getElementById("quizContainer").style.display = "none";
         document.getElementById("quizResult").style.display = "block";
         document.getElementById("resultScore").innerText = `${score} / ${currentQuizData.length}`;
-        document.getElementById("resultFeedback").innerText = score === currentQuizData.length ? "Mastery Achieved! 🏆" : "Keep Learning, Explorer!";
         
-        // Sync score and Mastery status with Backend
         const res = await fetch(`${BASE_URL}/api/progress/submit-quiz`, {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
             body: JSON.stringify({ courseId, lectureId: activeLectureId, score })
         });
-
-        if(res.ok) await fetchLeaderboard();
+        if(res.ok) fetchLeaderboard();
     }
 
-    // --- LEADERBOARD & UTILS ---
+    function closeQuizModal() { document.getElementById("quizModal").style.display = "none"; }
+    function openResourceModal(url) { document.getElementById("resourceIframe").src = url; document.getElementById("resourceModal").style.display = "flex"; }
+    function closeModal() { document.getElementById("resourceModal").style.display = "none"; document.getElementById("resourceIframe").src = ""; }
+
+    async function submitDoubt() {
+        const question = document.getElementById("doubtText").value;
+        const status = document.getElementById("doubtStatus");
+        if(!question.trim()) return alert("Please type your question.");
+        try {
+            const res = await fetch(`${BASE_URL}/api/purchase/ask-doubt`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+                body: JSON.stringify({ lectureId: activeLectureId, question })
+            });
+            if(res.ok) {
+                document.getElementById("doubtText").value = "";
+                status.innerText = "Doubt transmitted successfully! 🚀";
+                setTimeout(() => status.innerText = "", 3000);
+            }
+        } catch (err) { console.error(err); }
+    }
+
     async function fetchLeaderboard() {
         try {
             const res = await fetch(`${BASE_URL}/api/purchase/leaderboard/${courseId}`, {
@@ -365,34 +413,15 @@
             const data = await res.json();
             const list = document.getElementById("leaderboardList");
             if (data.length > 0) {
-                list.innerHTML = data.map((u, i) => `
+                list.innerHTML = data.map((user, index) => `
                     <div style="display:flex; justify-content:space-between; align-items:center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <span style="font-size: 0.85rem;"><b style="color:var(--accent)">#${i + 1}</b> ${u.name.split(' ')[0]}</span>
-                        <span style="background:var(--accent); color:white; padding:2px 10px; border-radius:12px; font-size:0.7rem;">${u.masteredCount} Mastery</span>
+                        <span style="font-size: 0.85rem;"><b style="color:var(--accent)">#${index + 1}</b> ${user.name.split(' ')[0]}</span>
+                        <span class="stat-badge" style="background:var(--accent); color:white; padding:2px 10px; border-radius:12px; font-size:0.7rem;">${user.masteredCount} Mastered</span>
                     </div>`).join('');
             } else {
                 list.innerHTML = "<p style='font-size:0.8rem; opacity:0.5; text-align:center;'>Be the first to master!</p>";
             }
-        } catch (err) { console.error(err); }
-    }
-
-    function openPdfModal(url) { document.getElementById("resourceIframe").src = url; document.getElementById("resourceModal").style.display = "flex"; }
-    function closeModal() { document.getElementById("resourceModal").style.display = "none"; document.getElementById("resourceIframe").src = ""; }
-    function closeQuizModal() { document.getElementById("quizModal").style.display = "none"; }
-    function toggleTheme() { applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark"); }
-
-    async function submitDoubt() {
-        const q = document.getElementById("doubtText").value;
-        if(!q.trim()) return;
-        const res = await fetch(`${BASE_URL}/api/purchase/ask-doubt`, {
-            method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-            body: JSON.stringify({ lectureId: activeLectureId, question: q })
-        });
-        if(res.ok) {
-            document.getElementById("doubtText").value = "";
-            document.getElementById("doubtStatus").innerText = "Mentor notified! 🚀";
-            setTimeout(() => document.getElementById("doubtStatus").innerText = "", 3000);
-        }
+        } catch (err) { console.error("Leaderboard fetch failed", err); }
     }
 </script>
 </body>
