@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Care & Support | PiMentor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --space-bg: radial-gradient(circle at top, #0d1117 0%, #010409 100%);
+            --accent: #7c4dff;
+            --accent-glow: rgba(124, 77, 255, 0.4);
+            --glass: rgba(255, 255, 255, 0.05);
+            --text: #ffffff;
+            --card-border: rgba(255, 255, 255, 0.1);
+        }
+
+        [data-theme="light"] {
+            --space-bg: linear-gradient(180deg, #f0f4f8 0%, #d9e2ec 100%);
+            --text: #1b4332;
+            --accent: #2d6a4f;
+            --glass: rgba(255, 255, 255, 0.85);
+            --card-border: rgba(45, 106, 79, 0.2);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--space-bg); color: var(--text); min-height: 100vh; line-height: 1.6; transition: 0.5s; }
+
+        /* Navigation Bar */
+        .nav-bar {
+            position: fixed; top: 0; width: 100%; height: 70px; z-index: 1000;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 5%; background: var(--glass); backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--card-border);
+        }
+        .nav-links { display: flex; gap: 15px; align-items: center; }
+        .nav-btn {
+            text-decoration: none; color: var(--text); font-size: 0.85rem; font-weight: 700;
+            padding: 8px 16px; border-radius: 20px; transition: 0.3s; border: 1px solid transparent;
+        }
+        .nav-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(124, 77, 255, 0.1); }
+        .nav-btn.active { background: var(--accent); color: white; }
+
+        /* Main Layout */
+        .container { max-width: 1100px; margin: 0 auto; padding: 100px 20px 50px; }
+        
+        .hero { text-align: center; margin-bottom: 60px; }
+        .hero h1 { font-size: 3rem; font-weight: 800; background: linear-gradient(90deg, #fff, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        /* Support Grid */
+        .support-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-bottom: 60px; }
+        .card { 
+            background: var(--glass); border: 1px solid var(--card-border); padding: 30px; 
+            border-radius: 24px; backdrop-filter: blur(10px); transition: 0.3s;
+        }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+
+        /* QR Section */
+        .qr-section { display: flex; align-items: center; gap: 40px; background: var(--glass); padding: 40px; border-radius: 30px; border: 1px solid var(--accent); margin-top: 40px; flex-wrap: wrap; justify-content: center; }
+        .qr-img { width: 220px; height: 220px; border-radius: 20px; border: 5px solid white; box-shadow: 0 0 20px var(--accent-glow); }
+
+        /* FAQ Styling */
+        .faq-item { margin-bottom: 15px; border-radius: 15px; background: rgba(255,255,255,0.02); overflow: hidden; border: 1px solid var(--card-border); }
+        .faq-question { padding: 18px 25px; cursor: pointer; font-weight: 700; display: flex; justify-content: space-between; transition: 0.3s; }
+        .faq-question:hover { background: rgba(124, 77, 255, 0.1); }
+        .faq-answer { padding: 0 25px; max-height: 0; overflow: hidden; transition: 0.4s ease-out; opacity: 0; font-size: 0.95rem; }
+        .faq-item.open .faq-answer { padding: 10px 25px 25px; max-height: 200px; opacity: 1; }
+
+        .email-link { color: var(--accent); font-weight: 800; text-decoration: none; }
+        
+        @media (max-width: 768px) { .nav-links { display: none; } .hero h1 { font-size: 2rem; } }
+    </style>
+</head>
+<body>
+
+<nav class="nav-bar">
+    <a href="/" style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
+        <img src="/images/OUR_LOGO.png" height="40" alt="Logo">
+        <span style="font-weight: 800; color: var(--text); font-size: 1.2rem;">PiMentor</span>
+    </a>
+    <div class="nav-links" id="navLinks">
+        <a href="/index.html" class="nav-btn">HOME</a>
+        <a href="/courses.html" class="nav-btn">COURSES</a>
+        <a href="/pishot.html" class="nav-btn">PISHOT</a>
+        <a href="/support.html" class="nav-btn active">COMMUNITY</a>
+        </div>
+    <button onclick="toggleTheme()" style="background:none; border:none; cursor:pointer; font-size:1.2rem;" id="themeBtn">🌙</button>
+</nav>
+
+<div class="container">
+    <section class="hero">
+        <h1>How can we help?</h1>
+        <p style="opacity: 0.7; margin-top: 10px;">Everything you need to master PiMentor and your learning journey.</p>
+    </section>
+
+    <div class="support-grid">
+        <div class="card">
+            <h3 style="color: var(--accent); margin-bottom: 15px;">🚀 Key Features</h3>
+            <ul style="list-style: none; padding: 0; font-size: 0.9rem;">
+                <li style="margin-bottom: 12px;">✅ <b>Dynamic Quiz Player:</b> Interactive MCQs with real-time LaTeX symbol rendering for math.</li>
+                <li style="margin-bottom: 12px;">✅ <b>Progress Tracking:</b> Leaderboards that update as you master each lecture.</li>
+                <li style="margin-bottom: 12px;">✅ <b>Doubt Transmitting:</b> Ask questions directly to mentors while watching a video.</li>
+                <li style="margin-bottom: 12px;">✅ <b>Resource Library:</b> Access PDF notes and additional reading in one click.</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 20px;">❓ Common Questions</h3>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">How do I track my progress? <span>+</span></div>
+                <div class="faq-answer">Your progress is automatically saved when you watch 85% of a video or pass a lecture quiz. Check the 'Curriculum' sidebar in the player.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">Math symbols aren't loading? <span>+</span></div>
+                <div class="faq-answer">Wait 1-2 seconds for MathJax to render. If it still doesn't show, refresh the page to re-trigger the rendering engine.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">Can I access PDF notes offline? <span>+</span></div>
+                <div class="faq-answer">Yes, once you open the PDF resource in the player, you can use the 'Download' icon in the top right of the viewer.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="qr-section">
+        <div style="flex: 1; min-width: 300px;">
+            <h2 style="margin-bottom: 15px;">Join the Community</h2>
+            <p style="margin-bottom: 20px; opacity: 0.8;">Scan the QR code to join our <b>PiMentor Student WhatsApp Group</b>. Get instant updates, discuss doubts with peers, and stay connected.</p>
+            <p>For official queries: <a href="mailto:pimentor.education@gmail.com" class="email-link">pimentor.education@gmail.com</a></p>
+        </div>
+        <img src="/images/whatsapp_qr.png" alt="WhatsApp Group QR" class="qr-img" id="qrDisplay">
+    </div>
+</div>
+
+<script>
+    // --- THEME LOGIC ---
+    function applyTheme(theme) {
+        document.documentElement.setAttribute("data-theme", theme);
+        const btn = document.getElementById("themeBtn");
+        if(btn) btn.innerText = theme === "dark" ? "☀️" : "🌙";
+        localStorage.setItem("pimentor-theme", theme);
+    }
+    applyTheme(localStorage.getItem('pimentor-theme') || 'dark');
+    function toggleTheme() { 
+        const current = document.documentElement.getAttribute("data-theme");
+        applyTheme(current === "dark" ? "light" : "dark"); 
+    }
+
+    // --- NAVIGATION LOGIC ---
+    function updateNav() {
+        const nav = document.getElementById("navLinks");
+        const token = localStorage.getItem("token");
+
+        if (token) {
+            nav.innerHTML += `
+                <a href="/dashboard.html" class="nav-btn">DASHBOARD</a>
+                <a href="#" onclick="logout()" class="nav-btn" style="color: #ff4d4d;">LOGOUT</a>
+            `;
+        } else {
+            nav.innerHTML += `
+                <a href="/login.html" class="nav-btn">LOGIN</a>
+                <a href="/register.html" class="nav-btn" style="border: 1px solid var(--accent);">REGISTER</a>
+            `;
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem("token");
+        window.location.href = "/login.html";
+    }
+
+    // --- FAQ ACCORDION ---
+    function toggleFaq(el) {
+        const item = el.parentElement;
+        item.classList.toggle('open');
+        const icon = el.querySelector('span');
+        icon.innerText = item.classList.contains('open') ? '-' : '+';
+    }
+
+    document.addEventListener("DOMContentLoaded", updateNav);
+</script>
+</body>
+</html>
