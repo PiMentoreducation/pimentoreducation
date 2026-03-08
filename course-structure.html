@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Course Content | PiMentor</title>
+    <title>Curriculum | PiMentor</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700;800&display=swap" rel="stylesheet">
     <style>
-        /* --- 1. THEME VARIABLES (Galactic & Meadow) --- */
         :root {
             --bg: radial-gradient(circle at top, #0d1117 0%, #010409 100%);
             --accent: #7c4dff;
@@ -15,7 +14,6 @@
             --text: #ffffff;
             --card-border: rgba(255, 255, 255, 0.1);
             --folder-bg: rgba(124, 77, 255, 0.15);
-            --transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
         }
 
         [data-theme="light"] {
@@ -27,80 +25,53 @@
             --folder-bg: rgba(45, 106, 79, 0.1);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; transition: background 0.4s, color 0.4s; }
-        body { background: var(--bg); background-attachment: fixed; color: var(--text); overflow-x: hidden; min-height: 100vh; }
-
-        /* --- STARDUST BACKGROUND --- */
-        body::before {
-            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: url('https://www.transparenttextures.com/patterns/stardust.png');
-            opacity: 0.2; z-index: -1;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; transition: 0.4s; }
+        body { background: var(--bg); background-attachment: fixed; color: var(--text); min-height: 100vh; overflow-x: hidden; }
 
         /* --- NAVIGATION --- */
         .navbar {
             position: fixed; top: 0; width: 100%; height: 80px; z-index: 1000;
             display: flex; align-items: center; padding: 0 5%;
-            background: var(--glass); backdrop-filter: blur(15px);
-            border-bottom: 1px solid var(--card-border);
+            background: var(--glass); backdrop-filter: blur(15px); border-bottom: 1px solid var(--card-border);
         }
-
-        .brand { display: flex; align-items: center; gap: 12px; cursor: pointer; text-decoration: none; z-index: 1001; }
-        .logo-img { height: 45px; width: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); filter: drop-shadow(0 0 8px var(--accent)); }
+        .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .logo-img { height: 45px; width: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); }
         .logo-text { font-size: 1.5rem; font-weight: 800; background: linear-gradient(90deg, var(--text), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        .nav-links { display: flex; gap: 20px; align-items: center; margin-left: auto; }
-        .nav-links a { text-decoration: none; color: inherit; font-weight: 600; font-size: 0.9rem; opacity: 0.8; }
-
-        /* --- MOBILE HAMBURGER & SIDEBAR --- */
+        /* --- HAMBURGER & SIDEBAR --- */
         .hamburger { display: none; cursor: pointer; flex-direction: column; gap: 6px; z-index: 2002; }
         .hamburger span { width: 28px; height: 3px; background: var(--text); border-radius: 2px; }
-
-        .sidebar {
-            position: fixed; top: 0; left: -320px; width: 300px; height: 100%;
-            background: var(--bg); backdrop-filter: blur(25px);
-            z-index: 2000; transition: 0.4s ease; padding: 80px 30px; border-right: 1px solid var(--accent);
-        }
+        .sidebar { position: fixed; top: 0; left: -320px; width: 300px; height: 100%; background: var(--bg); z-index: 2001; transition: 0.4s; padding: 80px 30px; border-right: 1px solid var(--accent); }
         .sidebar.open { left: 0; }
-        .sidebar-links { display: flex; flex-direction: column; gap: 20px; }
-        .sidebar-links a { color: var(--text); text-decoration: none; font-size: 1.1rem; font-weight: 700; }
+        .sidebar-links a { display: block; color: var(--text); text-decoration: none; font-weight: 700; margin-bottom: 20px; font-size: 1.1rem; }
 
         @media (max-width: 1024px) {
             .nav-links { display: none; }
             .hamburger { display: flex; order: -1; margin-right: 15px; }
             .brand { margin-right: auto; }
-            .navbar { padding: 0 20px; }
         }
 
-        /* --- THEME SWITCH (ON/OFF) --- */
-        .theme-switch-wrapper { display: flex; align-items: center; justify-content: space-between; padding-bottom: 20px; border-bottom: 1px solid var(--card-border); margin-bottom: 25px;}
+        /* --- CONTENT --- */
+        .container { max-width: 900px; margin: 120px auto 50px; padding: 0 20px; }
+        .header-box { background: var(--glass); padding: 35px; border-radius: 24px; border-left: 8px solid var(--accent); margin-bottom: 30px; border: 1px solid var(--card-border); border-left: 8px solid var(--accent); }
+        
+        /* Chapter/Lecture Cards */
+        .card-list { display: flex; flex-direction: column; gap: 15px; }
+        .item-card {
+            background: var(--glass); padding: 20px 30px; border-radius: 20px;
+            display: flex; align-items: center; justify-content: space-between;
+            cursor: pointer; border: 1px solid var(--card-border); text-decoration: none; color: inherit;
+        }
+        .item-card:hover { transform: translateX(10px); border-color: var(--accent); box-shadow: 0 10px 25px var(--accent-glow); }
+        .item-info { display: flex; align-items: center; gap: 20px; }
+        .icon-box { background: var(--folder-bg); width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 12px; color: var(--accent); font-weight: 800; }
+        
         .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider-round { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
         .slider-round:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider-round { background-color: var(--accent); }
         input:checked + .slider-round:before { transform: translateX(24px); }
-
-        /* --- CONTENT LAYOUT --- */
-        .container { max-width: 850px; margin: 120px auto 40px; padding: 0 20px; }
-        .header-box { 
-            background: var(--glass); padding: 35px; border-radius: 24px; 
-            backdrop-filter: blur(10px); border: 1px solid var(--card-border);
-            border-left: 8px solid var(--accent); margin-bottom: 30px;
-        }
-        .chapter-list { display: flex; flex-direction: column; gap: 15px; }
-        .chapter-card {
-            background: var(--glass); padding: 20px 30px; border-radius: 20px;
-            display: flex; align-items: center; justify-content: space-between;
-            cursor: pointer; transition: var(--transition);
-            border: 1px solid var(--card-border); text-decoration: none; color: inherit;
-        }
-        .chapter-card:hover { transform: translateX(12px); border-color: var(--accent); box-shadow: 0 10px 25px var(--accent-glow); }
-        .chapter-info { display: flex; align-items: center; gap: 20px; }
-        .folder-icon { font-size: 1rem; font-weight: 800; color: var(--accent); background: var(--folder-bg); width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 14px; }
-        .chapter-name { font-weight: 700; font-size: 1.1rem; }
-        .arrow { opacity: 0.5; font-size: 1.4rem; transition: 0.3s; }
-        .loading-text { text-align: center; opacity: 0.6; margin-top: 60px; font-size: 1.1rem; }
     </style>
 </head>
 <body>
@@ -111,135 +82,114 @@
         <img src="/images/OUR_LOGO.png" class="logo-img" alt="Logo">
         <div class="logo-text">PiMentor</div>
     </a>
-    <nav class="nav-links">
-        <a href="/index.html">Home</a>
-        <a href="/dashboard.html">Dashboard</a>
-        <a href="/courses.html">All Courses</a>
-        <a href="/pishot_hub.html">PiShot</a>
-        <a href="/community.html">Community</a>
-        <a href="/support.html">Contact Us</a>
-        <label class="switch" style="margin-left: 15px;">
-            <input type="checkbox" id="themeToggleNav" checked>
-            <span class="slider-round"></span>
-        </label>
-    </nav>
+    <div class="nav-links" style="margin-left: auto; display: flex; align-items: center; gap: 20px;">
+        <a href="/dashboard.html" style="text-decoration:none; color:inherit; font-weight:700;">Dashboard</a>
+        <label class="switch"><input type="checkbox" id="themeToggleNav" checked><span class="slider-round"></span></label>
+    </div>
 </header>
 
 <aside class="sidebar" id="sidebar">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-        <div class="logo-text" style="-webkit-text-fill-color: var(--text);">Menu</div>
-        <button id="closeSidebar" style="background:none; border:none; color:var(--text); font-size:2.5rem; cursor:pointer;">&times;</button>
-    </div>
-    <div class="theme-switch-wrapper">
-        <span style="font-weight:700;">Dark Mode</span>
-        <label class="switch">
-            <input type="checkbox" id="themeToggleSidebar" checked>
-            <span class="slider-round"></span>
-        </label>
+    <div style="display:flex; justify-content:space-between; margin-bottom:30px;">
+        <span class="logo-text">Menu</span>
+        <button id="closeSidebar" style="background:none; border:none; color:var(--text); font-size:2rem;">&times;</button>
     </div>
     <nav class="sidebar-links">
         <a href="/index.html">Home</a>
         <a href="/dashboard.html">Dashboard</a>
         <a href="/courses.html">All Courses</a>
-        <a href="/pishot_hub.html">PiShot</a>
-        <a href="/community.html">Community</a>
-        <a href="/support.html">Contact Us</a>
-        <a href="#" onclick="logout()" style="color: #ff4d4d; margin-top: 20px;">Logout</a>
+        <a href="#" onclick="logout()" style="color: #ff4d4d;">Logout</a>
     </nav>
 </aside>
 
 <div class="container">
     <div class="header-box">
-        <h1 id="courseTitle">Course Curriculum</h1>
-        <p>Select a chapter to access your structured learning path.</p>
+        <h1 id="pageHeading">Course Chapters</h1>
+        <p id="pageSubHeading">Select a chapter to explore the topics inside.</p>
+        <button id="backBtn" style="display:none; margin-top:15px; background:var(--accent); color:white; border:none; padding:8px 15px; border-radius:10px; cursor:pointer;">← Back to Chapters</button>
     </div>
-    <div id="chapterContainer" class="chapter-list">
-        <div class="loading-text">Synchronizing curriculum...</div>
+
+    <div id="contentList" class="card-list">
+        <div style="text-align:center; opacity:0.5;">Scanning Galaxy for content...</div>
     </div>
 </div>
 
 <script>
     const token = localStorage.getItem("token");
-    const themeToggles = [document.getElementById("themeToggleNav"), document.getElementById("themeToggleSidebar")];
-    const sidebar = document.getElementById("sidebar");
-    const hamburger = document.getElementById("hamburger");
-    const closeSidebar = document.getElementById("closeSidebar");
     const urlParams = new URLSearchParams(window.location.search);
     const courseId = urlParams.get('id');
+    const container = document.getElementById("contentList");
+    const backBtn = document.getElementById("backBtn");
 
-    // --- SIDEBAR & NAVIGATION LOGIC ---
-    hamburger.onclick = () => sidebar.classList.add('open');
-    closeSidebar.onclick = () => sidebar.classList.remove('open');
+    // Sidebar Logic
+    document.getElementById("hamburger").onclick = () => document.getElementById("sidebar").classList.add("open");
+    document.getElementById("closeSidebar").onclick = () => document.getElementById("sidebar").classList.remove("open");
 
-    document.addEventListener('click', (e) => {
-        if (!sidebar.contains(e.target) && !hamburger.contains(e.target) && sidebar.classList.contains('open')) {
-            sidebar.classList.remove('open');
-        }
-    });
-
-    // --- THEME MANAGEMENT ---
-    const applyTheme = (theme) => {
-        document.documentElement.setAttribute("data-theme", theme);
-        themeToggles.forEach(t => { if(t) t.checked = (theme === "dark"); });
-        localStorage.setItem("pimentor-theme", theme);
+    // Theme Logic
+    const applyTheme = (t) => {
+        document.documentElement.setAttribute("data-theme", t);
+        localStorage.setItem("pimentor-theme", t);
     };
-
     applyTheme(localStorage.getItem("pimentor-theme") || "dark");
+    document.getElementById("themeToggleNav").onchange = (e) => applyTheme(e.target.checked ? "dark" : "light");
 
-    themeToggles.forEach(t => {
-        if(t) t.onchange = () => applyTheme(t.checked ? 'dark' : 'light');
-    });
-
-    // --- CURRICULUM FETCHING LOGIC ---
+    // --- STEP 1: FETCH CHAPTERS ---
     async function loadChapters() {
-        const container = document.getElementById("chapterContainer");
-        if (!courseId) {
-            container.innerHTML = `<div class="loading-text">Error: Course ID missing from URL.</div>`;
-            return;
-        }
-
+        if (!courseId) return alert("Course ID Missing");
+        backBtn.style.display = "none";
+        document.getElementById("pageHeading").innerText = "Course Chapters";
+        
         try {
-            // URL matches authRoutes.js
-            const res = await fetch(`https://pimentor-project.onrender.com/api/auth/courses/${courseId}/lectures`, {
-                headers: { 
-                    "Authorization": "Bearer " + token,
-                    "Content-Type": "application/json"
-                }
+            // Target: router.get("/course-chapters/:courseId")
+            const res = await fetch(`https://pimentor-project.onrender.com/api/purchase/course-chapters/${courseId}`, {
+                headers: { "Authorization": "Bearer " + token }
             });
+            const chapters = await res.json();
 
-            const data = await res.json();
-
-            // Correctly access data.lectures based on your backend response
-            if (data.success && data.lectures) {
-                if (data.lectures.length === 0) {
-                    container.innerHTML = `<div class="loading-text">No lectures available in this dimension yet.</div>`;
-                    return;
-                }
-
-                container.innerHTML = data.lectures.map((lecture, index) => `
-                    <a href="/lecture-player.html?courseId=${courseId}&lectureId=${lecture._id}" class="chapter-card">
-                        <div class="chapter-info">
-                            <div class="folder-icon">${index + 1}</div>
-                            <div class="chapter-name">${lecture.title}</div>
-                        </div>
-                        <div class="arrow">→</div>
-                    </a>
-                `).join('');
-            } else {
-                container.innerHTML = `<div class="loading-text">${data.message || 'Failed to sync curriculum.'}</div>`;
+            if (res.status === 403) {
+                container.innerHTML = `<div style="text-align:center;">${chapters.message}</div>`;
+                return;
             }
 
-        } catch (err) {
-            console.error("Fetch Error:", err);
-            container.innerHTML = `<div class="loading-text">Connection lost. Please re-login to synchronize.</div>`;
-        }
+            container.innerHTML = chapters.map((ch, i) => `
+                <div class="item-card" onclick="loadLectures('${encodeURIComponent(ch)}')">
+                    <div class="item-info">
+                        <div class="icon-box">${i + 1}</div>
+                        <div style="font-weight:700;">${ch}</div>
+                    </div>
+                    <div style="opacity:0.5;">Explore →</div>
+                </div>
+            `).join('');
+        } catch (e) { container.innerHTML = "Error loading chapters."; }
     }
 
-    function logout() {
-        localStorage.removeItem("token");
-        window.location.href = "/login.html";
+    // --- STEP 2: FETCH LECTURES FOR CHAPTER ---
+    async function loadLectures(chapterName) {
+        container.innerHTML = `<div style="text-align:center;">Opening ${decodeURIComponent(chapterName)}...</div>`;
+        backBtn.style.display = "block";
+        document.getElementById("pageHeading").innerText = decodeURIComponent(chapterName);
+
+        try {
+            // Target: router.get("/course-content/:courseId/:chapterName")
+            const res = await fetch(`https://pimentor-project.onrender.com/api/purchase/course-content/${courseId}/${chapterName}`, {
+                headers: { "Authorization": "Bearer " + token }
+            });
+            const lectures = await res.json();
+
+            container.innerHTML = lectures.map((lec, i) => `
+                <a href="/lecture-player.html?courseId=${courseId}&lectureId=${lec._id}" class="item-card">
+                    <div class="item-info">
+                        <div class="icon-box">T${i + 1}</div>
+                        <div style="font-weight:700;">${lec.title}</div>
+                    </div>
+                    <div style="opacity:0.5;">Watch Topic →</div>
+                </a>
+            `).join('');
+        } catch (e) { container.innerHTML = "Error loading lectures."; }
     }
 
+    backBtn.onclick = loadChapters;
+
+    function logout() { localStorage.clear(); window.location.href = "/login.html"; }
     document.addEventListener("DOMContentLoaded", loadChapters);
 </script>
 </body>
