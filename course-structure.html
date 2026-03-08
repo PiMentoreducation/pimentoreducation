@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Content | PiMentor</title>
+    <title>Course Content | PiMentor</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700;800&display=swap" rel="stylesheet">
     <style>
         /* --- 1. THEME VARIABLES (Galactic & Meadow) --- */
@@ -50,29 +50,20 @@
         .logo-text { font-size: 1.5rem; font-weight: 800; background: linear-gradient(90deg, var(--text), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
         .nav-links { display: flex; gap: 20px; align-items: center; margin-left: auto; }
-        .nav-links a { text-decoration: none; color: inherit; font-weight: 600; opacity: 0.9; font-size: 0.9rem; transition: 0.3s; }
-        
-        /* --- NEW THEME BOX DESIGN --- */
-        .theme-box {
-            display: flex; align-items: center; gap: 10px; padding: 8px 15px;
-            background: var(--glass); border: 1px solid var(--accent);
-            border-radius: 12px; cursor: pointer; transition: 0.3s;
-            font-weight: 700; font-size: 0.85rem;
-        }
-        .theme-box:hover { background: rgba(124, 77, 255, 0.1); box-shadow: 0 0 15px var(--accent-glow); }
+        .nav-links a { text-decoration: none; color: inherit; font-weight: 600; font-size: 0.9rem; opacity: 0.8; }
 
         /* --- MOBILE HAMBURGER & SIDEBAR --- */
-        .hamburger { display: none; cursor: pointer; flex-direction: column; gap: 6px; z-index: 1002; }
+        .hamburger { display: none; cursor: pointer; flex-direction: column; gap: 6px; z-index: 2002; }
         .hamburger span { width: 28px; height: 3px; background: var(--text); border-radius: 2px; }
 
         .sidebar {
             position: fixed; top: 0; left: -320px; width: 300px; height: 100%;
             background: var(--bg); backdrop-filter: blur(25px);
-            z-index: 2000; transition: 0.4s ease; padding: 40px 30px; border-right: 1px solid var(--accent);
+            z-index: 2000; transition: 0.4s ease; padding: 80px 30px; border-right: 1px solid var(--accent);
         }
         .sidebar.open { left: 0; }
-        .sidebar-links { display: flex; flex-direction: column; gap: 20px; margin-top: 30px; }
-        .sidebar-links a { color: var(--text); text-decoration: none; font-size: 1.1rem; font-weight: 700; transition: 0.3s; }
+        .sidebar-links { display: flex; flex-direction: column; gap: 20px; }
+        .sidebar-links a { color: var(--text); text-decoration: none; font-size: 1.1rem; font-weight: 700; }
 
         @media (max-width: 1024px) {
             .nav-links { display: none; }
@@ -81,13 +72,21 @@
             .navbar { padding: 0 20px; }
         }
 
+        /* --- THEME SWITCH (ON/OFF) --- */
+        .theme-switch-wrapper { display: flex; align-items: center; justify-content: space-between; padding-bottom: 20px; border-bottom: 1px solid var(--card-border); margin-bottom: 25px;}
+        .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider-round { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider-round:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider-round { background-color: var(--accent); }
+        input:checked + .slider-round:before { transform: translateX(24px); }
+
         /* --- CONTENT LAYOUT --- */
         .container { max-width: 850px; margin: 120px auto 40px; padding: 0 20px; }
         .header-box { 
             background: var(--glass); padding: 35px; border-radius: 24px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-bottom: 30px;
             backdrop-filter: blur(10px); border: 1px solid var(--card-border);
-            border-left: 8px solid var(--accent);
+            border-left: 8px solid var(--accent); margin-bottom: 30px;
         }
         .chapter-list { display: flex; flex-direction: column; gap: 15px; }
         .chapter-card {
@@ -96,18 +95,22 @@
             cursor: pointer; transition: var(--transition);
             border: 1px solid var(--card-border); text-decoration: none; color: inherit;
         }
+        .chapter-card:hover { transform: translateX(12px); border-color: var(--accent); box-shadow: 0 10px 25px var(--accent-glow); }
+        .chapter-info { display: flex; align-items: center; gap: 20px; }
+        .folder-icon { font-size: 1rem; font-weight: 800; color: var(--accent); background: var(--folder-bg); width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 14px; }
+        .chapter-name { font-weight: 700; font-size: 1.1rem; }
+        .arrow { opacity: 0.5; font-size: 1.4rem; transition: 0.3s; }
+        .loading-text { text-align: center; opacity: 0.6; margin-top: 60px; font-size: 1.1rem; }
     </style>
 </head>
 <body>
 
 <header class="navbar">
     <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
-
     <a href="/index.html" class="brand">
         <img src="/images/OUR_LOGO.png" class="logo-img" alt="Logo">
         <div class="logo-text">PiMentor</div>
     </a>
-    
     <nav class="nav-links">
         <a href="/index.html">Home</a>
         <a href="/dashboard.html">Dashboard</a>
@@ -115,7 +118,6 @@
         <a href="/pishot_hub.html">PiShot</a>
         <a href="/community.html">Community</a>
         <a href="/support.html">Contact Us</a>
-        
         <label class="switch" style="margin-left: 15px;">
             <input type="checkbox" id="themeToggleNav" checked>
             <span class="slider-round"></span>
@@ -128,15 +130,13 @@
         <div class="logo-text" style="-webkit-text-fill-color: var(--text);">Menu</div>
         <button id="closeSidebar" style="background:none; border:none; color:var(--text); font-size:2.5rem; cursor:pointer;">&times;</button>
     </div>
-    
-    <div class="theme-switch-wrapper" style="display:flex; justify-content:space-between; align-items:center; padding-bottom:20px; border-bottom:1px solid var(--card-border);">
+    <div class="theme-switch-wrapper">
         <span style="font-weight:700;">Dark Mode</span>
         <label class="switch">
             <input type="checkbox" id="themeToggleSidebar" checked>
             <span class="slider-round"></span>
         </label>
     </div>
-
     <nav class="sidebar-links">
         <a href="/index.html">Home</a>
         <a href="/dashboard.html">Dashboard</a>
@@ -144,8 +144,19 @@
         <a href="/pishot_hub.html">PiShot</a>
         <a href="/community.html">Community</a>
         <a href="/support.html">Contact Us</a>
+        <a href="#" onclick="logout()" style="color: #ff4d4d; margin-top: 20px;">Logout</a>
     </nav>
 </aside>
+
+<div class="container">
+    <div class="header-box">
+        <h1 id="courseTitle">Course Curriculum</h1>
+        <p>Select a chapter to access your structured learning path.</p>
+    </div>
+    <div id="chapterContainer" class="chapter-list">
+        <div class="loading-text">Synchronizing curriculum...</div>
+    </div>
+</div>
 
 <script>
     const token = localStorage.getItem("token");
@@ -156,43 +167,52 @@
     const urlParams = new URLSearchParams(window.location.search);
     const courseId = urlParams.get('id');
 
-    // --- SIDEBAR LOGIC ---
+    // --- SIDEBAR & NAVIGATION LOGIC ---
     hamburger.onclick = () => sidebar.classList.add('open');
     closeSidebar.onclick = () => sidebar.classList.remove('open');
 
-    // --- THEME MANAGEMENT (Green Tree Light Mode) ---
+    document.addEventListener('click', (e) => {
+        if (!sidebar.contains(e.target) && !hamburger.contains(e.target) && sidebar.classList.contains('open')) {
+            sidebar.classList.remove('open');
+        }
+    });
+
+    // --- THEME MANAGEMENT ---
     const applyTheme = (theme) => {
         document.documentElement.setAttribute("data-theme", theme);
-        const isDark = theme === "dark";
-        themeToggles.forEach(t => { if(t) t.checked = isDark; });
+        themeToggles.forEach(t => { if(t) t.checked = (theme === "dark"); });
         localStorage.setItem("pimentor-theme", theme);
     };
 
     applyTheme(localStorage.getItem("pimentor-theme") || "dark");
-    themeToggles.forEach(t => { 
-        if(t) t.onchange = () => applyTheme(t.checked ? 'dark' : 'light'); 
+
+    themeToggles.forEach(t => {
+        if(t) t.onchange = () => applyTheme(t.checked ? 'dark' : 'light');
     });
 
-    // --- FIXED CURRICULUM FETCHING ---
+    // --- CURRICULUM FETCHING LOGIC ---
     async function loadChapters() {
         const container = document.getElementById("chapterContainer");
         if (!courseId) {
-            container.innerHTML = `<div class="loading-text">Error: Course ID missing.</div>`;
+            container.innerHTML = `<div class="loading-text">Error: Course ID missing from URL.</div>`;
             return;
         }
 
         try {
             // URL matches authRoutes.js
             const res = await fetch(`https://pimentor-project.onrender.com/api/auth/courses/${courseId}/lectures`, {
-                headers: { "Authorization": "Bearer " + token }
+                headers: { 
+                    "Authorization": "Bearer " + token,
+                    "Content-Type": "application/json"
+                }
             });
 
             const data = await res.json();
 
-            // Correctly access data.lectures based on your backend
+            // Correctly access data.lectures based on your backend response
             if (data.success && data.lectures) {
                 if (data.lectures.length === 0) {
-                    container.innerHTML = `<div class="loading-text">No lectures available yet.</div>`;
+                    container.innerHTML = `<div class="loading-text">No lectures available in this dimension yet.</div>`;
                     return;
                 }
 
@@ -206,13 +226,18 @@
                     </a>
                 `).join('');
             } else {
-                container.innerHTML = `<div class="loading-text">Unable to sync curriculum.</div>`;
+                container.innerHTML = `<div class="loading-text">${data.message || 'Failed to sync curriculum.'}</div>`;
             }
 
         } catch (err) {
-            console.error(err);
-            container.innerHTML = `<div class="loading-text">Server connection error.</div>`;
+            console.error("Fetch Error:", err);
+            container.innerHTML = `<div class="loading-text">Connection lost. Please re-login to synchronize.</div>`;
         }
+    }
+
+    function logout() {
+        localStorage.removeItem("token");
+        window.location.href = "/login.html";
     }
 
     document.addEventListener("DOMContentLoaded", loadChapters);
