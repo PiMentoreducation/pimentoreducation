@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Course Content | PiMentor</title>
+    <title><img src="/images/OUR_LOGO.png"> Content | PiMentor</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700;800&display=swap" rel="stylesheet">
     <style>
         /* --- 1. THEME VARIABLES (Galactic & Meadow) --- */
@@ -101,12 +101,10 @@
 <body>
 
 <header class="navbar">
-    <div class="hamburger" id="hamburger">
-        <span></span><span></span><span></span>
-    </div>
+    <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
 
     <a href="/index.html" class="brand">
-        <img src="/images/OUR_LOGO.png" class="logo-img" alt="PiMentor Logo">
+        <img src="/images/OUR_LOGO.png" class="logo-img" alt="Logo">
         <div class="logo-text">PiMentor</div>
     </a>
     
@@ -118,10 +116,10 @@
         <a href="/community.html">Community</a>
         <a href="/support.html">Contact Us</a>
         
-        <div class="theme-box" id="themeToggleNav">
-            <span id="themeLabelNav">Dark Mode</span>
-            <span id="themeIconNav">🌙</span>
-        </div>
+        <label class="switch" style="margin-left: 15px;">
+            <input type="checkbox" id="themeToggleNav" checked>
+            <span class="slider-round"></span>
+        </label>
     </nav>
 </header>
 
@@ -131,9 +129,12 @@
         <button id="closeSidebar" style="background:none; border:none; color:var(--text); font-size:2.5rem; cursor:pointer;">&times;</button>
     </div>
     
-    <div class="theme-box" id="themeToggleSidebar" style="margin-bottom: 20px; justify-content: center;">
-        <span id="themeLabelSidebar">Dark Mode</span>
-        <span id="themeIconSidebar">🌙</span>
+    <div class="theme-switch-wrapper" style="display:flex; justify-content:space-between; align-items:center; padding-bottom:20px; border-bottom:1px solid var(--card-border);">
+        <span style="font-weight:700;">Dark Mode</span>
+        <label class="switch">
+            <input type="checkbox" id="themeToggleSidebar" checked>
+            <span class="slider-round"></span>
+        </label>
     </div>
 
     <nav class="sidebar-links">
@@ -143,29 +144,15 @@
         <a href="/pishot_hub.html">PiShot</a>
         <a href="/community.html">Community</a>
         <a href="/support.html">Contact Us</a>
-        <a href="#" onclick="logout()" style="color: #ff4d4d; margin-top: 20px;">Logout</a>
     </nav>
 </aside>
 
-<div class="container">
-    <div class="header-box">
-        <h1 id="courseTitle">Course Curriculum</h1>
-        <p>Select a chapter to access your structured learning path.</p>
-    </div>
-    <div id="chapterContainer" class="chapter-list">
-        <div class="loading-text">Synchronizing curriculum...</div>
-    </div>
-</div>
-
 <script>
     const token = localStorage.getItem("token");
-    const themeToggleNav = document.getElementById("themeToggleNav");
-    const themeToggleSidebar = document.getElementById("themeToggleSidebar");
+    const themeToggles = [document.getElementById("themeToggleNav"), document.getElementById("themeToggleSidebar")];
     const sidebar = document.getElementById("sidebar");
     const hamburger = document.getElementById("hamburger");
     const closeSidebar = document.getElementById("closeSidebar");
-    
-    // Get Course ID from URL
     const urlParams = new URLSearchParams(window.location.search);
     const courseId = urlParams.get('id');
 
@@ -177,89 +164,58 @@
     const applyTheme = (theme) => {
         document.documentElement.setAttribute("data-theme", theme);
         const isDark = theme === "dark";
-        
-        const labelText = isDark ? "Dark Mode" : "Light Mode";
-        const iconSymbol = isDark ? "🌙" : "☀️";
-
-        if(document.getElementById("themeLabelNav")) document.getElementById("themeLabelNav").innerText = labelText;
-        if(document.getElementById("themeIconNav")) document.getElementById("themeIconNav").innerText = iconSymbol;
-        
+        themeToggles.forEach(t => { if(t) t.checked = isDark; });
         localStorage.setItem("pimentor-theme", theme);
     };
 
     applyTheme(localStorage.getItem("pimentor-theme") || "dark");
-
-    const toggleHandler = () => {
-        const current = document.documentElement.getAttribute("data-theme");
-        applyTheme(current === "dark" ? "light" : "dark");
-    };
-
-    if(themeToggleNav) themeToggleNav.onclick = toggleHandler;
-    if(themeToggleSidebar) themeToggleSidebar.onclick = toggleHandler;
+    themeToggles.forEach(t => { 
+        if(t) t.onchange = () => applyTheme(t.checked ? 'dark' : 'light'); 
+    });
 
     // --- FIXED CURRICULUM FETCHING ---
     async function loadChapters() {
         const container = document.getElementById("chapterContainer");
-        
         if (!courseId) {
-            container.innerHTML = `<div class="loading-text">Error: Course ID missing from URL.</div>`;
+            container.innerHTML = `<div class="loading-text">Error: Course ID missing.</div>`;
             return;
         }
 
         try {
-            // UPDATED URL: Matches authRoutes.js
+            // URL matches authRoutes.js
             const res = await fetch(`https://pimentor-project.onrender.com/api/auth/courses/${courseId}/lectures`, {
-                headers: { 
-                    "Authorization": "Bearer " + token,
-                    "Content-Type": "application/json"
-                }
+                headers: { "Authorization": "Bearer " + token }
             });
 
             const data = await res.json();
 
-            if (!data.success) {
-                container.innerHTML = `<div class="loading-text">${data.message || 'Failed to load curriculum.'}</div>`;
-                return;
+            // Correctly access data.lectures based on your backend
+            if (data.success && data.lectures) {
+                if (data.lectures.length === 0) {
+                    container.innerHTML = `<div class="loading-text">No lectures available yet.</div>`;
+                    return;
+                }
+
+                container.innerHTML = data.lectures.map((lecture, index) => `
+                    <a href="/lecture-player.html?courseId=${courseId}&lectureId=${lecture._id}" class="chapter-card">
+                        <div class="chapter-info">
+                            <div class="folder-icon">${index + 1}</div>
+                            <div class="chapter-name">${lecture.title}</div>
+                        </div>
+                        <div class="arrow">→</div>
+                    </a>
+                `).join('');
+            } else {
+                container.innerHTML = `<div class="loading-text">Unable to sync curriculum.</div>`;
             }
-
-            const lectures = data.lectures;
-
-            if (!lectures || lectures.length === 0) {
-                container.innerHTML = `<div class="loading-text">No lectures available in this course yet.</div>`;
-                return;
-            }
-
-            // Render the lectures dynamically
-            container.innerHTML = lectures.map((lecture, index) => `
-                <a href="/lecture-player.html?courseId=${courseId}&lectureId=${lecture._id}" class="chapter-card">
-                    <div class="chapter-info">
-                        <div class="folder-icon">${index + 1}</div>
-                        <div class="chapter-name">${lecture.title}</div>
-                    </div>
-                    <div class="arrow">→</div>
-                </a>
-            `).join('');
 
         } catch (err) {
-            console.error("Fetch Error:", err);
-            container.innerHTML = `<div class="loading-text">Server connection lost. Please log in again.</div>`;
+            console.error(err);
+            container.innerHTML = `<div class="loading-text">Server connection error.</div>`;
         }
     }
 
-    function logout() {
-        localStorage.removeItem("token");
-        window.location.href = "/login.html";
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-        // Handle Auth display in sidebar/nav
-        const desktopNav = document.querySelector(".nav-links");
-        if (token && desktopNav && !document.getElementById("dashBtn")) {
-             desktopNav.insertAdjacentHTML('afterbegin', '<a href="/dashboard.html" id="dashBtn">Dashboard</a>');
-        }
-        
-        loadChapters();
-    });
+    document.addEventListener("DOMContentLoaded", loadChapters);
 </script>
 </body>
 </html>
