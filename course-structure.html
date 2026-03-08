@@ -45,30 +45,33 @@
             border-bottom: 1px solid var(--card-border);
         }
 
-        .brand { display: flex; align-items: center; gap: 12px; cursor: pointer; text-decoration: none; }
+        .brand { display: flex; align-items: center; gap: 12px; cursor: pointer; text-decoration: none; z-index: 1001; }
         .logo-img { height: 45px; width: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); filter: drop-shadow(0 0 8px var(--accent)); }
         .logo-text { font-size: 1.5rem; font-weight: 800; background: linear-gradient(90deg, var(--text), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        .nav-links { display: flex; gap: 25px; align-items: center; margin-left: auto; }
-        .nav-links a { text-decoration: none; color: inherit; font-weight: 600; opacity: 0.9; }
+        .nav-links { display: flex; gap: 20px; align-items: center; margin-left: auto; }
+        .nav-links a { text-decoration: none; color: inherit; font-weight: 600; opacity: 0.9; font-size: 0.9rem; transition: 0.3s; }
+        .nav-links a:hover { color: var(--accent); opacity: 1; }
 
         /* --- MOBILE HAMBURGER & SIDEBAR --- */
-        .hamburger { display: none; cursor: pointer; flex-direction: column; gap: 6px; }
+        .hamburger { display: none; cursor: pointer; flex-direction: column; gap: 6px; z-index: 1002; }
         .hamburger span { width: 28px; height: 3px; background: var(--text); border-radius: 2px; }
 
         .sidebar {
             position: fixed; top: 0; left: -320px; width: 300px; height: 100%;
-            background: var(--glass); backdrop-filter: blur(25px);
+            background: var(--bg); backdrop-filter: blur(25px);
             z-index: 2000; transition: 0.4s ease; padding: 40px 30px; border-right: 1px solid var(--accent);
         }
         .sidebar.open { left: 0; }
         .sidebar-links { display: flex; flex-direction: column; gap: 20px; margin-top: 30px; }
-        .sidebar-links a { color: var(--text); text-decoration: none; font-size: 1.1rem; font-weight: 700; }
+        .sidebar-links a { color: var(--text); text-decoration: none; font-size: 1.1rem; font-weight: 700; transition: 0.3s; }
+        .sidebar-links a:hover { color: var(--accent); padding-left: 10px; }
 
-        @media (max-width: 900px) {
+        @media (max-width: 1024px) {
             .nav-links { display: none; }
-            .hamburger { display: flex; margin-right: auto; }
-            .brand { margin-left: auto; }
+            .hamburger { display: flex; order: -1; margin-right: 15px; }
+            .brand { margin-right: auto; }
+            .navbar { padding: 0 20px; }
         }
 
         /* --- THEME SWITCH --- */
@@ -81,7 +84,7 @@
         input:checked + .slider-round:before { transform: translateX(24px); }
 
         /* --- CONTENT LAYOUT --- */
-        .container { max-width: 850px; margin: 100px auto 40px; padding: 0 20px; }
+        .container { max-width: 850px; margin: 120px auto 40px; padding: 0 20px; }
         
         .header-box { 
             background: var(--glass); padding: 35px; border-radius: 24px; 
@@ -129,14 +132,18 @@
         <span></span><span></span><span></span>
     </div>
 
-    <a href="/dashboard.html" class="brand">
+    <a href="/index.html" class="brand">
         <img src="/images/OUR_LOGO.png" class="logo-img" alt="PiMentor Logo">
         <div class="logo-text">PiMentor</div>
     </a>
     
     <nav class="nav-links">
+        <a href="/index.html">Home</a>
         <a href="/dashboard.html">Dashboard</a>
         <a href="/courses.html">All Courses</a>
+        <a href="/pishot_hub.html">PiShot</a>
+        <a href="/community.html">Community</a>
+        <a href="/support.html">Contact Us</a>
         <button id="themeToggleNav" style="background:none; border:none; color:var(--text); cursor:pointer; font-size:1.2rem;">🌙</button>
     </nav>
 </header>
@@ -156,8 +163,13 @@
     </div>
 
     <nav class="sidebar-links">
+        <a href="/index.html">Home</a>
         <a href="/dashboard.html">Dashboard</a>
         <a href="/courses.html">All Courses</a>
+        <a href="/pishot_hub.html">PiShot</a>
+        <a href="/community.html">Community</a>
+        <a href="/support.html">Contact Us</a>
+        <a href="#" onclick="logout()" style="color: #ff4d4d; margin-top: 20px;">Logout</a>
     </nav>
 </aside>
 
@@ -186,6 +198,13 @@
     hamburger.onclick = () => sidebar.classList.add('open');
     closeSidebar.onclick = () => sidebar.classList.remove('open');
 
+    // Close sidebar when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!sidebar.contains(e.target) && !hamburger.contains(e.target) && sidebar.classList.contains('open')) {
+            sidebar.classList.remove('open');
+        }
+    });
+
     // --- THEME MANAGEMENT ---
     const applyTheme = (theme) => {
         document.documentElement.setAttribute("data-theme", theme);
@@ -205,7 +224,12 @@
     if (themeToggle) themeToggle.onchange = toggleHandler;
     if (themeToggleNav) themeToggleNav.onclick = toggleHandler;
 
-    // --- LOAD CHAPTERS (Original Logic Retained) ---
+    function logout() {
+        localStorage.removeItem("token");
+        window.location.href = "/login.html";
+    }
+
+    // --- LOAD CHAPTERS ---
     if (!courseId) {
         alert("Course ID is missing!");
         window.location.href = "dashboard.html";
@@ -243,7 +267,7 @@
 
         } catch (err) {
             console.error(err);
-            document.getElementById("chapterContainer").innerHTML = "<div class='loading-text'>Communication error to the server, login to another device detected.</div>";
+            document.getElementById("chapterContainer").innerHTML = "<div class='loading-text'>Communication error to the server. Please log in again.</div>";
         }
     }
 
