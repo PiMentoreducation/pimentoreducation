@@ -30,7 +30,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { background: var(--space-bg); color: var(--text); overflow-x: hidden; transition: 0.5s; scroll-behavior: smooth; }
 
-        /* Navigation */
+        /* Navigation Bar */
         .navbar {
             position: fixed; top: 0; width: 100%; height: 80px; z-index: 1000;
             display: flex; align-items: center; padding: 0 5%;
@@ -44,7 +44,7 @@
         .nav-links a { text-decoration: none; color: inherit; font-weight: 600; font-size: 0.9rem; opacity: 0.8; transition: 0.3s; }
         .btn-action { background: var(--accent); color: #fff !important; padding: 10px 24px; border-radius: 50px; font-weight: 800; text-decoration: none; box-shadow: 0 0 15px var(--accent-glow); }
 
-        /* Hamburger & Sidebar */
+        /* Mobile Hamburger & Sidebar */
         .hamburger { display: none; cursor: pointer; flex-direction: column; gap: 6px; z-index: 2002; }
         .hamburger span { width: 28px; height: 3px; background: var(--text); border-radius: 2px; }
         .sidebar { position: fixed; top: 0; left: -320px; width: 300px; height: 100%; background: var(--space-bg); z-index: 2000; transition: 0.4s; padding: 80px 30px; border-right: 1px solid var(--accent); display: flex; flex-direction: column; }
@@ -52,7 +52,7 @@
         .sidebar-links { display: flex; flex-direction: column; gap: 20px; flex-grow: 1; }
         .sidebar-links a { color: var(--text); text-decoration: none; font-weight: 700; font-size: 1.1rem; }
 
-        /* The Switch Toggle */
+        /* Theme Switch Toggle Box */
         .theme-switch-container { display: flex; align-items: center; justify-content: space-between; padding: 20px 0; border-top: 1px solid var(--card-border); }
         .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
         .switch input { opacity: 0; width: 0; height: 0; }
@@ -61,15 +61,16 @@
         input:checked + .slider-round { background-color: var(--accent); }
         input:checked + .slider-round:before { transform: translateX(24px); }
 
-        /* Hero */
+        /* Content Sections */
         .hero { height: 85vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 10%; }
         .hero h1 { font-size: clamp(2.5rem, 8vw, 5rem); font-weight: 800; line-height: 1.1; margin-bottom: 20px; }
-
-        /* Sections */
         .section { padding: 80px 8%; }
+        .section-title { font-size: 2.5rem; text-align: center; margin-bottom: 50px; font-weight: 800; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
-        .card { background: var(--glass); border: 1px solid var(--card-border); padding: 30px; border-radius: 24px; transition: 0.4s; backdrop-filter: blur(10px); }
+        
+        .card { background: var(--glass); border: 1px solid var(--card-border); padding: 25px; border-radius: 24px; transition: 0.4s; backdrop-filter: blur(10px); }
         .card:hover { transform: translateY(-10px); border-color: var(--accent); box-shadow: 0 15px 35px var(--accent-glow); }
+        .card-img { width: 100%; height: 180px; border-radius: 16px; object-fit: cover; margin-bottom: 20px; border: 1px solid var(--card-border); }
 
         /* Founder Section */
         .founder-box { display: flex; align-items: center; gap: 50px; background: var(--glass); border-radius: 30px; padding: 50px; border: 1px solid var(--card-border); }
@@ -79,6 +80,7 @@
             .nav-links { display: none; }
             .hamburger { display: flex; order: -1; margin-right: 15px; }
             .brand { margin-left: auto; order: 1; }
+            .hero h1 { font-size: 3.2rem; }
             .founder-box { flex-direction: column; text-align: center; }
         }
     </style>
@@ -118,7 +120,6 @@
         <a href="/courses.html">Courses</a>
         <a href="/pishot_hub.html">PiShot</a>
         <a href="/community.html">Community</a>
-        <a href="/support.html">Contact Us</a>
         <div id="mobileAuth" style="display:flex; flex-direction:column; gap:15px; margin-top:10px;"></div>
     </div>
     <div class="theme-switch-container">
@@ -132,8 +133,8 @@
 
 <section class="hero">
     <h1>Ignite the <br><span style="color:var(--accent)">Cosmos of Mind.</span></h1>
-    <p style="font-size: 1.2rem; opacity: 0.8; max-width: 650px; margin-top:20px;">Master the complexities of Science and Mathematics with Harsh Vardhan Vishwakarma. Experience the most advanced learning dimension ever created.</p>
-    <a href="/courses.html" class="btn-action" style="margin-top:40px; padding: 18px 50px; font-size: 1.1rem;">EXPLORE COURSES</a>
+    <p style="font-size: 1.1rem; opacity: 0.8; max-width: 650px; margin-top:20px;">Master Science and Mathematics with Harsh Vardhan Vishwakarma. The most advanced learning dimension in Gorakhpur.</p>
+    <a href="/register.html" class="btn-action" style="margin-top:40px; padding: 18px 50px; font-size: 1.1rem;">JOIN THE MISSION</a>
 </section>
 
 <section class="section">
@@ -150,34 +151,39 @@
     <div class="founder-box">
         <img src="/images/founder.jpg" alt="Harsh Vardhan Vishwakarma" class="founder-img">
         <div class="founder-text">
-            <h2 style="font-size: 2.2rem; margin-bottom: 10px;">The Architect</h2>
+            <h2 style="font-size: 2.2rem; margin-bottom: 10px;">The Visionary</h2>
             <h3 style="color:var(--accent); font-weight:800; margin-bottom:20px;">Harsh Vardhan Vishwakarma</h3>
-            <p style="opacity:0.8; line-height:1.8;">As the founder of PiMentor, Harsh envisions an era where education is not just a chore, but an immersive adventure. Driven by a passion for clarity and precision, he has built PiMentor to empower students with tools that simplify the impossible.</p>
+            <p style="opacity:0.8; line-height:1.8;">Harsh founded PiMentor with a single mission: to transcend traditional educational boundaries. By blending rigorous logic with galactic aesthetics, he has built a sanctuary where every student can achieve absolute mastery of their potential.</p>
         </div>
     </div>
 </section>
 
 <section class="section">
     <div style="background: linear-gradient(135deg, var(--accent) 0%, #4b2cbe 100%); padding: 80px; border-radius: 40px; text-align: center; color: white;">
-        <h2 style="font-size: 3rem; margin-bottom: 20px;">The PiMentor Family</h2>
-        <p style="margin-bottom: 40px; opacity:0.9; max-width: 700px; margin-left:auto; margin-right:auto;">Join a community of 10,000+ pioneers. Here, we don't just solve equations; we build futures. Are you ready to transcend?</p>
-        <a href="/community.html" class="btn-action" style="background:#fff; color:var(--accent) !important;">JOIN THE MOVEMENT</a>
+        <h2 style="font-size: 3rem; margin-bottom: 20px;">The Inner Circle</h2>
+        <p style="margin-bottom: 40px; opacity:0.9; max-width: 700px; margin-left:auto; margin-right:auto;">Join 10,000+ pioneers in our elite community. Here, doubts are conquered and futures are forged. Are you ready?</p>
+        <a href="/community.html" class="btn-action" style="background:#fff; color:var(--accent) !important;">ENTER THE FAMILY</a>
     </div>
 </section>
 
+<footer><p style="text-align:center; padding: 40px; border-top: 1px solid var(--card-border);">© 2026 PiMentor. Galactic Learning. Built by Harsh Vardhan Vishwakarma.</p></footer>
+
 <script>
-    const themeToggles = [document.getElementById('themeToggleNav'), document.getElementById('themeToggleSidebar')];
+    /* --- THEME LOGIC --- */
+    const toggles = [document.getElementById('themeToggleNav'), document.getElementById('themeToggleSidebar')];
     const applyTheme = (t) => {
         document.documentElement.setAttribute('data-theme', t);
-        themeToggles.forEach(toggle => toggle.checked = (t === 'dark'));
+        toggles.forEach(toggle => toggle.checked = (t === 'dark'));
         localStorage.setItem('pimentor-theme', t);
     };
     applyTheme(localStorage.getItem('pimentor-theme') || 'dark');
-    themeToggles.forEach(toggle => toggle.onchange = () => applyTheme(toggle.checked ? 'dark' : 'light'));
+    toggles.forEach(toggle => toggle.onchange = () => applyTheme(toggle.checked ? 'dark' : 'light'));
 
+    /* --- SIDEBAR LOGIC --- */
     document.getElementById('hamburger').onclick = () => document.getElementById('sidebar').classList.add('open');
     document.getElementById('closeSidebar').onclick = () => document.getElementById('sidebar').classList.remove('open');
 
+    /* --- AUTH & DATA SYNC --- */
     document.addEventListener("DOMContentLoaded", () => {
         const token = localStorage.getItem("token");
         if (token) {
@@ -189,35 +195,38 @@
 
     async function fetchData() {
         try {
-            // Courses Fetch from authRoutes /courses
+            // Fetch Dynamic Courses
             const cRes = await fetch('https://pimentor-project.onrender.com/api/auth/courses');
             const cData = await cRes.json();
             if(cData.success) {
+                // Show latest 3 dynamically
                 const latest = cData.courses.slice(-3).reverse();
                 document.getElementById('courseGrid').innerHTML = latest.map(c => `
                     <div class="card">
-                        <img src="/images/course.png" style="width:100%; border-radius:15px; margin-bottom:20px;">
+                        <img src="${c.thumbnail || '/images/course_default.png'}" class="card-img" alt="${c.title}">
                         <h3 style="font-size:1.3rem;">${c.title}</h3>
-                        <p style="opacity:0.7; font-size:0.9rem; margin: 15px 0;">New chapter in the dimension.</p>
-                        <a href="/courses.html" style="color:var(--accent); font-weight:800; text-decoration:none;">View Course →</a>
+                        <p style="opacity:0.7; font-size:0.9rem; margin: 15px 0;">New chapter added to your structured curriculum.</p>
+                        <a href="/courses.html" style="color:var(--accent); font-weight:800; text-decoration:none;">View Details →</a>
                     </div>
                 `).join('');
             }
 
-            // PiShots Fetch from shortRoutes /categories
+            // Fetch PiShot Categories
             const sRes = await fetch('https://pimentor-project.onrender.com/api/shorts/categories');
             const categories = await sRes.json();
-            // Sort by videoCount descending to get Top 3
+            // Sort to find the top 3 high-engagement categories
             const topCategories = categories.sort((a, b) => b.videoCount - a.videoCount).slice(0, 3);
             document.getElementById('shotGrid').innerHTML = topCategories.map(cat => `
                 <div class="card" style="text-align:center;">
                     <div style="font-size:3.5rem; margin-bottom:15px;">${cat.icon || '🎬'}</div>
                     <h3 style="font-size:1.4rem;">${cat.name}</h3>
-                    <p style="color:var(--gold); font-weight:800; margin-top:10px;">${cat.videoCount} Shorts Uploaded</p>
-                    <a href="/pishot_hub.html?category=${cat.name}" class="btn-action" style="display:inline-block; margin-top:20px; font-size:0.8rem; padding: 10px 25px;">Explore Category</a>
+                    <p style="color:var(--gold); font-weight:800; margin-top:10px;">${cat.videoCount} Shorts Released</p>
+                    <a href="/pishot_hub.html?category=${cat.name}" class="btn-action" style="display:inline-block; margin-top:20px; font-size:0.8rem; padding: 10px 25px;">Dive In</a>
                 </div>
             `).join('');
-        } catch (e) { console.error("Sync Error", e); }
+        } catch (e) { 
+            console.error("Galaxy Sync Failure:", e); 
+        }
     }
 </script>
 </body>
