@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PiMentor | Galactic Learning</title>
+    <title>PiMentor | Transcend Your Learning</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700;800&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="/images/OUR_LOGO.png">
     
@@ -17,39 +17,31 @@
             --text: #ffffff;
             --card-border: rgba(255, 255, 255, 0.1);
             --transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            --gold: #ffcc00;
         }
 
         /* LIGHT MODE (RISING SUN GRASSLAND) */
         [data-theme="light"] {
             --space-bg: linear-gradient(180deg, #87CEEB 0%, #E0F7FA 40%, #A8E063 100%);
             --text: #1b4332;
-            --accent: #2d6a4f; /* Deep Leaf Green */
+            --accent: #2d6a4f;
             --accent-glow: rgba(45, 106, 79, 0.2);
             --glass: rgba(255, 255, 255, 0.85);
             --card-border: rgba(45, 106, 79, 0.2);
+            --gold: #b8860b;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--space-bg); color: var(--text); overflow-x: hidden; transition: background 0.5s ease; min-height: 100vh; }
+        body { background: var(--space-bg); color: var(--text); overflow-x: hidden; transition: background 0.5s ease; min-height: 100vh; scroll-behavior: smooth; }
 
-        /* --- BACKGROUND DECOR --- */
-        body::before {
-            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: url('https://www.transparenttextures.com/patterns/stardust.png');
-            opacity: 0.3; z-index: -1; animation: twinkle 100s linear infinite;
+        /* --- LOGO CIRCULAR BOUNDARY FIX --- */
+        .logo-img { 
+            height: 45px; width: 45px; border-radius: 50%; 
+            object-fit: cover; border: 2px solid var(--accent);
+            filter: drop-shadow(0 0 8px var(--accent)); 
         }
-        @keyframes twinkle { from { background-position: 0 0; } to { background-position: 1000px 1000px; } }
 
-        /* LIGHT MODE DECOR (SUN & TREE) */
-        [data-theme="light"] body::after {
-            content: "☀️"; position: fixed; top: 10%; right: 10%; font-size: 80px; filter: blur(15px); opacity: 0.4; z-index: -1;
-        }
-        .grass-tree {
-            display: none; position: fixed; bottom: 0; left: 5%; font-size: 150px; z-index: -1; opacity: 0.3;
-        }
-        [data-theme="light"] .grass-tree { display: block; }
-
-        /* --- NAVBAR --- */
+        /* --- NAVIGATION --- */
         .navbar {
             position: fixed; top: 0; width: 100%; height: 80px; z-index: 1000;
             display: flex; align-items: center; justify-content: flex-start;
@@ -57,229 +49,225 @@
             backdrop-filter: blur(15px); border-bottom: 1px solid var(--card-border);
         }
 
-        .brand { display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.3s; }
-        
-        /* CIRCULAR LOGO DESIGN */
-        .logo-img { 
-            height: 45px; 
-            width: 45px; 
-            border-radius: 50%; 
-            object-fit: cover; 
-            border: 2px solid var(--accent);
-            filter: drop-shadow(0 0 8px var(--accent)); 
-        }
-
+        .brand { display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.3s; text-decoration: none; }
         .logo-text { font-size: 1.5rem; font-weight: 800; background: linear-gradient(90deg, var(--text), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        .nav-links { display: flex; gap: 30px; align-items: center; margin-left: auto; }
-        .nav-links a { text-decoration: none; color: inherit; font-weight: 600; transition: var(--transition); opacity: 0.8; }
+        .nav-links { display: flex; gap: 20px; align-items: center; margin-left: auto; }
+        .nav-links a { text-decoration: none; color: inherit; font-weight: 600; transition: var(--transition); opacity: 0.8; font-size: 0.9rem; }
         .nav-links a:hover { opacity: 1; color: var(--accent); }
-        .btn-get-started { background: var(--accent); color: #fff !important; padding: 10px 24px; border-radius: 50px; box-shadow: 0 0 20px var(--accent-glow); opacity: 1 !important; }
+        .btn-action { background: var(--accent); color: #fff !important; padding: 10px 24px; border-radius: 50px; box-shadow: 0 0 20px var(--accent-glow); font-weight: 800; }
 
-        /* --- MOBILE HAMBURGER --- */
-        .hamburger { display: none; cursor: pointer; flex-direction: column; gap: 6px; }
+        /* --- MOBILE NAVBAR --- */
+        .hamburger { display: none; cursor: pointer; flex-direction: column; gap: 6px; z-index: 2001; }
         .hamburger span { width: 28px; height: 3px; background: var(--text); border-radius: 2px; }
 
         @media (max-width: 900px) {
             .nav-links { display: none; }
-            .hamburger { display: flex; margin-right: auto; } 
-            .brand { margin-left: auto; } /* Brand pushed to RIGHT */
+            .hamburger { display: flex; order: -1; margin-right: 15px; } 
+            .brand { margin-left: auto; order: 1; }
+            .hero-title { font-size: 2.5rem !important; }
         }
 
         /* --- SIDEBAR DRAWER --- */
         .sidebar {
             position: fixed; top: 0; left: -320px; width: 300px; height: 100%;
-            background: var(--glass); backdrop-filter: blur(25px);
+            background: var(--space-bg); backdrop-filter: blur(25px);
             z-index: 2000; transition: 0.4s cubic-bezier(0.77, 0, 0.175, 1); padding: 40px 30px; border-right: 1px solid var(--accent);
         }
         .sidebar.open { left: 0; }
-        .sidebar-links { display: flex; flex-direction: column; gap: 25px; margin-top: 30px; }
-        .sidebar-links a { color: var(--text); text-decoration: none; font-size: 1.1rem; font-weight: 700; width: 100%; }
-
-        /* --- THEME SWITCH STYLING --- */
-        .theme-switch-wrapper {
-            display: flex; align-items: center; justify-content: space-between;
-            padding-bottom: 20px; border-bottom: 1px solid var(--card-border); margin-bottom: 10px;
+        .sidebar-links { display: flex; flex-direction: column; gap: 20px; margin-top: 30px; }
+        .sidebar-links a { color: var(--text); text-decoration: none; font-size: 1.1rem; font-weight: 700; }
+        
+        /* --- DYNAMIC THEME ON/OFF SWITCH --- */
+        .theme-switch-box {
+            background: var(--glass); border: 1px solid var(--accent);
+            padding: 15px; border-radius: 15px; display: flex; align-items: center;
+            justify-content: space-between; margin-bottom: 30px;
         }
-        .switch-label { font-weight: 700; color: var(--text); }
+
+        /* --- HERO SECTION --- */
+        .hero { height: 90vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: url('https://www.transparenttextures.com/patterns/stardust.png'); }
+        .hero-title { font-size: 5rem; font-weight: 800; line-height: 1.1; margin-bottom: 20px; }
+
+        /* --- DYNAMIC SECTIONS --- */
+        .section { padding: 80px 8%; }
+        .section-title { font-size: 2.5rem; text-align: center; margin-bottom: 50px; font-weight: 800; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+
+        .card { 
+            background: var(--glass); border: 1px solid var(--card-border); 
+            padding: 30px; border-radius: 24px; transition: var(--transition); 
+            backdrop-filter: blur(10px); position: relative; overflow: hidden;
+        }
+        .card:hover { transform: translateY(-10px); border-color: var(--accent); box-shadow: 0 15px 40px var(--accent-glow); }
+
+        /* --- FOUNDER SECTION --- */
+        .founder-box { display: flex; align-items: center; gap: 50px; background: var(--glass); border-radius: 30px; padding: 50px; border: 1px solid var(--card-border); }
+        .founder-img { width: 250px; height: 250px; border-radius: 50%; border: 4px solid var(--accent); object-fit: cover; }
+        
+        @media (max-width: 768px) { .founder-box { flex-direction: column; text-align: center; } }
+
+        /* --- HYPNOTIC COMMUNITY --- */
+        .community-cta { 
+            background: linear-gradient(135deg, var(--accent) 0%, #4b2cbe 100%); 
+            padding: 80px; border-radius: 40px; text-align: center; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
+        }
+
         .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider-round {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #ccc; transition: .4s; border-radius: 34px;
-        }
-        .slider-round:before {
-            position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px;
-            background-color: white; transition: .4s; border-radius: 50%;
-        }
+        .slider-round { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider-round:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider-round { background-color: var(--accent); }
         input:checked + .slider-round:before { transform: translateX(24px); }
-
-        .sidebar-btn { background: var(--accent); text-align: center; padding: 15px; border-radius: 12px; color: #fff !important; }
-
-        /* --- FIXED SLIDER --- */
-        .slider-container { width: 100%; height: 70vh; margin-top: 80px; position: relative; overflow: hidden; }
-        .slider-wrapper { display: flex; width: 100%; height: 100%; transition: transform 0.8s ease-in-out; }
-        .slide { min-width: 100%; height: 100%; position: relative; }
-        .slide img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.5); }
-        .slide-content { position: absolute; bottom: 15%; left: 8%; z-index: 10; }
-        .slide-content h2 { font-size: 3.5rem; color: #fff; }
-
-        /* --- SECTIONS --- */
-        .courses-section, .why, .features { padding: 100px 8%; }
-        .section-title { font-size: 2.5rem; text-align: center; margin-bottom: 50px; }
-        .course-grid, .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; }
-        
-        .course-card, .feature-card {
-            background: var(--glass); border: 1px solid var(--card-border);
-            padding: 30px; border-radius: 24px; transition: var(--transition); backdrop-filter: blur(10px);
-        }
-        .course-card img { width: 100%; border-radius: 15px; margin-bottom: 20px; }
-
-        @media (max-width: 900px) {
-            .slide-content h2 { font-size: 2.2rem; }
-        }
     </style>
 </head>
 <body>
 
-<div class="grass-tree">🌳</div>
-
 <header class="navbar">
-    <div class="hamburger" id="hamburger">
-        <span></span>
-        <span></span>
-        <span></span>
-    </div>
-
-    <div class="brand" onclick="window.location.href='/index.html'">
-        <img src="/images/OUR_LOGO.png" class="logo-img" alt="pimentor">
-        <div class="logo-text">PiMentor</div>
-    </div>
-
-    <nav class="nav-links">
+    <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+    <a href="/index.html" class="brand">
+        <img src="/images/OUR_LOGO.png" class="logo-img" alt="Logo">
+        <span class="logo-text">PiMentor</span>
+    </a>
+    <nav class="nav-links" id="desktopNav">
         <a href="/index.html">Home</a>
         <a href="/courses.html">Courses</a>
         <a href="/pishot_hub.html">PiShot</a>
-        <a href="support.html">Contact Us</a>
-        <a href="/login.html" id="loginLink">Login</a>
-        <a href="community.html">Community</a>
-        <a href="/register.html" class="btn-get-started" id="startBtn">Get Started</a>
+        <a href="/community.html">Community</a>
+        <a href="/support.html">Contact Us</a>
+        <div id="desktopAuth">
+            <a href="/login.html" style="margin-right:15px">Login</a>
+            <a href="/register.html" class="btn-action">Register</a>
+        </div>
+        <label class="switch" style="margin-left: 15px;">
+            <input type="checkbox" id="themeToggleDesktop" checked>
+            <span class="slider-round"></span>
+        </label>
     </nav>
 </header>
 
 <aside class="sidebar" id="sidebar">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-        <div class="logo-text" style="-webkit-text-fill-color: var(--text);">Menu</div>
-        <button id="closeSidebar" style="background:none; border:none; color:var(--text); font-size:2.5rem; cursor:pointer;">&times;</button>
+        <span class="logo-text">Menu</span>
+        <button id="closeSidebar" style="background:none; border:none; color:var(--text); font-size:2rem; cursor:pointer;">&times;</button>
     </div>
-    
-    <div class="theme-switch-wrapper">
-        <span class="switch-label">Dark Theme</span>
+    <div class="theme-switch-box">
+        <span style="font-weight:800">Dark Mode</span>
         <label class="switch">
-            <input type="checkbox" id="themeToggle" checked>
+            <input type="checkbox" id="themeToggleMobile" checked>
             <span class="slider-round"></span>
         </label>
     </div>
-
-    <nav class="sidebar-links">
+    <nav class="sidebar-links" id="mobileNav">
         <a href="/index.html">Home</a>
         <a href="/courses.html">Courses</a>
         <a href="/pishot_hub.html">PiShot</a>
-        <a href="support.html">Contact Us</a>
-        <a href="community.html">Community</a>
-        <div id="mobileAuthLinks" style="display: flex; flex-direction: column; gap: 20px;">
+        <a href="/community.html">Community</a>
+        <div id="mobileAuth">
             <a href="/login.html">Login</a>
-            <a href="/register.html" class="sidebar-btn">Get Started</a>
+            <a href="/register.html" style="color:var(--accent)">Register</a>
         </div>
     </nav>
 </aside>
 
-<section class="slider-container">
-    <div class="slider-wrapper" id="sliderWrapper">
-        <div class="slide"><img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1920" alt="S1"><div class="slide-content"><h2>Space for Learning</h2><p>Structured courses for the stars of Gorakhpur.</p></div></div>
-        <div class="slide"><img src="https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1920" alt="S2"><div class="slide-content"><h2>Expert Mentorship</h2><p>Guidance from the finest educators.</p></div></div>
-        <div class="slide"><img src="https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=1920" alt="S3"><div class="slide-content"><h2>Infinite Progress</h2><p>Track your growth in real-time.</p></div></div>
+<section class="hero">
+    <h1 class="hero-title">Transcending <br><span style="color:var(--accent)">The Infinite.</span></h1>
+    <p style="font-size: 1.2rem; opacity: 0.8; max-width: 600px;">Gorakhpur's most advanced digital learning ecosystem. Join Harsh Vardhan Vishwakarma in the pursuit of absolute mastery.</p>
+    <a href="/register.html" class="btn-action" style="margin-top:40px; padding: 18px 50px; font-size: 1.1rem;">Begin Your Journey</a>
+</section>
+
+<section class="section">
+    <h2 class="section-title">Latest <span style="color:var(--accent)">Launches</span></h2>
+    <div class="grid" id="dynamicCourses">
+        <p style="text-align:center; grid-column: 1/-1;">Synchronizing galactic data...</p>
     </div>
 </section>
 
-<section class="courses-section">
-    <h2 class="section-title">Popular <span style="color:var(--accent)">Courses</span></h2>
-    <div class="course-grid">
-        <div class="course-card">
-            <img src="/images/course.png" alt="Math">
-            <h3>Class 10 Mathematics</h3>
-            <p>Master every logic with clarity.</p>
-            <a href="/courses.html" class="btn-get-started" style="display:block; text-align:center; margin-top:20px; text-decoration:none;">Enroll</a>
-        </div>
-        <div class="course-card">
-            <img src="/images/course.png" alt="Physics">
-            <h3>Class 12 Physics</h3>
-            <p>Competitive & Board level preparation.</p>
-            <a href="/courses.html" class="btn-get-started" style="display:block; text-align:center; margin-top:20px; text-decoration:none;">Enroll</a>
-        </div>
-        <div class="course-card">
-            <img src="/images/course.png" alt="Foundation">
-            <h3>Foundation Course</h3>
-            <p>Early Exam Preparation Focus.</p>
-            <a href="/courses.html" class="btn-get-started" style="display:block; text-align:center; margin-top:20px; text-decoration:none;">Enroll</a>
+<section class="section" style="background: rgba(124, 77, 255, 0.02);">
+    <h2 class="section-title">Trending <span style="color:var(--gold)">PiShots</span></h2>
+    <div class="grid" id="dynamicShots">
+        <p style="text-align:center; grid-column: 1/-1;">Fetching viral concepts...</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="founder-box">
+        <img src="/images/founder.jpg" alt="Harsh Vardhan Vishwakarma" class="founder-img">
+        <div>
+            <h2 style="font-size: 2rem; margin-bottom: 15px;">Meet Your Mentor</h2>
+            <h3 style="color:var(--accent); margin-bottom: 20px;">Harsh Vardhan Vishwakarma</h3>
+            <p style="opacity:0.8;">Founder of PiMentor and a visionary educator. Harsh established PiMentor to bridge the gap between complex academics and student intuition. His goal? To turn every learner in Gorakhpur into a leader of tomorrow through structured, galactic-grade education.</p>
         </div>
     </div>
 </section>
 
-<section class="why" style="background: rgba(124, 77, 255, 0.03);">
-    <h2 class="section-title">Why <span style="color:var(--accent)">PiMentor?</span></h2>
-    <div class="features-grid">
-        <div class="feature-card"><h3>📘 Expert Content</h3><p>Verified by top subject experts.</p></div>
-        <div class="feature-card"><h3>📊 Smart Analytics</h3><p>Deep insights into your performance.</p></div>
-        <div class="feature-card"><h3>🎯 Target Oriented</h3><p>100% Exam focused strategies.</p></div>
+<section class="section">
+    <div class="community-cta">
+        <h2 style="font-size: 3rem; color:#fff; margin-bottom: 20px;">The Inner Circle</h2>
+        <p style="color:#fff; margin-bottom: 40px; opacity:0.9;">Don't just study. Evolve. Join 10,000+ students in our private community where doubts die and mastery is born.</p>
+        <a href="/community.html" class="btn-action" style="background:#fff; color:var(--accent) !important;">ENTER THE CIRCLE</a>
     </div>
 </section>
 
-<footer><p>© 2026 PiMentor. Galactic Learning. Gorakhpur, UP.</p></footer>
+<footer><p style="text-align:center; padding: 40px; border-top: 1px solid var(--card-border);">© 2026 PiMentor. Galactic Learning. Built by Harsh Vardhan Vishwakarma.</p></footer>
 
 <script>
-    /* --- SLIDER LOGIC --- */
-    const wrapper = document.getElementById('sliderWrapper');
-    let currentSlide = 0;
-    setInterval(() => {
-        currentSlide = (currentSlide + 1) % 3;
-        wrapper.style.transform = `translateX(-${currentSlide * 100}%)`;
-    }, 5000);
-
-    /* --- SIDEBAR LOGIC --- */
-    const hamburger = document.getElementById('hamburger');
-    const sidebar = document.getElementById('sidebar');
-    const closeSidebar = document.getElementById('closeSidebar');
-    hamburger.onclick = () => sidebar.classList.add('open');
-    closeSidebar.onclick = () => sidebar.classList.remove('open');
-
-    /* --- THEME TOGGLE LOGIC --- */
-    const themeToggle = document.getElementById('themeToggle');
+    /* --- THEME LOGIC (ON/OFF SWITCH) --- */
+    const toggles = [document.getElementById('themeToggleDesktop'), document.getElementById('themeToggleMobile')];
     const applyTheme = (theme) => {
         document.documentElement.setAttribute('data-theme', theme);
-        themeToggle.checked = (theme === 'dark');
+        toggles.forEach(t => t.checked = (theme === 'dark'));
         localStorage.setItem('pimentor-theme', theme);
     };
 
-    const savedTheme = localStorage.getItem('pimentor-theme') || 'dark';
-    applyTheme(savedTheme);
+    toggles.forEach(t => t.onchange = () => applyTheme(t.checked ? 'dark' : 'light'));
+    applyTheme(localStorage.getItem('pimentor-theme') || 'dark');
 
-    themeToggle.onchange = () => {
-        const newTheme = themeToggle.checked ? 'dark' : 'light';
-        applyTheme(newTheme);
-    };
+    /* --- SIDEBAR --- */
+    document.getElementById('hamburger').onclick = () => document.getElementById('sidebar').classList.add('open');
+    document.getElementById('closeSidebar').onclick = () => document.getElementById('sidebar').classList.remove('open');
 
-    /* --- AUTH CHECK --- */
+    /* --- AUTH CHECK (DASHBOARD VS LOGIN) --- */
     document.addEventListener("DOMContentLoaded", () => {
         const token = localStorage.getItem("token");
-        const startBtn = document.getElementById("startBtn");
-        const mobileAuth = document.getElementById("mobileAuthLinks");
+        const desktopAuth = document.getElementById("desktopAuth");
+        const mobileAuth = document.getElementById("mobileAuth");
+
         if (token) {
-            if(startBtn) { startBtn.innerText = "Dashboard"; startBtn.href = "dashboard.html"; }
-            if(mobileAuth) mobileAuth.innerHTML = `<a href="dashboard.html" class="sidebar-btn">Dashboard</a>`;
+            desktopAuth.innerHTML = `<a href="dashboard.html" class="btn-action">Dashboard</a>`;
+            mobileAuth.innerHTML = `<a href="dashboard.html" style="color:var(--accent)">Dashboard</a>`;
         }
+        fetchDynamicData();
     });
+
+    /* --- DYNAMIC FETCHING --- */
+    async function fetchDynamicData() {
+        try {
+            // Courses
+            const cRes = await fetch('https://pimentor-project.onrender.com/api/courses');
+            const courses = await cRes.json();
+            document.getElementById('dynamicCourses').innerHTML = courses.slice(-3).reverse().map(c => `
+                <div class="card">
+                    <img src="/images/course.png" style="width:100%; border-radius:15px; margin-bottom:15px;">
+                    <h3>${c.title}</h3>
+                    <p style="font-size:0.9rem; opacity:0.7; margin-top:10px;">The latest curriculum addition.</p>
+                    <a href="/courses.html" style="color:var(--accent); text-decoration:none; display:block; margin-top:15px; font-weight:800;">View Details →</a>
+                </div>
+            `).join('');
+
+            // PiShots (Mock top 3 categories)
+            const categories = ["Mathematics", "Physics", "Exam Strategy"];
+            document.getElementById('dynamicShots').innerHTML = categories.map(cat => `
+                <div class="card" style="text-align:center">
+                    <div style="font-size:3rem; margin-bottom:15px;">🎬</div>
+                    <h3>${cat}</h3>
+                    <p style="opacity:0.7;">Top Category: Most Shorts Uploaded</p>
+                    <a href="/pishot_hub.html" class="btn-action" style="display:inline-block; margin-top:20px; font-size:0.8rem;">Explore</a>
+                </div>
+            `).join('');
+        } catch (e) { console.error("Sync Error", e); }
+    }
 </script>
 </body>
 </html>
