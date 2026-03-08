@@ -16,7 +16,7 @@
             --drawer-bg: #0d1117;
         }
 
-        /* Restored Green Tree Light Theme */
+        /* Greenish Tree Light Theme */
         [data-theme="light"] {
             --space-bg: linear-gradient(180deg, #87CEEB 0%, #E0F7FA 40%, #A8E063 100%);
             --text: #1b4332;
@@ -37,7 +37,7 @@
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
-        /* Logo Branding Fix */
+        /* Logo Branding - Circular Fix */
         .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; z-index: 1001; }
         .logo-img { 
             height: 45px; width: 45px; border-radius: 50%; 
@@ -46,7 +46,7 @@
         }
         .logo-text { font-size: 1.3rem; font-weight: 800; color: var(--text); }
 
-        /* Desktop Links */
+        /* Desktop Controls */
         .nav-links { display: flex; gap: 15px; align-items: center; }
         .nav-btn { 
             text-decoration: none; color: var(--text); font-weight: 700; 
@@ -54,7 +54,7 @@
         }
         .nav-btn:hover, .nav-btn.active { background: var(--accent); color: white !important; }
 
-        /* Mobile Hamburger Icon */
+        /* Mobile Controls */
         .menu-toggle {
             display: none; background: none; border: none; color: var(--text);
             font-size: 1.8rem; cursor: pointer; z-index: 1002;
@@ -63,19 +63,28 @@
         /* Sidebar Drawer (Left) */
         .nav-drawer {
             position: fixed; top: 0; left: -100%; width: 280px; height: 100%;
-            background: var(--drawer-bg); z-index: 1001; padding: 100px 30px;
-            display: flex; flex-direction: column; gap: 20px;
+            background: var(--drawer-bg); z-index: 1001; padding: 80px 30px 40px;
+            display: flex; flex-direction: column; 
             transition: 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
             box-shadow: 10px 0 30px rgba(0,0,0,0.5);
             border-right: 1px solid var(--accent);
         }
         .nav-drawer.open { left: 0; }
+        .drawer-content { flex-grow: 1; display: flex; flex-direction: column; gap: 15px; }
         .drawer-btn {
             text-decoration: none; color: var(--text); font-size: 1.1rem; 
             font-weight: 700; padding: 12px 0; border-bottom: 1px solid rgba(124, 77, 255, 0.1);
         }
 
-        /* Sections */
+        /* Theme Toggle at bottom of Drawer */
+        .drawer-footer { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--card-border); }
+        .theme-toggle-wide {
+            width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+            padding: 12px; border-radius: 12px; background: var(--glass); 
+            border: 1px solid var(--accent); color: var(--text); cursor: pointer; font-weight: 700;
+        }
+
+        /* Hero and Content */
         .hero { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 20px; position: relative; }
         .hero h1 { font-size: clamp(3rem, 8vw, 6rem); font-weight: 800; line-height: 1; background: linear-gradient(to bottom, #fff 30%, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: pulse 4s infinite ease-in-out; }
         @keyframes pulse { 0%, 100% { filter: drop-shadow(0 0 10px var(--accent-glow)); } 50% { filter: drop-shadow(0 0 30px var(--accent)); } }
@@ -95,14 +104,14 @@
         .qr-frame { background: white; padding: 15px; border-radius: 20px; display: inline-block; margin: 30px 0; transform: rotate(-3deg); transition: 0.5s; }
         .qr-frame img { width: 200px; height: 200px; display: block; }
 
-        #themeBtn { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 50%; cursor: pointer; font-size: 1.5rem; z-index: 1002; }
+        #themeBtnDesktop { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 50%; cursor: pointer; font-size: 1.5rem; }
 
         @media (max-width: 900px) {
-            .nav-links { display: none; }
-            .menu-toggle { display: block; order: -1; } /* Hamburger to left */
-            .brand { order: 1; margin-left: auto; } /* Brand to right */
+            .nav-links, #themeBtnDesktop { display: none; }
+            .menu-toggle { display: block; order: -1; } /* Hamburger far left */
+            .brand { order: 1; margin-left: auto; } /* Brand far right */
             .nav-bar { padding: 0 20px; }
-            .hero h1 { font-size: 3.5rem; }
+            .hero h1 { font-size: 3.2rem; }
             .feature-box { flex-direction: column; text-align: center; }
         }
     </style>
@@ -121,18 +130,26 @@
         <a href="/index.html" class="nav-btn">HOME</a>
         <a href="/courses.html" class="nav-btn">COURSES</a>
         <a href="/pishot.html" class="nav-btn">PISHOT</a>
-        <a href="/support.html" class="nav-btn active">CONTACT US</a>
+        <a href="/community.html" class="nav-btn active">COMMUNITY</a>
     </div>
 
-    <button id="themeBtn" onclick="toggleTheme()" style="order: 2; margin-left: 15px;">🌙</button>
+    <button id="themeBtnDesktop" onclick="toggleTheme()">🌙</button>
 </nav>
 
 <div class="nav-drawer" id="mobileDrawer">
-    <a href="/index.html" class="drawer-btn">HOME</a>
-    <a href="/courses.html" class="drawer-btn">COURSES</a>
-    <a href="/pishot.html" class="drawer-btn">PISHOT</a>
-    <a href="/support.html" class="drawer-btn">CONTACT US</a>
-    <div id="drawerDynamic"></div>
+    <div class="drawer-content">
+        <a href="/index.html" class="drawer-btn">HOME</a>
+        <a href="/courses.html" class="drawer-btn">COURSES</a>
+        <a href="/pishot.html" class="drawer-btn">PISHOT</a>
+        <a href="/community.html" class="drawer-btn">COMMUNITY</a>
+        <div id="drawerDynamic"></div>
+    </div>
+    
+    <div class="drawer-footer">
+        <button class="theme-toggle-wide" onclick="toggleTheme()">
+            <span id="themeLabelMobile">Switch Theme</span> <span id="themeIconMobile">🌙</span>
+        </button>
+    </div>
 </div>
 
 <section class="hero">
@@ -147,7 +164,7 @@
 <div class="stats-grid">
     <div class="stat-card"><h2>10K+</h2><p>Minds Connected</p></div>
     <div class="stat-card"><h2>500+</h2><p>Expert Mentors</p></div>
-    <div class="stat-card)<h2>98%</h2><p>Success Rate</p></div>
+    <div class="stat-card"><h2>98%</h2><p>Success Rate</p></div>
 </div>
 
 <div class="content-section">
@@ -178,17 +195,27 @@
 </div>
 
 <script>
+    // Theme Logic - Preserving Green Tree and updating both Desktop/Mobile icons
     function applyTheme(theme) {
         document.documentElement.setAttribute("data-theme", theme);
-        document.getElementById("themeBtn").innerText = theme === "dark" ? "☀️" : "🌙";
+        const icon = theme === "dark" ? "☀️" : "🌙";
+        const label = theme === "dark" ? "Light Mode" : "Dark Mode";
+        
+        document.getElementById("themeBtnDesktop").innerText = icon;
+        document.getElementById("themeIconMobile").innerText = icon;
+        document.getElementById("themeLabelMobile").innerText = label;
+        
         localStorage.setItem("pimentor-theme", theme);
     }
+
     applyTheme(localStorage.getItem('pimentor-theme') || 'dark');
+    
     function toggleTheme() { 
         const current = document.documentElement.getAttribute("data-theme");
         applyTheme(current === "dark" ? "light" : "dark"); 
     }
 
+    // Scroll Animation
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) entry.target.classList.add('visible');
@@ -196,10 +223,12 @@
     }, { threshold: 0.1 });
     document.querySelectorAll('.feature-box').forEach(box => observer.observe(box));
 
+    // Drawer Logic
     function toggleDrawer() {
         document.getElementById("mobileDrawer").classList.toggle('open');
     }
 
+    // Nav Auth Sync
     function updateNav() {
         const desktop = document.getElementById("navContainer");
         const drawer = document.getElementById("drawerDynamic");
