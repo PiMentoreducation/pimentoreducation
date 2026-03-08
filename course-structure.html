@@ -14,6 +14,7 @@
             --text: #ffffff;
             --card-border: rgba(255, 255, 255, 0.1);
             --folder-bg: rgba(124, 77, 255, 0.15);
+            --drawer-bg: #0d1117;
         }
 
         [data-theme="light"] {
@@ -23,39 +24,65 @@
             --glass: rgba(255, 255, 255, 0.85);
             --card-border: rgba(45, 106, 79, 0.2);
             --folder-bg: rgba(45, 106, 79, 0.1);
+            --drawer-bg: #E0F7FA;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; transition: 0.4s; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; transition: background 0.4s, color 0.4s; }
         body { background: var(--bg); background-attachment: fixed; color: var(--text); min-height: 100vh; overflow-x: hidden; }
 
-        /* Navigation */
+        /* --- NAVIGATION --- */
         .navbar {
             position: fixed; top: 0; width: 100%; height: 80px; z-index: 1000;
             display: flex; align-items: center; padding: 0 5%;
             background: var(--glass); backdrop-filter: blur(15px); border-bottom: 1px solid var(--card-border);
         }
-        .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
-        .logo-img { height: 45px; width: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); }
+        
+        .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; z-index: 1001; }
+        .logo-img { height: 45px; width: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); filter: drop-shadow(0 0 8px var(--accent)); }
         .logo-text { font-size: 1.5rem; font-weight: 800; background: linear-gradient(90deg, var(--text), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        /* Hamburger & Sidebar */
+        .nav-links { display: flex; gap: 20px; align-items: center; margin-left: auto; }
+        .nav-links a { text-decoration: none; color: inherit; font-weight: 600; font-size: 0.9rem; opacity: 0.8; transition: 0.3s; }
+        .nav-links a:hover { opacity: 1; color: var(--accent); }
+
+        /* --- HAMBURGER & SIDEBAR --- */
         .hamburger { display: none; cursor: pointer; flex-direction: column; gap: 6px; z-index: 2002; }
         .hamburger span { width: 28px; height: 3px; background: var(--text); border-radius: 2px; }
-        .sidebar { position: fixed; top: 0; left: -320px; width: 300px; height: 100%; background: var(--bg); z-index: 2001; transition: 0.4s; padding: 80px 30px; border-right: 1px solid var(--accent); }
+
+        .sidebar {
+            position: fixed; top: 0; left: -320px; width: 300px; height: 100%;
+            background: var(--drawer-bg); z-index: 2001; transition: 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            padding: 80px 30px 40px; border-right: 1px solid var(--accent);
+            display: flex; flex-direction: column;
+        }
         .sidebar.open { left: 0; }
-        .sidebar-links a { display: block; color: var(--text); text-decoration: none; font-weight: 700; margin-bottom: 20px; font-size: 1.1rem; }
+        .sidebar-links { flex-grow: 1; display: flex; flex-direction: column; gap: 20px; }
+        .sidebar-links a { color: var(--text); text-decoration: none; font-size: 1.1rem; font-weight: 700; transition: 0.3s; }
 
         @media (max-width: 1024px) {
-            .nav-links { display: none; }
+            .nav-links, #themeBtnDesktop { display: none; }
             .hamburger { display: flex; order: -1; margin-right: 15px; }
-            .brand { margin-right: auto; }
+            .brand { order: 1; margin-left: auto; }
+            .navbar { padding: 0 20px; }
         }
 
-        /* Content Layout */
+        /* --- THEME SWITCH --- */
+        .drawer-footer { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--card-border); }
+        .theme-toggle-box {
+            width: 100%; display: flex; align-items: center; justify-content: space-between;
+            padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--accent);
+        }
+        .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider-round { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider-round:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider-round { background-color: var(--accent); }
+        input:checked + .slider-round:before { transform: translateX(24px); }
+
+        /* --- CONTENT LAYOUT --- */
         .container { max-width: 900px; margin: 120px auto 50px; padding: 0 20px; }
         .header-box { background: var(--glass); padding: 35px; border-radius: 24px; border-left: 8px solid var(--accent); margin-bottom: 30px; border: 1px solid var(--card-border); }
-        
-        .card-list { display: flex; flex-direction: column; gap: 15px; }
+        .chapter-list { display: flex; flex-direction: column; gap: 15px; }
         .item-card {
             background: var(--glass); padding: 20px 30px; border-radius: 20px;
             display: flex; align-items: center; justify-content: space-between;
@@ -64,41 +91,52 @@
         .item-card:hover { transform: translateX(10px); border-color: var(--accent); box-shadow: 0 10px 25px var(--accent-glow); }
         .item-info { display: flex; align-items: center; gap: 20px; }
         .icon-box { background: var(--folder-bg); width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 12px; color: var(--accent); font-weight: 800; }
-        
-        /* Theme Switch */
-        .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider-round { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
-        .slider-round:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider-round { background-color: var(--accent); }
-        input:checked + .slider-round:before { transform: translateX(24px); }
     </style>
 </head>
 <body>
 
 <header class="navbar">
     <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+    
     <a href="/index.html" class="brand">
         <img src="/images/OUR_LOGO.png" class="logo-img" alt="Logo">
         <div class="logo-text">PiMentor</div>
     </a>
-    <div class="nav-links" style="margin-left: auto; display: flex; align-items: center; gap: 20px;">
-        <a href="/dashboard.html" style="text-decoration:none; color:inherit; font-weight:700;">Dashboard</a>
-        <label class="switch"><input type="checkbox" id="themeToggleNav" checked><span class="slider-round"></span></label>
-    </div>
-</header>
-
-<aside class="sidebar" id="sidebar">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-        <span class="logo-text">Menu</span>
-        <button id="closeSidebar" style="background:none; border:none; color:var(--text); font-size:2rem;">&times;</button>
-    </div>
-    <nav class="sidebar-links">
+    
+    <nav class="nav-links">
         <a href="/index.html">Home</a>
         <a href="/dashboard.html">Dashboard</a>
         <a href="/courses.html">All Courses</a>
-        <a href="#" onclick="logout()" style="color: #ff4d4d;">Logout</a>
+        <a href="/pishot_hub.html">PiShot</a>
+        <a href="/community.html">Community</a>
+        <a href="/support.html">Contact Us</a>
+        <label class="switch" id="themeBtnDesktop">
+            <input type="checkbox" id="themeToggleNav" checked>
+            <span class="slider-round"></span>
+        </label>
     </nav>
+</header>
+
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-links">
+        <a href="/index.html">Home</a>
+        <a href="/dashboard.html">Dashboard</a>
+        <a href="/courses.html">All Courses</a>
+        <a href="/pishot_hub.html">PiShot</a>
+        <a href="/community.html">Community</a>
+        <a href="/support.html">Contact Us</a>
+        <a href="#" onclick="logout()" style="color: #ff4d4d; margin-top: 10px;">Logout</a>
+    </div>
+
+    <div class="drawer-footer">
+        <div class="theme-toggle-box">
+            <span style="font-weight:800; font-size: 0.9rem;">Dark Mode</span>
+            <label class="switch">
+                <input type="checkbox" id="themeToggleSidebar" checked>
+                <span class="slider-round"></span>
+            </label>
+        </div>
+    </div>
 </aside>
 
 <div class="container">
@@ -121,18 +159,31 @@
     const backBtn = document.getElementById("backBtn");
     const BASE_URL = "https://pimentor-project.onrender.com";
 
-    // Navigation
-    document.getElementById("hamburger").onclick = () => document.getElementById("sidebar").classList.add("open");
-    document.getElementById("closeSidebar").onclick = () => document.getElementById("sidebar").classList.remove("open");
+    // Navigation & Sidebar Logic
+    const sidebar = document.getElementById("sidebar");
+    document.getElementById("hamburger").onclick = (e) => {
+        e.stopPropagation();
+        sidebar.classList.toggle("open");
+    };
 
-    // Theme Switch
+    document.addEventListener('click', (e) => {
+        if (!sidebar.contains(e.target) && sidebar.classList.contains('open')) {
+            sidebar.classList.remove('open');
+        }
+    });
+
+    // Unified Theme Logic
+    const themeToggles = [document.getElementById('themeToggleNav'), document.getElementById('themeToggleSidebar')];
     const applyTheme = (t) => {
         document.documentElement.setAttribute("data-theme", t);
         localStorage.setItem("pimentor-theme", t);
-        if(document.getElementById("themeToggleNav")) document.getElementById("themeToggleNav").checked = (t === "dark");
+        themeToggles.forEach(toggle => { if(toggle) toggle.checked = (t === "dark"); });
     };
+
     applyTheme(localStorage.getItem("pimentor-theme") || "dark");
-    document.getElementById("themeToggleNav").onchange = (e) => applyTheme(e.target.checked ? "dark" : "light");
+    themeToggles.forEach(toggle => {
+        if(toggle) toggle.onchange = (e) => applyTheme(e.target.checked ? "dark" : "light");
+    });
 
     // 1. Fetch Chapters initially
     async function loadChapters() {
@@ -148,7 +199,7 @@
             const chapters = await res.json();
 
             if (res.status === 403) {
-                container.innerHTML = `<div style="text-align:center;">${chapters.message}</div>`;
+                container.innerHTML = `<div style="text-align:center; padding: 20px;">${chapters.message}</div>`;
                 return;
             }
 
@@ -164,7 +215,7 @@
         } catch (e) { container.innerHTML = "Error loading chapters."; }
     }
 
-    // 2. Fetch Topics for selected Chapter and send specific lecture ID
+    // 2. Fetch Topics for selected Chapter
     async function loadTopics(chapterName) {
         container.innerHTML = `<div style="text-align:center;">Opening ${decodeURIComponent(chapterName)}...</div>`;
         backBtn.style.display = "block";
@@ -190,7 +241,11 @@
 
     backBtn.onclick = loadChapters;
 
-    function logout() { localStorage.clear(); window.location.href = "/login.html"; }
+    function logout() { 
+        localStorage.clear(); 
+        window.location.href = "/login.html"; 
+    }
+
     document.addEventListener("DOMContentLoaded", loadChapters);
 </script>
 </body>
