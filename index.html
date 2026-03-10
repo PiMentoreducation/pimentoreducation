@@ -176,7 +176,7 @@
 <section class="section">
     <div style="background: linear-gradient(135deg, var(--accent) 0%, #4b2cbe 100%); padding: 80px; border-radius: 40px; text-align: center; color: white;">
         <h2 style="font-size: 3rem; margin-bottom: 20px;">The Inner Circle</h2>
-        <p style="margin-bottom: 40px; opacity:0.9; max-width: 80%; margin-left:auto; margin-right:auto;">Join 10,000+ pioneers in our elite community. Here, doubts are conquered and futures are forged. Are you ready?</p>
+        <p style="margin-bottom: 40px; opacity:0.9; max-width: 700px; margin-left:auto; margin-right:auto;">Join 10,000+ pioneers in our elite community. Here, doubts are conquered and futures are forged. Are you ready?</p>
         <a href="/community.html" class="btn-action" style="background:#fff; color:var(--accent) !important;">ENTER THE FAMILY</a>
     </div>
 </section>
@@ -211,7 +211,7 @@
     async function fetchData() {
         try {
             // Fetch Dynamic Courses
-            const cRes = await fetch('https://pimentor-project.onrender.com/courses');
+            const cRes = await fetch('https://pimentor-project.onrender.com/api/auth/courses');
             const cData = await cRes.json();
             if(cData.success) {
                 // Show latest 3 dynamically
