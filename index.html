@@ -152,7 +152,7 @@
         <img src="/images/harsh.jpg" alt="Harsh Vardhan Vishwakarma" class="founder-img">
         
         <div class="founder-text">
-            <h2 style="font-size: 2.2rem; margin-bottom: 5px;">The Architect of PiMentor</h2>
+            <h2 style="font-size: 2.2rem; margin-bottom: 5px;">The Founder of PiMentor</h2>
             <h3 style="color:var(--accent); font-weight:800; margin-bottom:20px; letter-spacing: 1px;">HARSH VARDHAN VISHWAKARMA</h3>
             
             <p style="opacity:0.9; line-height:1.8; font-size: 1.05rem;">
@@ -211,7 +211,7 @@
     async function fetchData() {
         try {
             // Fetch Dynamic Courses
-            const cRes = await fetch('https://pimentor-project.onrender.com/api/auth/courses');
+            const cRes = await fetch('https://pimentor-project.onrender.com/courses');
             const cData = await cRes.json();
             if(cData.success) {
                 // Show latest 3 dynamically
