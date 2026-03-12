@@ -859,29 +859,27 @@
         refreshPishotDeleteList(); loadPishotCategories();
     }
 
-async function deployManualQuiz() {
+aasync function deployManualQuiz() {
     let jsonInput = document.getElementById("manualJsonInput").value.trim();
     const btn = document.getElementById("injectBtn");
 
     if (!selectedLecId || !selectedCourseId) return alert("❌ Error: Select a Course and a Lecture first!");
-    if (!jsonInput) return alert("❌ Error: Paste the JSON array.");
-
+    
     try {
-        // 1. Remove Markdown code blocks if present
+        // 1. Clean Markdown backticks
         jsonInput = jsonInput.replace(/```json|```/g, "").trim();
 
-        /**
-         * 2. THE HEALER LOGIC:
-         * This regex looks for single backslashes that are NOT part of a valid 
-         * JSON escape character and turns them into double backslashes.
-         * This ensures MathJax receives "\frac" and not a broken character.
-         */
-        const sanitizedJson = jsonInput.replace(/\\/g, "\\\\")
-                                       .replace(/\\\\\\\\/g, "\\\\"); // Prevent over-escaping
-
-        // 3. Attempt to parse
-        const questionsArray = JSON.parse(jsonInput); 
-        // Note: If JSON.parse fails with raw input, use: JSON.parse(sanitizedJson);
+        // 2. Validate JSON first. 
+        // If it parses successfully as is, don't touch the backslashes!
+        let questionsArray;
+        try {
+            questionsArray = JSON.parse(jsonInput);
+        } catch (e) {
+            // If it fails, it might need backslash "healing"
+            const healed = jsonInput.replace(/\\/g, "\\\\")
+                                    .replace(/\\\\\\\\/g, "\\\\"); // Fix over-escaping
+            questionsArray = JSON.parse(healed);
+        }
 
         btn.innerText = "⏳ Deploying..."; 
         btn.disabled = true;
@@ -900,14 +898,15 @@ async function deployManualQuiz() {
         });
 
         if (res.ok) { 
-            alert("✅ Success: Quiz is live with sanitized LaTeX!"); 
-            document.getElementById("manualJsonInput").value = ""; 
+            alert("✅ Success: Quiz is live!"); 
+            document.getElementById("manualJsonInput").value = "";
+            document.getElementById("quizPreviewBox").style.display = "none";
         } else { 
             const errData = await res.json(); 
             alert("❌ Server Error: " + errData.message); 
         }
     } catch (err) { 
-        alert("⚠️ JSON Parsing Error: " + err.message + "\n\nTip: Ensure all quotes are standard double quotes (\")."); 
+        alert("⚠️ JSON Error: " + err.message); 
     } finally { 
         btn.innerText = "🚀 Deploy Quiz to Cloud"; 
         btn.disabled = false; 
