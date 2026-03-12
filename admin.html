@@ -858,61 +858,62 @@
         await fetch(`${BASE_URL}/api/shorts/delete/${shotId}`, { method: "DELETE", headers: { "Authorization": "Bearer " + token } });
         refreshPishotDeleteList(); loadPishotCategories();
     }
+    // --- MISSING HEALER FUNCTION ---
+function healLaTeX(str) {
+    if (!str) return "";
+    let fixed = str
+        .replace(/ext\{/g, '\\text{')
+        .replace(/et\s*\(/g, '\\det(')
+        .replace(/race\s*\(/g, '\\text{trace}(')
+        .replace(/\\+/g, '\\') 
+        .replace(/\$/g, '');
+
+    return fixed.split(' ').map(word => {
+        const isMath = /[\\]|[_]|[\^]|[=]/.test(word);
+        return isMath ? `$${word}$` : word;
+    }).join(' ');
+}
 async function deployManualQuiz() {
     let rawInput = document.getElementById("manualJsonInput").value;
     const btn = document.getElementById("injectBtn");
 
-    if (!selectedLecId || !selectedCourseId) return alert("❌ Error: Select a Course and a Lecture first!");
+    if (!selectedLecId) return alert("❌ Error: Select a Lecture in Step 2 first!");
     if (!rawInput.trim()) return alert("❌ Error: Paste the JSON array.");
 
     try {
-        // 1. EXTRACTION: Find the actual array bounds
+        // Find actual array bounds to ignore AI chat text
         const start = rawInput.indexOf('[');
         const end = rawInput.lastIndexOf(']');
-        if (start === -1 || end === -1) throw new Error("Could not find the start [ or end ] of the quiz.");
+        if (start === -1 || end === -1) throw new Error("JSON must start with [ and end with ]");
         
         let cleanText = rawInput.substring(start, end + 1);
 
-        // 2. THE "DEEP CLEAN" (Fixes the Red Line error):
+        // Sanitize backslashes for JSON parsing (\frac -> \\frac)
         cleanText = cleanText
-            .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"') // Replaces all types of curly/smart quotes
-            .replace(/[\u2018\u2019\u201A\u201B]/g, "'")             // Replaces smart single quotes
-            .replace(/\r?\n|\r/g, " ")                              // Removes line breaks that break strings
-            .replace(/\\(?![\\"\/bfnrtu]|u[0-9a-fA-F]{4})/g, "\\\\"); // Fixes the single \ in \frac
+            .replace(/[\u201C\u201D]/g, '"') 
+            .replace(/\\(?![\\"\/bfnrtu]|u[0-9a-fA-F]{4})/g, "\\\\");
 
-        // 3. PARSE THE CLEANED VERSION
         const questionsArray = JSON.parse(cleanText);
 
-        btn.innerText = "⏳ Deploying..."; 
-        btn.disabled = true;
+        btn.innerText = "⏳ Deploying..."; btn.disabled = true;
 
         const res = await fetch(`${BASE_URL}/api/admin/save-quiz`, {
             method: "POST", 
-            headers: { 
-                "Content-Type": "application/json", 
-                "Authorization": "Bearer " + token 
-            },
-            body: JSON.stringify({ 
-                courseId: selectedCourseId, 
-                lectureId: selectedLecId, 
-                questions: questionsArray 
-            })
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+            body: JSON.stringify({ courseId: selectedCourseId, lectureId: selectedLecId, questions: questionsArray })
         });
 
         if (res.ok) { 
             alert("✅ Success: Quiz is live!"); 
             document.getElementById("manualJsonInput").value = "";
-            if(document.getElementById("quizPreviewBox")) document.getElementById("quizPreviewBox").style.display = "none";
+            document.getElementById("quizPreviewBox").style.display = "none";
         } else { 
-            const errData = await res.json(); 
-            alert("❌ Server Error: " + errData.message); 
+            const errData = await res.json(); alert("❌ Server Error: " + errData.message); 
         }
     } catch (err) { 
-        console.error("DEBUG:", err);
-        alert("⚠️ JSON REPAIR FAILED\n\nError: " + err.message + "\n\nTip: Make sure you didn't accidentally delete the final ] bracket."); 
+        alert("⚠️ JSON Error: " + err.message); 
     } finally { 
-        btn.innerText = "🚀 Deploy Quiz to Cloud"; 
-        btn.disabled = false; 
+        btn.innerText = "🚀 Deploy Quiz to Cloud"; btn.disabled = false; 
     }
 }
 document.getElementById("manualJsonInput").addEventListener("input", function() {
