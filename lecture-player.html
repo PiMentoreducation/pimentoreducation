@@ -469,6 +469,19 @@ async function calculateScore() {
     let score = 0;
     let reviewHtml = '<h3 style="color:var(--accent); margin-bottom:15px;">Review Answers:</h3>';
 
+    // Helper to intelligently wrap only math words for the review display
+    const formatForReview = (str) => {
+        if (!str) return "";
+        // Clean up broken LaTeX commands and backslashes before processing
+        let fixed = str.replace(/\\+/g, '\\').replace(/\$/g, '');
+        
+        return fixed.split(' ').map(word => {
+            // Check if the word contains LaTeX/Math markers (\, _, ^, or =)
+            const isMath = /[\\]|[_]|[\^]|[=]/.test(word);
+            return isMath ? `$${word}$` : word;
+        }).join(' ');
+    };
+
     currentQuizData.forEach((q, i) => {
         const selectedOption = document.querySelector(`input[name="q${i}"]:checked`);
         const selectedIndex = selectedOption ? parseInt(selectedOption.value) : null;
@@ -476,24 +489,25 @@ async function calculateScore() {
         
         if (isCorrect) score++;
 
-        // Format Review Row
-        const cleanText = q.questionText.includes('$') ? q.questionText : `$${q.questionText}$`;
-        const correctText = q.options[q.correctAnswerIndex].includes('$') ? q.options[q.correctAnswerIndex] : `$${q.options[q.correctAnswerIndex]}$`;
+        // Format parts using the helper to preserve sentence spacing
+        const cleanText = formatForReview(q.questionText);
+        const correctText = formatForReview(q.options[q.correctAnswerIndex]);
         const chosenText = selectedIndex !== null 
-            ? (q.options[selectedIndex].includes('$') ? q.options[selectedIndex] : `$${q.options[selectedIndex]}$`)
+            ? formatForReview(q.options[selectedIndex])
             : "No option selected";
 
         reviewHtml += `
             <div style="margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 12px; border-left: 4px solid ${isCorrect ? '#2ecc71' : '#ff4d4d'};">
-                <p style="font-weight:bold; margin-bottom:8px;">${i + 1}. ${cleanText}</p>
-                <p style="font-size:0.9rem; color: #2ecc71;">✅ Correct: ${correctText}</p>
-                <p style="font-size:0.9rem; color: ${isCorrect ? '#2ecc71' : '#ff4d4d'};">
-                    ${isCorrect ? '✨ You nailed it!' : '❌ Your Answer: ' + chosenText}
-                </p>
+                <p style="font-weight:bold; margin-bottom:8px; line-height:1.6;">${i + 1}. ${cleanText}</p>
+                <p style="font-size:0.9rem; color: #2ecc71; margin-bottom: 4px;">✅ Correct: ${correctText}</p>
+                ${!isCorrect ? 
+                    `<p style="font-size:0.9rem; color: #ff4d4d;">❌ Your Answer: ${chosenText}</p>` : 
+                    `<p style="font-size:0.9rem; color: #2ecc71;">✨ Correct Answer!</p>`
+                }
             </div>`;
     });
 
-    // Update UI
+    // 1. Switch UI from Questions to Results
     document.getElementById("quizContainer").style.display = "none";
     const resultDiv = document.getElementById("quizResult");
     resultDiv.style.display = "block";
@@ -501,28 +515,42 @@ async function calculateScore() {
     document.getElementById("resultScore").innerText = `${score} / ${currentQuizData.length}`;
     document.getElementById("quizReview").innerHTML = reviewHtml;
     
-    // Feedback text
+    // 2. Set Feedback Text based on performance
     const feedback = document.getElementById("resultFeedback");
-    if (score === currentQuizData.length) feedback.innerText = "Perfect Score! You are a Master! 🏆";
-    else if (score >= currentQuizData.length * 0.7) feedback.innerText = "Great job! Almost perfect. 🌟";
+    const percentage = (score / currentQuizData.length) * 100;
+    if (percentage === 100) feedback.innerText = "Perfect Score! You are a Master! 🏆";
+    else if (percentage >= 70) feedback.innerText = "Great job! Almost perfect. 🌟";
     else feedback.innerText = "Good effort! Review the notes and try again. 📖";
 
-    // Trigger MathJax for the Review content
+    // 3. Trigger MathJax to render the review content
     if (window.MathJax && window.MathJax.typesetPromise) {
-        setTimeout(() => MathJax.typesetPromise([document.getElementById("quizReview")]), 100);
+        setTimeout(() => {
+            MathJax.typesetPromise([document.getElementById("quizReview")])
+                .catch((err) => console.log('MathJax Review Error:', err));
+        }, 100);
     }
 
-    // Sync to Backend
-    await fetch(`${BASE_URL}/api/progress/submit-quiz`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-        body: JSON.stringify({ courseId: courseId, lectureId: activeLectureId, score: score })
-    });
-    
-    await fetchLeaderboard();
+    // 4. Sync Score to Backend for Leaderboard
+    try {
+        await fetch(`${BASE_URL}/api/progress/submit-quiz`, {
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json", 
+                "Authorization": "Bearer " + token 
+            },
+            body: JSON.stringify({ 
+                courseId: courseId, 
+                lectureId: activeLectureId, 
+                score: score 
+            })
+        });
+        
+        // Refresh rankings after submission
+        await fetchLeaderboard();
+    } catch (err) {
+        console.error("Failed to sync score:", err);
+    }
 }
-
-    function closeQuizModal() { document.getElementById("quizModal").style.display = "none"; }
 
     async function fetchLeaderboard() {
         try {
