@@ -552,24 +552,30 @@ async function calculateScore() {
     }
 }
 
-    async function fetchLeaderboard() {
-        try {
-            const res = await fetch(`${BASE_URL}/api/purchase/leaderboard/${courseId}`, {
-                headers: { "Authorization": "Bearer " + token }
-            });
-            const data = await res.json();
-            const list = document.getElementById("leaderboardList");
-            if (data.length > 0) {
-                list.innerHTML = data.map((user, index) => `
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <span style="font-size: 0.85rem;"><b style="color:var(--accent)">#${index + 1}</b> ${user.name.split(' ')[0]}</span>
-                        <span style="background:var(--accent); color:white; padding:2px 8px; border-radius:10px; font-size:0.7rem;">${user.masteredCount} Mastered</span>
-                    </div>`).join('');
-            } else {
-                list.innerHTML = "<p style='font-size:0.8rem; opacity:0.5; text-align:center;'>Be the first to master a lecture!</p>";
-            }
-        } catch (err) { console.error(err); }
-    }
+async function fetchLeaderboard() {
+    try {
+        const res = await fetch(`${BASE_URL}/api/purchase/leaderboard/${courseId}`, {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        const data = await res.json();
+        const list = document.getElementById("leaderboardList");
+        
+        if (data.length > 0) {
+            list.innerHTML = data.map((user, index) => `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <span style="font-size: 0.85rem;">
+                        <b style="color:var(--accent); margin-right: 8px;">#${index + 1}</b> 
+                        ${user.name.split(' ')[0]}
+                    </span>
+                    <span style="background: var(--accent); color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 800;">
+                        ${user.score}%
+                    </span>
+                </div>`).join('');
+        } else {
+            list.innerHTML = "<p style='font-size:0.8rem; opacity:0.5; text-align:center;'>Start learning to appear here!</p>";
+        }
+    } catch (err) { console.error(err); }
+}
 
     document.addEventListener("DOMContentLoaded", initPlayer);
     // Function to close the Quiz Modal and reset its state

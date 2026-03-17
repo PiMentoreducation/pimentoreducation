@@ -203,25 +203,48 @@ router.get("/quiz/fetch/:lectureId", authMiddleware, async (req, res) => {
 
 router.get("/leaderboard/:courseId", authMiddleware, async (req, res) => {
     try {
+        const { courseId } = req.params;
+
+        // 1. Get total number of lectures for this course to calculate video %
+        const totalLectures = await Lecture.countDocuments({ courseId });
+        if (totalLectures === 0) return res.json([]);
+
         const stats = await Progress.aggregate([
-            { $match: { courseId: req.params.courseId, isMastered: true } },
+            { $match: { courseId: courseId } },
             { $group: { 
                 _id: "$studentEmail", 
                 name: { $first: "$studentName" }, 
-                masteredCount: { $sum: 1 } 
+                videosCompleted: { $sum: { $cond: ["$isVideoCompleted", 1, 0] } },
+                totalQuizScore: { $sum: "$highestQuizScore" },
+                quizzesTaken: { $sum: { $cond: [{ $gt: ["$highestQuizScore", -1] }, 1, 0] } } 
+                // Assumes -1 or null if quiz not taken
             }},
-            { $sort: { masteredCount: -1 } },
+            { $project: {
+                name: 1,
+                videoProgress: { $multiply: [{ $divide: ["$videosCompleted", totalLectures] }, 100] },
+                quizProgress: { 
+                    $cond: [
+                        { $gt: ["$quizzesTaken", 0] },
+                        { $multiply: [{ $divide: ["$totalQuizScore", { $multiply: ["$quizzesTaken", 10] }] }, 100] }, 
+                        0 
+                    ]
+                } // Assumes each quiz is out of 10. Adjust if different.
+            }},
+            { $addFields: {
+                finalScore: { $divide: [{ $add: ["$videoProgress", "$quizProgress"] }, 2] }
+            }},
+            { $sort: { finalScore: -1 } },
             { $limit: 10 }
         ]);
-        
-        // Format for frontend
+
         const leaderboard = stats.map(s => ({
             name: s.name,
-            masteredCount: s.masteredCount
+            score: s.finalScore.toFixed(1) // Rounded to 1 decimal
         }));
 
         res.json(leaderboard);
     } catch (err) {
+        console.error("Leaderboard Error:", err);
         res.status(500).json({ message: "Leaderboard error" });
     }
 });
