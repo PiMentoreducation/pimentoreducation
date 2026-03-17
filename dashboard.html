@@ -82,24 +82,7 @@
         .hamburger { display: flex; margin-right: auto; } /* Burger Left */
         .brand { margin-left: auto; } /* Logo Right */
     }
-    .btn-report {
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-}
 
-.btn-report:hover {
-    background: var(--accent) !important;
-    color: white !important;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px var(--accent-glow);
-}
-
-.btn-report:active {
-    transform: scale(0.98);
-}
     /* --- SIDEBAR --- */
     .sidebar {
         position: fixed; top: 0; left: -320px; width: 300px; height: 100%;
@@ -388,6 +371,9 @@
                     <div style="grid-column: 1/-1; text-align: center; padding: 40px; opacity: 0.7;">
                         <p>No active missions found in your learning galaxy.</p>
                         <button class="btn-main" style="width:auto; margin-top:15px;" onclick="window.location.href='courses.html'">Start Learning →</button>
+                        <button onclick="downloadMyReport('${course.courseId}')" class="btn-report">
+                        📥 Download Performance Report
+                        </button>
                         </div>`;
                 return;
             }
@@ -420,9 +406,7 @@
                             <button class="btn-main btn-secondary" onclick="window.location.href='course-desc.html?id=${p.courseId}'">Course Details</button>
                             
                             <button class="btn-main btn-secondary" style="border: 1px solid var(--accent);" onclick="openProgressModal('${p.courseId}', '${(p.title || meta.title).replace(/'/g, "\\'")}')">📈 View My Progress</button>
-                            <button onclick="downloadMyReport('${course.courseId}')" class="btn-report">
-                        📥 Download Performance Report
-                        </button>
+
                             ${isExpired ? 
                               `<button class="btn-main btn-renew" onclick="window.location.href='courses.html?renew=${p.courseId}'">Renew Access (₹${currentPrice})</button>` : 
                               `<button class="btn-main" onclick="window.location.href='course-structure.html?id=${p.courseId}'">Enter Classroom →</button>`
@@ -525,35 +509,38 @@
     window.onclick = (e) => { 
         if(e.target == document.getElementById('progressModal')) document.getElementById('progressModal').style.display = 'none'; 
     };
- async function downloadMyReport(courseId) {
+    async function downloadMyReport(cId) {
     const btn = event.target;
-    const originalText = btn.innerHTML;
+    const originalText = btn.innerText;
     
     try {
-        btn.innerHTML = "⏳ Generating...";
+        btn.innerText = "⏳ Generating PDF...";
         btn.disabled = true;
 
-        const response = await fetch(`${BASE_URL}/api/progress/download-report/${courseId}`, {
+        const response = await fetch(`${BASE_URL}/api/progress/download-report/${cId}`, {
             headers: { "Authorization": "Bearer " + localStorage.getItem("token") }
         });
 
-        if (!response.ok) throw new Error("Report generation failed.");
+        if (!response.ok) throw new Error("Failed to generate report");
 
+        // Convert response to a blob (file)
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
+        
+        // Create a hidden link to trigger the download
         const a = document.createElement('a');
         a.href = url;
-        a.download = `PiMentor_Report_${courseId}.pdf`;
+        a.download = `PiMentor_Report_${cId}.pdf`;
         document.body.appendChild(a);
         a.click();
-        window.URL.revokeObjectURL(url);
         
-        btn.innerHTML = "✅ Downloaded";
+        window.URL.revokeObjectURL(url);
+        btn.innerText = "✅ Downloaded";
     } catch (err) {
-        alert("Unable to generate report. Make sure you have completed at least one video!");
+        alert("Could not download report. Ensure you have started the course!");
     } finally {
         setTimeout(() => {
-            btn.innerHTML = originalText;
+            btn.innerText = originalText;
             btn.disabled = false;
         }, 3000);
     }
