@@ -371,7 +371,10 @@
                     <div style="grid-column: 1/-1; text-align: center; padding: 40px; opacity: 0.7;">
                         <p>No active missions found in your learning galaxy.</p>
                         <button class="btn-main" style="width:auto; margin-top:15px;" onclick="window.location.href='courses.html'">Start Learning →</button>
-                    </div>`;
+                        <button onclick="downloadMyReport('${course.courseId}')" class="btn-report">
+                        📥 Download Performance Report
+                        </button>
+                        </div>`;
                 return;
             }
 
@@ -506,6 +509,42 @@
     window.onclick = (e) => { 
         if(e.target == document.getElementById('progressModal')) document.getElementById('progressModal').style.display = 'none'; 
     };
+    async function downloadMyReport(cId) {
+    const btn = event.target;
+    const originalText = btn.innerText;
+    
+    try {
+        btn.innerText = "⏳ Generating PDF...";
+        btn.disabled = true;
+
+        const response = await fetch(`${BASE_URL}/api/progress/download-report/${cId}`, {
+            headers: { "Authorization": "Bearer " + localStorage.getItem("token") }
+        });
+
+        if (!response.ok) throw new Error("Failed to generate report");
+
+        // Convert response to a blob (file)
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        
+        // Create a hidden link to trigger the download
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `PiMentor_Report_${cId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        
+        window.URL.revokeObjectURL(url);
+        btn.innerText = "✅ Downloaded";
+    } catch (err) {
+        alert("Could not download report. Ensure you have started the course!");
+    } finally {
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }, 3000);
+    }
+}
 </script>
 </body>
 </html>

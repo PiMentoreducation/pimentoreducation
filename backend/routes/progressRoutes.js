@@ -86,5 +86,57 @@ router.get("/course-details/:courseId", auth, async (req, res) => {
         res.status(500).json({ message: "Server error fetching detailed metrics" });
     }
 });
+// Add this to your progress routes
+router.get("/download-report/:courseId", authMiddleware, async (req, res) => {
+    try {
+        const { courseId } = req.params;
+        const studentEmail = req.user.email;
+        const studentName = req.user.name;
 
+        // 1. Fetch Lectures and Progress
+        const lectures = await Lecture.find({ courseId }).sort({ order: 1 });
+        const progress = await Progress.find({ courseId, studentEmail });
+        const course = await Course.findOne({ courseId });
+
+        if (!course) return res.status(404).json({ message: "Course not found" });
+
+        // 2. Prepare Data for PDF
+        const reportData = lectures.map(lec => {
+            const prog = progress.find(p => p.lectureId.toString() === lec._id.toString());
+            return {
+                title: lec.lectureTitle,
+                isVideoCompleted: prog ? prog.isVideoCompleted : false,
+                highestQuizScore: prog ? (prog.highestQuizScore || 0) : 0
+            };
+        });
+
+        // 3. Apply your Galactic Formula
+        const videosWatched = reportData.filter(r => r.isVideoCompleted).length;
+        const videoPerc = (videosWatched / lectures.length) * 100;
+        
+        const quizzesTaken = reportData.filter(r => r.highestQuizScore > 0).length;
+        const totalQuizMarks = reportData.reduce((acc, curr) => acc + (curr.highestQuizScore > 0 ? curr.highestQuizScore : 0), 0);
+        const quizPerc = quizzesTaken > 0 ? (totalQuizMarks / (quizzesTaken * 10)) * 100 : 0;
+        
+        const finalScore = ((videoPerc + quizPerc) / 2).toFixed(1);
+
+        // 4. Set Headers for PDF Download
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=PiMentor_Report_${courseId}.pdf`);
+
+        // 5. Generate and Stream
+        // Using the generateMonthlyPDF function we created earlier
+        const doc = await generateMonthlyPDF(
+            { name: studentName }, 
+            course.title, 
+            reportData, 
+            finalScore,
+            res // Pass the response object to stream directly
+        );
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error generating report");
+    }
+});
 module.exports = router;
