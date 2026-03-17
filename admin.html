@@ -881,19 +881,27 @@ async function deployManualQuiz() {
     if (!rawInput.trim()) return alert("❌ Error: Paste the JSON array.");
 
     try {
-        // Find actual array bounds to ignore AI chat text
+        // 1. Extract the array portion
         const start = rawInput.indexOf('[');
         const end = rawInput.lastIndexOf(']');
         if (start === -1 || end === -1) throw new Error("JSON must start with [ and end with ]");
         
         let cleanText = rawInput.substring(start, end + 1);
 
-        // Sanitize backslashes for JSON parsing (\frac -> \\frac)
-        cleanText = cleanText
-            .replace(/[\u201C\u201D]/g, '"') 
-            .replace(/\\(?![\\"\/bfnrtu]|u[0-9a-fA-F]{4})/g, "\\\\");
+        // 2. Fix smart quotes first (they always break JSON)
+        cleanText = cleanText.replace(/[\u201C\u201D]/g, '"');
 
-        const questionsArray = JSON.parse(cleanText);
+        let questionsArray;
+        
+        // 3. THE SMART TOGGLE: Try raw parse, then heal only if it fails
+        try {
+            questionsArray = JSON.parse(cleanText);
+        } catch (e) {
+            console.log("Raw JSON parse failed, applying backslash healing...");
+            // Only double the backslashes if the raw input is invalid JSON
+            const healedText = cleanText.replace(/\\(?![\\"\/bfnrtu]|u[0-9a-fA-F]{4})/g, "\\\\");
+            questionsArray = JSON.parse(healedText);
+        }
 
         btn.innerText = "⏳ Deploying..."; btn.disabled = true;
 
@@ -908,9 +916,11 @@ async function deployManualQuiz() {
             document.getElementById("manualJsonInput").value = "";
             document.getElementById("quizPreviewBox").style.display = "none";
         } else { 
-            const errData = await res.json(); alert("❌ Server Error: " + errData.message); 
+            const errData = await res.json(); 
+            alert("❌ Server Error: " + errData.message); 
         }
     } catch (err) { 
+        console.error("Deploy Error:", err);
         alert("⚠️ JSON Error: " + err.message); 
     } finally { 
         btn.innerText = "🚀 Deploy Quiz to Cloud"; btn.disabled = false; 
