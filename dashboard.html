@@ -418,7 +418,7 @@
 
                         <div style="display: flex; flex-direction: column; gap: 10px;">
                             <button class="btn-main btn-secondary" onclick="window.location.href='course-desc.html?id=${p.courseId}'">Course Details</button>
-                            
+                            <button class="btn-main btn-secondary" style="border: 1px solid var(--accent);" onclick="openProgressModal('${p.courseId}', '${(p.title || meta.title).replace(/'/g, "\\'")}')">📈 View My Progress</button>
                             ${isExpired ? 
                               `<button class="btn-main btn-renew" onclick="window.location.href='courses.html?renew=${p.courseId}'">Renew Access (₹${currentPrice})</button>` : 
                               `<button class="btn-main" onclick="window.location.href='course-structure.html?id=${p.courseId}'">Enter Classroom →</button>`
