@@ -572,6 +572,26 @@ async function calculateScore() {
     }
 
     document.addEventListener("DOMContentLoaded", initPlayer);
+    // Function to close the Quiz Modal and reset its state
+function closeQuizModal() {
+    const modal = document.getElementById("quizModal");
+    if (modal) {
+        modal.style.display = "none";
+        
+        // Reset state so the next quiz starts with questions, not the old result
+        document.getElementById("quizContainer").style.display = "block";
+        document.getElementById("quizResult").style.display = "none";
+        
+        // Clear the review area to save memory
+        document.getElementById("quizReview").innerHTML = "";
+    }
+}
+
+// Ensure the "Back to Lecture" button and top "X" both work
+// You can also add an escape key listener for better UX
+document.addEventListener('keydown', (e) => {
+    if (e.key === "Escape") closeQuizModal();
+});
 </script>
 </body>
 </html>
