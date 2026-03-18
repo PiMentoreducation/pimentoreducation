@@ -38,49 +38,73 @@
         .searchable-select {
     position: relative;
     width: 100%;
+    margin-bottom: 20px;
 }
 
-.searchable-select input {
+/* The Search Input */
+#class {
     width: 100%;
-    padding: 12px;
+    padding: 14px 16px;
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--card-border);
-    border-radius: 8px;
-    color: white;
+    border: 1px solid rgba(124, 77, 255, 0.2); /* Subtle Purple Border */
+    border-radius: 12px;
+    color: #ffffff;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+#class:focus {
+    border-color: #7c4dff; /* Your Brand Purple */
+    background: rgba(124, 77, 255, 0.08);
+    box-shadow: 0 0 15px rgba(124, 77, 255, 0.2);
     outline: none;
-    transition: 0.3s;
 }
 
-.searchable-select input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 10px var(--accent-glow);
-}
-
+/* The Dropdown Menu */
 .options-list {
     position: absolute;
-    top: 110%;
+    top: calc(100% + 5px); /* Small gap from input */
     left: 0;
     width: 100%;
-    max-height: 200px;
+    max-height: 250px;
     overflow-y: auto;
-    background: #1a1a1a;
-    border: 1px solid var(--card-border);
-    border-radius: 8px;
-    z-index: 1001;
+    background: #121212; /* Deep Black/Grey */
+    border: 1px solid rgba(124, 77, 255, 0.3);
+    border-radius: 12px;
+    z-index: 9999;
     display: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px); /* Glass effect */
 }
 
+/* Individual Items */
 .option-item {
-    padding: 10px 15px;
+    padding: 12px 18px;
     cursor: pointer;
-    transition: 0.2s;
-    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.95rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    transition: all 0.2s ease;
 }
 
+/* THE HOVER FIX: No more ugly green! */
 .option-item:hover {
-    background: var(--accent);
-    color: white;
+    background: linear-gradient(90deg, #7c4dff, #b388ff); /* Purple Gradient */
+    color: #ffffff;
+    padding-left: 25px; /* Slight slide effect */
 }
+
+/* No Results text */
+.no-results {
+    padding: 15px;
+    text-align: center;
+    opacity: 0.5;
+    font-style: italic;
+}
+
+/* Scrollbar styling to match */
+.options-list::-webkit-scrollbar { width: 5px; }
+.options-list::-webkit-scrollbar-thumb { background: #7c4dff; border-radius: 10px; }
 
 /* Custom Scrollbar for the list */
 .options-list::-webkit-scrollbar { width: 5px; }
@@ -286,49 +310,29 @@ function setupSearchableDropdown() {
     const input = document.getElementById('class');
     const list = document.querySelector('.options-list');
 
-    function renderOptions(filter = "") {
-        list.innerHTML = "";
-        const filtered = ALL_CLASSES.filter(c => 
-            c.toLowerCase().includes(filter.toLowerCase())
-        );
+    function adjustPosition() {
+        const rect = input.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
         
-        if (filtered.length === 0) {
-            list.innerHTML = '<div class="option-item">No results found</div>';
-            return;
+        // If less than 250px space below, open upward
+        if (spaceBelow < 250) {
+            list.style.top = 'auto';
+            list.style.bottom = '100%';
+            list.style.marginBottom = '8px';
+            list.style.borderRadius = '12px 12px 0 0';
+        } else {
+            list.style.top = 'calc(100% + 5px)';
+            list.style.bottom = 'auto';
+            list.style.borderRadius = '0 0 12px 12px';
         }
-
-        filtered.forEach(cls => {
-            const item = document.createElement('div');
-            item.className = 'option-item';
-            item.textContent = cls;
-            item.onmousedown = (e) => {
-                // We use onmousedown to trigger before the blur event
-                input.value = cls;
-                list.style.display = 'none';
-            };
-            list.appendChild(item);
-        });
     }
 
-    // Show list on focus
     input.addEventListener('focus', () => {
         list.style.display = 'block';
+        adjustPosition(); // Check space every time it opens
         renderOptions(input.value);
     });
-
-    // Hide list when clicking away
-    input.addEventListener('blur', () => {
-        // Timeout allows the click on an option to register first
-        setTimeout(() => { list.style.display = 'none'; }, 200);
-    });
-
-    // Filter list on typing
-    input.addEventListener('input', (e) => {
-        list.style.display = 'block';
-        renderOptions(e.target.value);
-    });
 }
-
 // Initialize
 document.addEventListener('DOMContentLoaded', setupSearchableDropdown);
 /* --- ORIGINAL REGISTRATION LOGIC (Retained Exactly) --- */
