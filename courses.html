@@ -94,21 +94,38 @@
     .btn-details { background: rgba(255,255,255,0.1); color: var(--text); border: 1px solid var(--card-border); }
 
   </style>
-  <link rel="stylesheet" href="navbar.css">
 </head>
 <body>
 
-<div id="global-navbar-container"></div>
+<header class="navbar">
+    <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+    <a href="/index.html" class="brand">
+        <img src="/images/OUR_LOGO.png" class="logo-img" alt="pimentor">
+        <div class="logo-text">PiMentor</div>
+    </a>
+    <nav class="nav-links">
+        <a href="/index.html">Home</a>
+        <a href="/dashboard.html">Dashboard</a>
+        <a href="community.html">Community</a>
+        <a href="support.html">Contact Us</a>
+        <a href="pishot_hub.html">PiShot</a>
+        <button id="themeToggleBtn" style="background:none; border:none; color:var(--text); cursor:pointer; font-size:1.2rem;">🌙</button>
+    </nav>
+</header>
 
-<div id="progressModal" class="progress-modal">
-    <div class="modal-content">
-        <span class="close-modal" id="closeModal" onclick="this.parentElement.parentElement.style.display='none'">&times;</span>
-        <h2 id="modalCourseTitle" style="border:none; margin-bottom:20px;">Course Progress</h2>
-        <div id="modalBody"></div>
+<aside class="sidebar" id="sidebar">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+        <div class="logo-text">Menu</div>
+        <button id="closeSidebar" style="background:none; border:none; color:inherit; font-size:2.5rem; cursor:pointer;">&times;</button>
     </div>
-</div>
-
-<script src="models/Navbar.js"></script>
+    <nav class="sidebar-links">
+        <a href="/index.html">Home</a>
+        <a href="/dashboard.html">Dashboard</a>
+        <a href="pishot_hub.html">PiShot</a>
+        <a href="community.html">Community</a>
+        <a href="support.html">Support</a>
+    </nav>
+</aside>
 
 <div class="course-container" id="courseContainer">
     <p id="statusMessage" style="grid-column: 1/-1; text-align: center; opacity: 0.6;">Scanning the learning galaxy...</p>
