@@ -274,7 +274,63 @@ setTheme(savedTheme);
 themeToggle.addEventListener('change', () => {
     setTheme(themeToggle.checked ? 'dark' : 'light');
 });
+const ALL_CLASSES = [
+    "Class 6", "Class 7", "Class 8", "Class 9", "Class 10", 
+    "Class 11 (Science)", "Class 11 (Commerce)", "Class 12 (Science)", "Class 12 (Commerce)",
+    "JEE Main", "JEE Advanced", "NEET", "CUET",
+    "B.Sc Mathematics", "B.Tech Engineering Math", "M.Sc Mathematics",
+    "Higher Math", "CSIR NET", "GATE", "IIT JAM"
+];
 
+function setupSearchableDropdown() {
+    const input = document.getElementById('class');
+    const list = document.querySelector('.options-list');
+
+    function renderOptions(filter = "") {
+        list.innerHTML = "";
+        const filtered = ALL_CLASSES.filter(c => 
+            c.toLowerCase().includes(filter.toLowerCase())
+        );
+        
+        if (filtered.length === 0) {
+            list.innerHTML = '<div class="option-item">No results found</div>';
+            return;
+        }
+
+        filtered.forEach(cls => {
+            const item = document.createElement('div');
+            item.className = 'option-item';
+            item.textContent = cls;
+            item.onmousedown = (e) => {
+                // We use onmousedown to trigger before the blur event
+                input.value = cls;
+                list.style.display = 'none';
+            };
+            list.appendChild(item);
+        });
+    }
+
+    // Show list on focus
+    input.addEventListener('focus', () => {
+        list.style.display = 'block';
+        renderOptions(input.value);
+    });
+
+    // Hide list when clicking away
+    input.addEventListener('blur', () => {
+        // Timeout allows the click on an option to register first
+        setTimeout(() => { list.style.display = 'none'; }, 200);
+    });
+
+    // Filter list on typing
+    input.addEventListener('input', (e) => {
+        list.style.display = 'block';
+        renderOptions(e.target.value);
+    });
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', setupSearchableDropdown);
 /* --- ORIGINAL REGISTRATION LOGIC (Retained Exactly) --- */
 let timerOn = false;
 const BASE_URL = "https://pimentor-project.onrender.com"; 
@@ -365,47 +421,6 @@ document.getElementById("registerForm").addEventListener("submit", async functio
     }
   } catch (err) { alert("Connection error."); btn.disabled = false; }
 });
-// Add this list to your navbar.js or a global script
-const ALL_CLASSES = [
-    "Class 6", "Class 7", "Class 8", "Class 9", "Class 10", 
-    "Class 11 (Science)", "Class 11 (Commerce)", "Class 12 (Science)", "Class 12 (Commerce)",
-    "JEE Main/Advanced", "NEET (Physics)", "CUET",
-    "B.Sc Mathematics", "B.Tech Engineering Math", "M.Sc Mathematics",
-    "Higher Math", "CSIR NET", "GATE", "IIT JAM"
-];
-
-function setupSearchableDropdown() {
-    const wrapper = document.querySelector('.searchable-select');
-    if (!wrapper) return;
-
-    const input = wrapper.querySelector('input');
-    const list = wrapper.querySelector('.options-list');
-
-    // Populate List
-    function renderOptions(filter = "") {
-        list.innerHTML = "";
-        const filtered = ALL_CLASSES.filter(c => c.toLowerCase().includes(filter.toLowerCase()));
-        
-        filtered.forEach(cls => {
-            const item = document.createElement('div');
-            item.className = 'option-item';
-            item.textContent = cls;
-            item.onclick = () => {
-                input.value = cls;
-                list.style.display = 'none';
-            };
-            list.appendChild(item);
-        });
-    }
-
-    input.onfocus = () => { list.style.display = 'block'; renderOptions(input.value); };
-    input.oninput = (e) => renderOptions(e.target.value);
-
-    // Close if clicked outside
-    document.addEventListener('click', (e) => {
-        if (!wrapper.contains(e.target)) list.style.display = 'none';
-    });
-}
 </script>
 </body>
 </html>
