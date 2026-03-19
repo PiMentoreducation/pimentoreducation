@@ -404,10 +404,10 @@
                 return `
                     <div class="course-card">
                         <span class="status-tag ${isExpired ? 'tag-expired' : 'tag-active'}">
-                            ${isExpired ? 'Access Expired' : 'Active Mission'}
+                            ${isExpired ? 'Access Expired' : 'Active'}
                         </span>
                         <h3 style="margin-bottom:12px;">${p.title || meta.title || 'Course'}</h3>
-                        
+                        <div style="margin: 12px 0; height; 30%; width:80%"><img src="${p.thumbnail}"></div>
                         <div style="margin: 15px 0; font-size: 0.9rem;">
                             <p style="color: ${isExpired ? 'var(--danger)' : (diffDays < 7 ? 'var(--warning)' : 'var(--success)')}; font-weight: 800;">
                                 ${isExpired ? 'Mission Ended' : diffDays + ' Days Remaining'}
