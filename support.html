@@ -191,6 +191,7 @@
 </div>
 
 <script>
+    
     // Unified Theme Logic
     function applyTheme(theme) {
         document.documentElement.setAttribute("data-theme", theme);
@@ -219,7 +220,58 @@
     function toggleDrawer() {
         document.getElementById("mobileDrawer").classList.toggle('open');
     }
+// Add this inside your <script> tag
+const BASE_URL = "https://pimentor-project.onrender.com"; // Ensure this matches your backend URL
+const token = localStorage.getItem("token");
 
+async function loadFullDoubtHistory() {
+    const container = document.getElementById("dashboardDoubtsContainer");
+    if (!token) {
+        container.innerHTML = "<p style='opacity:0.6;'>Please login to view your mentor interactions.</p>";
+        return;
+    }
+
+    try {
+        const res = await fetch(`${BASE_URL}/api/purchase/my-dashboard-doubts`, { 
+            headers: { "Authorization": "Bearer " + token } 
+        });
+        
+        // Use your existing handleResponse logic or simple res.json()
+        const doubts = await res.json();
+        
+        if(!doubts || doubts.length === 0) { 
+            container.innerHTML = "<p style='opacity:0.6;'>No mentor interactions found in your orbit.</p>"; 
+            return; 
+        }
+
+        // Sort by Newest First (Showing ALL doubts on the support page)
+        const allDoubts = [...doubts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        container.innerHTML = allDoubts.map(d => `
+            <div style="background:rgba(255,255,255,0.04); border:1px solid var(--card-border); padding:20px; border-radius:18px; margin-bottom:15px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <div style="font-size:0.8rem; color:var(--accent); font-weight:800; text-transform:uppercase;">
+                        ${d.lectureTitle || 'General Support'}
+                    </div>
+                    <span style="font-size: 0.65rem; padding: 4px 8px; border-radius: 20px; background: ${d.answer ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 152, 0, 0.1)'}; color: ${d.answer ? '#4CAF50' : '#FF9800'}; border: 1px solid ${d.answer ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 152, 0, 0.2)'};">
+                        ${d.answer ? 'RESOLVED' : 'PENDING'}
+                    </span>
+                </div>
+                <strong style="font-size:1rem; display:block; margin-bottom:10px;">Q: ${d.question}</strong>
+                <div style="margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.05); color: #cfcfcf;">
+                    ${d.answer ? `🎯 Mentor Response: ${d.answer}` : "⏳ A mentor is reviewing your query..."}
+                </div>
+                <div style="font-size: 0.7rem; opacity: 0.4; margin-top: 10px;">
+                    ${new Date(d.createdAt).toLocaleDateString()}
+                </div>
+            </div>`).join('');
+    } catch (e) { 
+        container.innerHTML = "<p>Support inbox temporarily offline.</p>"; 
+    }
+}
+
+// Trigger the load when the page is ready
+window.addEventListener('DOMContentLoaded', loadFullDoubtHistory);
     // Navigation Sync
     function updateNav() {
         const desktop = document.getElementById("navContainer");
