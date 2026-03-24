@@ -9,45 +9,46 @@
         :root {
             --space-bg: radial-gradient(circle at top, #0d1117 0%, #010409 100%);
             --accent: #7c4dff;
-            --accent-glow: rgba(124, 77, 255, 0.4);
-            --glass: rgba(255, 255, 255, 0.05);
+            --accent-glow: rgba(124, 77, 255, 0.6);
+            --glass: rgba(255, 255, 255, 0.03);
             --text: #ffffff;
             --card-border: rgba(255, 255, 255, 0.1);
             --drawer-bg: #0d1117;
         }
 
+        /* Greenish Tree Light Theme */
         [data-theme="light"] {
             --space-bg: linear-gradient(180deg, #87CEEB 0%, #E0F7FA 40%, #A8E063 100%);
             --text: #1b4332;
             --accent: #2d6a4f;
-            --glass: rgba(255, 255, 255, 0.85);
+            --glass: rgba(255, 255, 255, 0.8);
             --card-border: rgba(45, 106, 79, 0.2);
             --drawer-bg: #E0F7FA;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--space-bg); background-attachment: fixed; color: var(--text); min-height: 100vh; line-height: 1.6; transition: 0.5s; overflow-x: hidden; }
+        body { background: var(--space-bg); color: var(--text); background-attachment: fixed; min-height: 100vh; transition: 0.5s; overflow-x: hidden; }
 
-        /* Navigation Bar */
+        /* Navigation */
         .nav-bar {
             position: fixed; top: 0; width: 100%; height: 75px; z-index: 1000;
             display: flex; align-items: center; justify-content: space-between;
-            padding: 0 5%; background: var(--glass); backdrop-filter: blur(15px);
-            border-bottom: 1px solid var(--card-border);
+            padding: 0 5%; background: var(--glass); backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
         .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; z-index: 1001; }
         .logo-img { 
             height: 45px; width: 45px; border-radius: 50%; 
             object-fit: cover; border: 2px solid var(--accent); 
-            filter: drop-shadow(0 0 5px var(--accent-glow)); 
+            filter: drop-shadow(0 0 10px var(--accent-glow));
         }
         .logo-text { font-size: 1.3rem; font-weight: 800; color: var(--text); }
 
         .nav-links { display: flex; gap: 10px; align-items: center; }
         .nav-btn {
             text-decoration: none; color: var(--text); font-size: 0.8rem; font-weight: 700;
-            padding: 8px 15px; border-radius: 20px; transition: 0.3s;
+            padding: 10px 20px; border-radius: 30px; transition: 0.3s;
         }
         .nav-btn:hover, .nav-btn.active { background: var(--accent); color: white !important; }
 
@@ -56,55 +57,61 @@
             font-size: 1.8rem; cursor: pointer; z-index: 1002;
         }
 
-        /* Sidebar Drawer */
+        /* Sidebar Drawer (Left-Aligned) */
         .nav-drawer {
             position: fixed; top: 0; left: -100%; width: 280px; height: 100%;
             background: var(--drawer-bg); z-index: 1001; padding: 80px 25px 30px;
             display: flex; flex-direction: column;
             transition: 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
             box-shadow: 10px 0 30px rgba(0,0,0,0.5);
-            border-right: 1px solid var(--card-border);
+            border-right: 1px solid var(--accent);
         }
         .nav-drawer.open { left: 0; }
-        
-        .drawer-links { flex-grow: 1; display: flex; flex-direction: column; gap: 10px; }
+        .drawer-content { flex-grow: 1; display: flex; flex-direction: column; gap: 10px; }
         .drawer-btn {
             text-decoration: none; color: var(--text); font-size: 1.1rem; 
-            font-weight: 700; padding: 12px 0; border-bottom: 1px solid var(--card-border);
+            font-weight: 700; padding: 12px 0; border-bottom: 1px solid rgba(124, 77, 255, 0.1);
         }
 
-        /* Bottom section of Mobile Drawer */
-        .drawer-footer {
-            margin-top: auto;
-            padding-top: 20px;
-            border-top: 1px solid var(--card-border);
-        }
-        .mobile-theme-row {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 20px; font-weight: 700;
+        /* Mobile Theme Toggle (Bottom of Drawer) */
+        .drawer-footer { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--card-border); }
+        .theme-toggle-wide {
+            width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+            padding: 12px; border-radius: 12px; background: var(--glass); 
+            border: 1px solid var(--accent); color: var(--text); cursor: pointer; font-weight: 700;
         }
 
-        /* Layout */
+        /* Support Page Layout */
         .container { max-width: 1100px; margin: 0 auto; padding: 120px 20px 50px; }
-        .hero { text-align: center; margin-bottom: 60px; }
-        .hero h1 { font-size: 3rem; font-weight: 800; margin-bottom: 10px; }
-        .support-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; }
-        .card { background: var(--glass); border: 1px solid var(--card-border); padding: 30px; border-radius: 24px; backdrop-filter: blur(10px); }
+        .hero-title { text-align: center; margin-bottom: 60px; }
+        .hero-title h1 { font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 800; margin-bottom: 10px; }
+        
+        .support-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+        .card { background: var(--glass); border: 1px solid var(--card-border); padding: 30px; border-radius: 30px; backdrop-filter: blur(15px); }
+        
+        /* QR & Community */
+        .community-cta { 
+            background: linear-gradient(135deg, var(--accent) 0%, #4b2cbe 100%); 
+            padding: 50px; border-radius: 40px; margin-top: 50px; text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        .qr-box { background: white; padding: 10px; border-radius: 15px; display: inline-block; margin: 20px 0; }
+        .qr-box img { width: 180px; height: 180px; display: block; }
 
-        .qr-section { display: flex; align-items: center; gap: 40px; background: var(--glass); padding: 40px; border-radius: 30px; border: 1px solid var(--accent); margin-top: 40px; flex-wrap: wrap; justify-content: center; }
-        .qr-img { width: 220px; height: 220px; border-radius: 20px; border: 5px solid white; box-shadow: 0 0 20px var(--accent-glow); }
+        /* FAQ Styling */
+        .faq-item { margin-bottom: 15px; border-radius: 15px; background: rgba(255,255,255,0.02); border: 1px solid var(--card-border); overflow: hidden; }
+        .faq-question { padding: 18px 25px; cursor: pointer; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+        .faq-answer { padding: 0 25px; max-height: 0; overflow: hidden; transition: 0.3s; opacity: 0; font-size: 0.95rem; }
+        .faq-item.open .faq-answer { padding: 5px 25px 20px; max-height: 300px; opacity: 1; }
 
-        .faq-item { margin-bottom: 15px; border-radius: 15px; background: rgba(255,255,255,0.02); border: 1px solid var(--card-border); }
-        .faq-question { padding: 18px 25px; cursor: pointer; font-weight: 700; display: flex; justify-content: space-between; }
-        .faq-answer { padding: 0 25px; max-height: 0; overflow: hidden; transition: 0.3s; opacity: 0; }
-        .faq-item.open .faq-answer { padding: 10px 25px 25px; max-height: 200px; opacity: 1; }
+        /* Desktop Toggle */
+        #themeBtnDesktop { background: var(--glass); border: 1px solid var(--card-border); padding: 10px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; margin-left: 15px; }
 
         @media (max-width: 900px) {
-            .nav-links, #themeBtnDesktop { display: none; } /* Hide desktop toggle */
+            .nav-links, #themeBtnDesktop { display: none; }
             .menu-toggle { display: block; order: -1; }
             .brand { order: 1; margin-left: auto; }
             .nav-bar { padding: 0 20px; }
-            .hero h1 { font-size: 2.2rem; }
         }
     </style>
 </head>
@@ -118,68 +125,68 @@
         <span class="logo-text">PiMentor</span>
     </a>
 
-    <div class="nav-links" id="desktopNav">
+    <div class="nav-links" id="navContainer">
         <a href="/index.html" class="nav-btn">HOME</a>
         <a href="/courses.html" class="nav-btn">COURSES</a>
-        <a href="/pishot.html" class="nav-btn">PISHOT</a>
-        <a href="/community.html" class="nav-btn">Community</a>
+        <a href="/pishot_hub.html" class="nav-btn">PISHOT</a>
+        <a href="/community.html" class="nav-btn">COMMUNITY</a>
         <a href="/support.html" class="nav-btn active">Contact Us</a>
     </div>
 
-    <button onclick="toggleTheme()" id="themeBtnDesktop" style="background:none; border:none; cursor:pointer; font-size:1.3rem; order: 2; margin-left: 15px;">🌙</button>
+    <button id="themeBtnDesktop" onclick="toggleTheme()">🌙</button>
 </nav>
 
 <div class="nav-drawer" id="mobileDrawer">
-    <div class="drawer-links">
+    <div class="drawer-content">
         <a href="/index.html" class="drawer-btn">HOME</a>
         <a href="/courses.html" class="drawer-btn">COURSES</a>
-        <a href="/pishot.html" class="drawer-btn">PISHOT</a>
+        <a href="/pishot_hub.html" class="drawer-btn">PISHOT</a>
         <a href="/community.html" class="drawer-btn">COMMUNITY</a>
+        <a href="/support.html" class="drawer-btn">CONTACT US</a>
         <div id="drawerDynamic"></div>
     </div>
-
+    
     <div class="drawer-footer">
-        <div class="mobile-theme-row">
-            <span>Appearance</span>
-            <button onclick="toggleTheme()" id="themeBtnMobile" style="background:var(--accent); border:none; color:white; padding:5px 15px; border-radius:15px; cursor:pointer; font-size:1rem;">🌙 Dark</button>
-        </div>
+        <button class="theme-toggle-wide" onclick="toggleTheme()">
+            <span id="themeLabelMobile">Dark Mode</span> <span id="themeIconMobile">🌙</span>
+        </button>
     </div>
 </div>
 
 <div class="container">
-    <section class="hero">
+    <section class="hero-title">
+        <p style="text-transform: uppercase; letter-spacing: 3px; font-weight: 700; color: var(--accent); margin-bottom: 10px;">The Nexus of Support</p>
         <h1>How can we help?</h1>
-        <p style="opacity: 0.8;">Empowering your learning journey with 24/7 support.</p>
     </section>
 
     <div class="support-grid">
-        <div class="card">
-            <h3 style="color: var(--accent); margin-bottom: 15px;">🚀 Key Features</h3>
-            <ul style="list-style: none; font-size: 0.9rem;">
-                <li>🔹 <b>Dynamic Quiz Player:</b> Interactive MCQs with LaTeX math rendering.</li>
-                <li>🔹 <b>Progress Tracking:</b> Leaderboards that update in real-time.</li>
-                <li>🔹 <b>Doubt Transmitting:</b> Ask mentors questions directly.</li>
-                <li>🔹 <b>Resource Library:</b> Access PDF notes in one click.</li>
-            </ul>
+        <div class="card" id="myDoubtsSection">
+            <h3 style="color: var(--accent); margin-bottom: 20px; font-size: 1.5rem;">🌌 Doubt History</h3>
+            <div id="dashboardDoubtsContainer">
+                <p style="opacity: 0.6; font-size: 0.9rem;">Connecting to mentor records...</p>
+            </div>
         </div>
 
-        <div class="card" id="myDoubtsSection">
-            <h3 style="margin-bottom: 20px;">❓ FAQs & Doubts</h3>
+        <div class="card">
+            <h3 style="margin-bottom: 20px; font-size: 1.5rem;">💡 Frequent Queries</h3>
             <div class="faq-item">
                 <div class="faq-question" onclick="toggleFaq(this)">How do I track my progress? <span>+</span></div>
-                <div class="faq-answer">Progress is saved when you watch 85% of a video or pass a lecture quiz.</div>
+                <div class="faq-answer">Your progress is automatically calculated based on video watch-time (85%+) and your highest quiz scores. Check the Leaderboard for real-time rank.</div>
             </div>
-            <div id="dashboardDoubtsContainer"></div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">Math symbols not loading? <span>+</span></div>
+                <div class="faq-answer">Wait for the page to fully load MathJax rendering. If symbols still look like code, refresh your browser or check your internet connection.</div>
+            </div>
         </div>
     </div>
 
-    <div class="qr-section">
-        <div style="flex: 1; min-width: 280px;">
-            <h2>Join the Community</h2>
-            <p style="margin: 15px 0; opacity: 0.8;">Scan the QR code to join our official WhatsApp group for student support.</p>
-            <p>Email: <b style="color:var(--accent)">pimentor.education@gmail.com</b></p>
+    <div class="community-cta">
+        <h2>Enter the Inner Circle</h2>
+        <p style="opacity: 0.9; margin: 10px 0;">Join the official student community for instant doubt resolution.</p>
+        <div class="qr-box">
+            <img src="/images/whatsapp_qr.jpg" alt="WhatsApp Support QR">
         </div>
-        <img src="/images/whatsapp_qr.jpg" alt="WhatsApp QR" class="qr-img">
+        <p style="font-size: 0.9rem;">Direct Inquiry: <b style="color: var(--gold);">pimentor.education@gmail.com</b></p>
     </div>
 </div>
 
@@ -187,38 +194,50 @@
     // Unified Theme Logic
     function applyTheme(theme) {
         document.documentElement.setAttribute("data-theme", theme);
-        const icon = theme === "dark" ? "☀️ Light" : "🌙 Dark";
-        const btnIcon = theme === "dark" ? "☀️" : "🌙";
+        const icon = theme === "dark" ? "☀️" : "🌙";
+        const label = theme === "dark" ? "Light Mode" : "Dark Mode";
         
-        document.getElementById("themeBtnDesktop").innerText = btnIcon;
-        document.getElementById("themeBtnMobile").innerText = icon;
+        const desktopBtn = document.getElementById("themeBtnDesktop");
+        const mobileIcon = document.getElementById("themeIconMobile");
+        const mobileLabel = document.getElementById("themeLabelMobile");
+
+        if(desktopBtn) desktopBtn.innerText = icon;
+        if(mobileIcon) mobileIcon.innerText = icon;
+        if(mobileLabel) mobileLabel.innerText = label;
+        
         localStorage.setItem("pimentor-theme", theme);
     }
 
     applyTheme(localStorage.getItem('pimentor-theme') || 'dark');
-
+    
     function toggleTheme() { 
         const current = document.documentElement.getAttribute("data-theme");
         applyTheme(current === "dark" ? "light" : "dark"); 
     }
 
-    // Auth & Navigation
+    // Sidebar Logic
+    function toggleDrawer() {
+        document.getElementById("mobileDrawer").classList.toggle('open');
+    }
+
+    // Navigation Sync
     function updateNav() {
-        const desktop = document.getElementById("desktopNav");
+        const desktop = document.getElementById("navContainer");
         const drawer = document.getElementById("drawerDynamic");
         const token = localStorage.getItem("token");
-
-        if(token) {
-            desktop.innerHTML += `
+        
+        if (token) {
+            const authHtml = `
                 <a href="/dashboard.html" class="nav-btn">DASHBOARD</a>
                 <a href="#" onclick="logout()" class="nav-btn" style="color:#ff4d4d">LOGOUT</a>`;
+            desktop.innerHTML += authHtml;
             drawer.innerHTML = `
                 <a href="/dashboard.html" class="drawer-btn">DASHBOARD</a>
                 <a href="#" onclick="logout()" class="drawer-btn" style="color:#ff4d4d">LOGOUT</a>`;
         } else {
             desktop.innerHTML += `
                 <a href="/login.html" class="nav-btn">LOGIN</a>
-                <a href="/register.html" class="nav-btn" style="border:1px solid var(--accent)">REGISTER</a>`;
+                <a href="/register.html" class="nav-btn" style="border: 1px solid var(--accent);">REGISTER</a>`;
             drawer.innerHTML = `
                 <a href="/login.html" class="drawer-btn">LOGIN</a>
                 <a href="/register.html" class="drawer-btn">REGISTER</a>`;
@@ -227,21 +246,19 @@
 
     function logout() { localStorage.removeItem("token"); window.location.href = "/login.html"; }
 
-    function toggleDrawer() { document.getElementById("mobileDrawer").classList.toggle('open'); }
-
     function toggleFaq(el) {
         const item = el.parentElement;
         item.classList.toggle('open');
         el.querySelector('span').innerText = item.classList.contains('open') ? '-' : '+';
     }
 
-    // Hash handling for #history
+    // Hash handling for Dashboard Redirects
     window.addEventListener('load', () => {
         updateNav();
         if (window.location.hash === '#history') {
             setTimeout(() => {
-                const section = document.getElementById('myDoubtsSection');
-                if (section) section.scrollIntoView({ behavior: 'smooth' });
+                const historyEl = document.getElementById('myDoubtsSection');
+                if (historyEl) historyEl.scrollIntoView({ behavior: 'smooth' });
             }, 500);
         }
     });
