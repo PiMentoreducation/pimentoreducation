@@ -16,7 +16,6 @@
             --drawer-bg: #0d1117;
         }
 
-        /* Restored Green Tree Light Theme */
         [data-theme="light"] {
             --space-bg: linear-gradient(180deg, #87CEEB 0%, #E0F7FA 40%, #A8E063 100%);
             --text: #1b4332;
@@ -37,7 +36,6 @@
             border-bottom: 1px solid var(--card-border);
         }
 
-        /* Circular Logo Styling */
         .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; z-index: 1001; }
         .logo-img { 
             height: 45px; width: 45px; border-radius: 50%; 
@@ -46,7 +44,6 @@
         }
         .logo-text { font-size: 1.3rem; font-weight: 800; color: var(--text); }
 
-        /* Desktop Navigation */
         .nav-links { display: flex; gap: 10px; align-items: center; }
         .nav-btn {
             text-decoration: none; color: var(--text); font-size: 0.8rem; font-weight: 700;
@@ -54,7 +51,6 @@
         }
         .nav-btn:hover, .nav-btn.active { background: var(--accent); color: white !important; }
 
-        /* Hamburger Icon */
         .menu-toggle {
             display: none; background: none; border: none; color: var(--text);
             font-size: 1.8rem; cursor: pointer; z-index: 1002;
@@ -63,40 +59,50 @@
         /* Sidebar Drawer */
         .nav-drawer {
             position: fixed; top: 0; left: -100%; width: 280px; height: 100%;
-            background: var(--drawer-bg); z-index: 1001; padding: 100px 30px;
-            display: flex; flex-direction: column; gap: 20px;
+            background: var(--drawer-bg); z-index: 1001; padding: 80px 25px 30px;
+            display: flex; flex-direction: column;
             transition: 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
             box-shadow: 10px 0 30px rgba(0,0,0,0.5);
             border-right: 1px solid var(--card-border);
         }
         .nav-drawer.open { left: 0; }
+        
+        .drawer-links { flex-grow: 1; display: flex; flex-direction: column; gap: 10px; }
         .drawer-btn {
             text-decoration: none; color: var(--text); font-size: 1.1rem; 
             font-weight: 700; padding: 12px 0; border-bottom: 1px solid var(--card-border);
         }
 
-        /* Layout Adjustments */
+        /* Bottom section of Mobile Drawer */
+        .drawer-footer {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid var(--card-border);
+        }
+        .mobile-theme-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; font-weight: 700;
+        }
+
+        /* Layout */
         .container { max-width: 1100px; margin: 0 auto; padding: 120px 20px 50px; }
         .hero { text-align: center; margin-bottom: 60px; }
         .hero h1 { font-size: 3rem; font-weight: 800; margin-bottom: 10px; }
         .support-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; }
         .card { background: var(--glass); border: 1px solid var(--card-border); padding: 30px; border-radius: 24px; backdrop-filter: blur(10px); }
 
-        /* QR Section */
         .qr-section { display: flex; align-items: center; gap: 40px; background: var(--glass); padding: 40px; border-radius: 30px; border: 1px solid var(--accent); margin-top: 40px; flex-wrap: wrap; justify-content: center; }
         .qr-img { width: 220px; height: 220px; border-radius: 20px; border: 5px solid white; box-shadow: 0 0 20px var(--accent-glow); }
 
-        /* FAQ Styling */
         .faq-item { margin-bottom: 15px; border-radius: 15px; background: rgba(255,255,255,0.02); border: 1px solid var(--card-border); }
         .faq-question { padding: 18px 25px; cursor: pointer; font-weight: 700; display: flex; justify-content: space-between; }
         .faq-answer { padding: 0 25px; max-height: 0; overflow: hidden; transition: 0.3s; opacity: 0; }
         .faq-item.open .faq-answer { padding: 10px 25px 25px; max-height: 200px; opacity: 1; }
 
-        /* Responsive Mobile Behavior */
         @media (max-width: 900px) {
-            .nav-links { display: none; }
-            .menu-toggle { display: block; order: -1; } /* Hamburger to the far left */
-            .brand { order: 1; margin-left: auto; } /* Logo and Brand to the far right */
+            .nav-links, #themeBtnDesktop { display: none; } /* Hide desktop toggle */
+            .menu-toggle { display: block; order: -1; }
+            .brand { order: 1; margin-left: auto; }
             .nav-bar { padding: 0 20px; }
             .hero h1 { font-size: 2.2rem; }
         }
@@ -120,15 +126,24 @@
         <a href="/support.html" class="nav-btn active">Contact Us</a>
     </div>
 
-    <button onclick="toggleTheme()" id="themeBtn" style="background:none; border:none; cursor:pointer; font-size:1.3rem; order: 2; margin-left: 15px;">🌙</button>
+    <button onclick="toggleTheme()" id="themeBtnDesktop" style="background:none; border:none; cursor:pointer; font-size:1.3rem; order: 2; margin-left: 15px;">🌙</button>
 </nav>
 
 <div class="nav-drawer" id="mobileDrawer">
-    <a href="/index.html" class="drawer-btn">HOME</a>
-    <a href="/courses.html" class="drawer-btn">COURSES</a>
-    <a href="/pishot.html" class="drawer-btn">PISHOT</a>
-    <a href="/community.html" class="drawer-btn">COMMUNITY</a>
-    <div id="drawerDynamic"></div>
+    <div class="drawer-links">
+        <a href="/index.html" class="drawer-btn">HOME</a>
+        <a href="/courses.html" class="drawer-btn">COURSES</a>
+        <a href="/pishot.html" class="drawer-btn">PISHOT</a>
+        <a href="/community.html" class="drawer-btn">COMMUNITY</a>
+        <div id="drawerDynamic"></div>
+    </div>
+
+    <div class="drawer-footer">
+        <div class="mobile-theme-row">
+            <span>Appearance</span>
+            <button onclick="toggleTheme()" id="themeBtnMobile" style="background:var(--accent); border:none; color:white; padding:5px 15px; border-radius:15px; cursor:pointer; font-size:1rem;">🌙 Dark</button>
+        </div>
+    </div>
 </div>
 
 <div class="container">
@@ -141,23 +156,20 @@
         <div class="card">
             <h3 style="color: var(--accent); margin-bottom: 15px;">🚀 Key Features</h3>
             <ul style="list-style: none; font-size: 0.9rem;">
-                <li>🔹 <b>Dynamic Quiz Player:</b> Interactive MCQs with real-time LaTeX math rendering.</li>
-                <li>🔹 <b>Progress Tracking:</b> Leaderboards that update as you master each lecture.</li>
-                <li>🔹 <b>Doubt Transmitting:</b> Ask mentors questions directly while watching videos.</li>
-                <li>🔹 <b>Resource Library:</b> Access PDF notes and reading materials in one click.</li>
+                <li>🔹 <b>Dynamic Quiz Player:</b> Interactive MCQs with LaTeX math rendering.</li>
+                <li>🔹 <b>Progress Tracking:</b> Leaderboards that update in real-time.</li>
+                <li>🔹 <b>Doubt Transmitting:</b> Ask mentors questions directly.</li>
+                <li>🔹 <b>Resource Library:</b> Access PDF notes in one click.</li>
             </ul>
         </div>
 
-        <div class="card">
-            <h3 style="margin-bottom: 20px;">❓ FAQs</h3>
+        <div class="card" id="myDoubtsSection">
+            <h3 style="margin-bottom: 20px;">❓ FAQs & Doubts</h3>
             <div class="faq-item">
                 <div class="faq-question" onclick="toggleFaq(this)">How do I track my progress? <span>+</span></div>
                 <div class="faq-answer">Progress is saved when you watch 85% of a video or pass a lecture quiz.</div>
             </div>
-            <div class="faq-item">
-                <div class="faq-question" onclick="toggleFaq(this)">Math symbols aren't loading? <span>+</span></div>
-                <div class="faq-answer">Wait a few seconds for MathJax to render, or refresh the page.</div>
-            </div>
+            <div id="dashboardDoubtsContainer"></div>
         </div>
     </div>
 
@@ -172,59 +184,67 @@
 </div>
 
 <script>
-    // Theme Logic with Green Tree Shade
+    // Unified Theme Logic
     function applyTheme(theme) {
         document.documentElement.setAttribute("data-theme", theme);
-        document.getElementById("themeBtn").innerText = theme === "dark" ? "☀️" : "🌙";
+        const icon = theme === "dark" ? "☀️ Light" : "🌙 Dark";
+        const btnIcon = theme === "dark" ? "☀️" : "🌙";
+        
+        document.getElementById("themeBtnDesktop").innerText = btnIcon;
+        document.getElementById("themeBtnMobile").innerText = icon;
         localStorage.setItem("pimentor-theme", theme);
     }
+
     applyTheme(localStorage.getItem('pimentor-theme') || 'dark');
+
     function toggleTheme() { 
         const current = document.documentElement.getAttribute("data-theme");
         applyTheme(current === "dark" ? "light" : "dark"); 
     }
 
-    // Navigation Injection (Auth Check)
+    // Auth & Navigation
     function updateNav() {
         const desktop = document.getElementById("desktopNav");
         const drawer = document.getElementById("drawerDynamic");
         const token = localStorage.getItem("token");
 
-        const authLinks = token ? `
-            <a href="/dashboard.html" class="nav-btn">DASHBOARD</a>
-            <a href="#" onclick="logout()" class="nav-btn" style="color:#ff4d4d">LOGOUT</a>
-        ` : `
-            <a href="/login.html" class="nav-btn">LOGIN</a>
-            <a href="/register.html" class="nav-btn" style="border:1px solid var(--accent)">REGISTER</a>
-        `;
-
-        const drawerLinks = token ? `
-            <a href="/dashboard.html" class="drawer-btn">DASHBOARD</a>
-            <a href="#" onclick="logout()" class="drawer-btn" style="color:#ff4d4d">LOGOUT</a>
-        ` : `
-            <a href="/login.html" class="drawer-btn">LOGIN</a>
-            <a href="/register.html" class="drawer-btn">REGISTER</a>
-        `;
-
-        desktop.innerHTML += authLinks;
-        drawer.innerHTML = drawerLinks;
+        if(token) {
+            desktop.innerHTML += `
+                <a href="/dashboard.html" class="nav-btn">DASHBOARD</a>
+                <a href="#" onclick="logout()" class="nav-btn" style="color:#ff4d4d">LOGOUT</a>`;
+            drawer.innerHTML = `
+                <a href="/dashboard.html" class="drawer-btn">DASHBOARD</a>
+                <a href="#" onclick="logout()" class="drawer-btn" style="color:#ff4d4d">LOGOUT</a>`;
+        } else {
+            desktop.innerHTML += `
+                <a href="/login.html" class="nav-btn">LOGIN</a>
+                <a href="/register.html" class="nav-btn" style="border:1px solid var(--accent)">REGISTER</a>`;
+            drawer.innerHTML = `
+                <a href="/login.html" class="drawer-btn">LOGIN</a>
+                <a href="/register.html" class="drawer-btn">REGISTER</a>`;
+        }
     }
 
     function logout() { localStorage.removeItem("token"); window.location.href = "/login.html"; }
 
-    // Sidebar Drawer Toggle
-    function toggleDrawer() {
-        document.getElementById("mobileDrawer").classList.toggle('open');
-    }
+    function toggleDrawer() { document.getElementById("mobileDrawer").classList.toggle('open'); }
 
-    // FAQ Accordion
     function toggleFaq(el) {
         const item = el.parentElement;
         item.classList.toggle('open');
         el.querySelector('span').innerText = item.classList.contains('open') ? '-' : '+';
     }
 
-    document.addEventListener("DOMContentLoaded", updateNav);
+    // Hash handling for #history
+    window.addEventListener('load', () => {
+        updateNav();
+        if (window.location.hash === '#history') {
+            setTimeout(() => {
+                const section = document.getElementById('myDoubtsSection');
+                if (section) section.scrollIntoView({ behavior: 'smooth' });
+            }, 500);
+        }
+    });
 
     // Close drawer when clicking outside
     document.addEventListener('click', (e) => {
@@ -234,20 +254,6 @@
             drawer.classList.remove('open');
         }
     });
-    document.addEventListener('DOMContentLoaded', () => {
-    // If the URL contains #history, automatically scroll to or show the doubts section
-    if (window.location.hash === '#history') {
-        const historySection = document.getElementById('myDoubtsSection'); 
-        // Replace 'myDoubtsSection' with the actual ID of your history container
-        
-        if (historySection) {
-            historySection.scrollIntoView({ behavior: 'smooth' });
-            
-            // If you use tabs, trigger the 'click' on the History tab
-            // document.getElementById('tab-history-btn').click();
-        }
-    }
-});
 </script>
 </body>
 </html>
