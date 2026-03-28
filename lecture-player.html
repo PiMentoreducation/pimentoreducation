@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700;800&display=swap" rel="stylesheet">
     
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
@@ -426,51 +426,41 @@
         }
     }
 
-    function renderQuizQuestions(questions) {
-        const area = document.getElementById("questionArea");
-        
-        const healLaTeX = (str) => {
-            if (!str) return "";
-            let fixed = str
-                .replace(/ext\{/g, '\\text{')
-                .replace(/et\s*\(/g, '\\det(')
-                .replace(/race\s*\(/g, '\\text{trace}(')
-                .replace(/\\+/g, '\\') 
-                .replace(/\$/g, '');   
-
-            return fixed.split(' ').map(word => {
-                const isMath = /[\\]|[_]|[\^]|[=]/.test(word);
-                return isMath ? `$${word}$` : word;
-            }).join(' ');
-        };
-
-        area.innerHTML = questions.map((q, i) => {
-            const repairedQ = healLaTeX(q.questionText);
-            return `
-                <div class="quiz-q-box" style="margin-bottom: 35px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
-                    <p style="font-weight:bold; margin-bottom:18px; font-size: 1.1rem; line-height: 1.6;">
-                        ${i + 1}. ${repairedQ}
-                    </p>
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                        ${q.options.map((opt, oi) => {
-                            const repairedO = healLaTeX(opt);
-                            return `
-                                <label style="display:block; cursor:pointer; background: rgba(255,255,255,0.05); padding: 14px; border-radius: 12px; transition: 0.3s;">
-                                    <input type="radio" name="q${i}" value="${oi}" style="margin-right: 10px; accent-color: var(--accent);"> 
-                                    <span>${repairedO}</span>
-                                </label>
-                            `;
-                        }).join('')}
-                    </div>
-                </div>`;
-        }).join('');
-
-        if (window.MathJax && window.MathJax.typesetPromise) {
-            setTimeout(() => {
-                MathJax.typesetPromise([area]).catch((err) => console.log('MathJax Error:', err));
-            }, 200);
+ function renderQuizQuestions(questions) {
+    const area = document.getElementById("questionArea");
+    
+    // Fixes the "missing spaces" and "rendering" issues
+    const smartFormat = (str) => {
+        if (!str) return "";
+        // 1. Remove raw $ signs to prevent double wrapping
+        let clean = str.replace(/\$/g, '');
+        // 2. If it contains LaTeX characters, wrap it but add padding spaces
+        if (/[\\]|[_]|[\^]/.test(clean)) {
+            return ` \( ${clean} \) `; // Using \( \) is more stable for inline math
         }
+        return ` ${clean} `; // Ensure regular text has space padding
+    };
+
+    area.innerHTML = questions.map((q, i) => `
+        <div class="quiz-q-box" style="margin-bottom: 35px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
+            <p style="font-weight:bold; margin-bottom:18px; font-size: 1.1rem; line-height: 1.6;">
+                ${i + 1}. ${smartFormat(q.questionText)}
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                ${q.options.map((opt, oi) => `
+                    <label style="display:block; cursor:pointer; background: rgba(255,255,255,0.05); padding: 14px; border-radius: 12px; transition: 0.3s;">
+                        <input type="radio" name="q${i}" value="${oi}" style="margin-right: 10px; accent-color: var(--accent);"> 
+                        <span>${smartFormat(opt)}</span>
+                    </label>
+                `).join('')}
+            </div>
+        </div>`).join('');
+
+    // CRITICAL: Manual trigger for Mobile
+    if (window.MathJax && window.MathJax.typesetPromise) {
+        MathJax.typesetPromise([area]).catch((err) => console.log('MathJax Error:', err));
     }
+}
 
     async function calculateScore() {
         let score = 0;
@@ -515,6 +505,9 @@
         
         document.getElementById("resultScore").innerText = `${score} / ${currentQuizData.length}`;
         document.getElementById("quizReview").innerHTML = reviewHtml;
+        if (window.MathJax && window.MathJax.typesetPromise) {
+        MathJax.typesetPromise([document.getElementById("quizReview")]);
+    }
         
         const feedback = document.getElementById("resultFeedback");
         const percentage = (score / currentQuizData.length) * 100;
