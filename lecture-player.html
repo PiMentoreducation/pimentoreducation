@@ -426,38 +426,31 @@
         }
     }
 
-    function renderQuizQuestions(questions) {
+function renderQuizQuestions(questions) {
         const area = document.getElementById("questionArea");
         
-        const healLaTeX = (str) => {
+        // CLEANER LATEX HANDLER
+        const prepareLaTeX = (str) => {
             if (!str) return "";
-            let fixed = str
-                .replace(/ext\{/g, '\\text{')
-                .replace(/et\s*\(/g, '\\det(')
-                .replace(/race\s*\(/g, '\\text{trace}(')
-                .replace(/\\+/g, '\\') 
-                .replace(/\$/g, '');   
-
-            return fixed.split(' ').map(word => {
-                const isMath = /[\\]|[_]|[\^]|[=]/.test(word);
-                return isMath ? `$${word}$` : word;
-            }).join(' ');
+            // 1. Remove any existing $ to prevent double-wrapping
+            let clean = str.replace(/\$/g, '');
+            // 2. Wrap the whole thing in a single math block for stability
+            // Or use a regex to wrap specific parts if you mix text and math
+            return `$${clean}$`; 
         };
 
         area.innerHTML = questions.map((q, i) => {
-            const repairedQ = healLaTeX(q.questionText);
             return `
                 <div class="quiz-q-box" style="margin-bottom: 35px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
                     <p style="font-weight:bold; margin-bottom:18px; font-size: 1.1rem; line-height: 1.6;">
-                        ${i + 1}. ${repairedQ}
+                        ${i + 1}. ${prepareLaTeX(q.questionText)}
                     </p>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
                         ${q.options.map((opt, oi) => {
-                            const repairedO = healLaTeX(opt);
                             return `
                                 <label style="display:block; cursor:pointer; background: rgba(255,255,255,0.05); padding: 14px; border-radius: 12px; transition: 0.3s;">
                                     <input type="radio" name="q${i}" value="${oi}" style="margin-right: 10px; accent-color: var(--accent);"> 
-                                    <span>${repairedO}</span>
+                                    <span>${prepareLaTeX(opt)}</span>
                                 </label>
                             `;
                         }).join('')}
@@ -465,10 +458,9 @@
                 </div>`;
         }).join('');
 
-        if (window.MathJax && window.MathJax.typesetPromise) {
-            setTimeout(() => {
-                MathJax.typesetPromise([area]).catch((err) => console.log('MathJax Error:', err));
-            }, 200);
+        // TRIGGER MATHJAX
+        if (window.MathJax) {
+            MathJax.typesetPromise([area]).catch((err) => console.log('MathJax Error:', err));
         }
     }
 
@@ -476,13 +468,9 @@
         let score = 0;
         let reviewHtml = '<h3 style="color:var(--accent); margin-bottom:15px;">Review Answers:</h3>';
 
-        const formatForReview = (str) => {
+        const prepareLaTeX = (str) => {
             if (!str) return "";
-            let fixed = str.replace(/\\+/g, '\\').replace(/\$/g, '');
-            return fixed.split(' ').map(word => {
-                const isMath = /[\\]|[_]|[\^]|[=]/.test(word);
-                return isMath ? `$${word}$` : word;
-            }).join(' ');
+            return `$${str.replace(/\$/g, '')}$`;
         };
 
         currentQuizData.forEach((q, i) => {
@@ -492,18 +480,12 @@
             
             if (isCorrect) score++;
 
-            const cleanText = formatForReview(q.questionText);
-            const correctText = formatForReview(q.options[q.correctAnswerIndex]);
-            const chosenText = selectedIndex !== null 
-                ? formatForReview(q.options[selectedIndex])
-                : "No option selected";
-
             reviewHtml += `
                 <div style="margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 12px; border-left: 4px solid ${isCorrect ? '#2ecc71' : '#ff4d4d'};">
-                    <p style="font-weight:bold; margin-bottom:8px; line-height:1.6;">${i + 1}. ${cleanText}</p>
-                    <p style="font-size:0.9rem; color: #2ecc71; margin-bottom: 4px;">✅ Correct: ${correctText}</p>
+                    <p style="font-weight:bold; margin-bottom:8px; line-height:1.6;">${i + 1}. ${prepareLaTeX(q.questionText)}</p>
+                    <p style="font-size:0.9rem; color: #2ecc71; margin-bottom: 4px;">✅ Correct: ${prepareLaTeX(q.options[q.correctAnswerIndex])}</p>
                     ${!isCorrect ? 
-                        `<p style="font-size:0.9rem; color: #ff4d4d;">❌ Your Answer: ${chosenText}</p>` : 
+                        `<p style="font-size:0.9rem; color: #ff4d4d;">❌ Your Answer: ${selectedIndex !== null ? prepareLaTeX(q.options[selectedIndex]) : "No option selected"}</p>` : 
                         `<p style="font-size:0.9rem; color: #2ecc71;">✨ Correct Answer!</p>`
                     }
                 </div>`;
@@ -516,36 +498,20 @@
         document.getElementById("resultScore").innerText = `${score} / ${currentQuizData.length}`;
         document.getElementById("quizReview").innerHTML = reviewHtml;
         
-        const feedback = document.getElementById("resultFeedback");
-        const percentage = (score / currentQuizData.length) * 100;
-        if (percentage === 100) feedback.innerText = "Perfect Score! You are a Master! 🏆";
-        else if (percentage >= 70) feedback.innerText = "Great job! Almost perfect. 🌟";
-        else feedback.innerText = "Good effort! Review the notes and try again. 📖";
-
-        if (window.MathJax && window.MathJax.typesetPromise) {
-            setTimeout(() => {
-                MathJax.typesetPromise([document.getElementById("quizReview")])
-                    .catch((err) => console.log('MathJax Review Error:', err));
-            }, 100);
+        // RE-TRIGGER MATHJAX FOR THE REVIEW AREA
+        if (window.MathJax) {
+            MathJax.typesetPromise([document.getElementById("quizReview")]).catch((err) => console.log('MathJax Review Error:', err));
         }
 
+        // Send results to DB
         try {
             await fetch(`${BASE_URL}/api/progress/submit-quiz`, {
                 method: "POST",
-                headers: { 
-                    "Content-Type": "application/json", 
-                    "Authorization": "Bearer " + token 
-                },
-                body: JSON.stringify({ 
-                    courseId: courseId, 
-                    lectureId: activeLectureId, 
-                    score: score 
-                })
+                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+                body: JSON.stringify({ courseId, lectureId: activeLectureId, score: score })
             });
             await fetchLeaderboard();
-        } catch (err) {
-            console.error("Failed to sync score:", err);
-        }
+        } catch (err) { console.error("Sync error:", err); }
     }
 
     async function fetchLeaderboard() {
