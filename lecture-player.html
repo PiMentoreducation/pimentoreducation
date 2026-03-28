@@ -206,6 +206,7 @@
 </div>
 
 <script src="https://www.youtube.com/iframe_api"></script>
+
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     const courseId = urlParams.get('courseId');
@@ -220,8 +221,8 @@
     let studentProgress = [];
     let currentQuizData = [];
 
-    // --- 1. FULLSCREEN ORIENTATION LOGIC (RESTORED) ---
-    // This communicates with your Android WebView App
+    // --- AUTO-ORIENTATION LOGIC ---
+    // Listen for Fullscreen changes to trigger App Landscape Mode
     document.addEventListener('fullscreenchange', () => {
         if (typeof FullscreenChannel !== "undefined") {
             if (document.fullscreenElement) {
@@ -232,45 +233,42 @@
         }
     });
 
-    // --- 2. MATHJAX CONFIG (SPACING FIX) ---
+    // MathJax Configuration
     window.MathJax = {
         tex: {
             inlineMath: [['$', '$'], ['\\(', '\\)']],
             displayMath: [['$$', '$$'], ['\\[', '\\]']],
             processEscapes: true
-        },
-        options: {
-            enableMenu: false
         }
     };
 
+    // --- THEME LOGIC ---
     function applyTheme(theme) {
         document.documentElement.setAttribute("data-theme", theme);
         const btn = document.getElementById("themeBtn");
         if(btn) btn.innerText = theme === "dark" ? "☀️" : "🌙";
         localStorage.setItem("pimentor-theme", theme);
     }
-    applyTheme(localStorage.getItem('pimentor-theme') || 'dark');
+    
+    const savedTheme = localStorage.getItem('pimentor-theme') || 'dark';
+    applyTheme(savedTheme);
 
     function toggleTheme() { 
         const current = document.documentElement.getAttribute("data-theme");
         applyTheme(current === "dark" ? "light" : "dark"); 
     }
 
-    // --- 3. DATA LOADING ---
-    async function initPage() {
+    // --- PLAYER INITIALIZATION ---
+    async function initPlayer() {
         if (!courseId || !chapter) {
             window.location.href = "dashboard.html";
             return;
         }
-        document.getElementById("backBtn").href = `course-structure.html?id=${courseId}`;
-        document.getElementById("chapterNameDisplay").innerText = "CHAPTER: " + decodeURIComponent(chapter);
-        
-        loadLecturesAndProgress();
-        fetchLeaderboard();
-    }
 
-    async function loadLecturesAndProgress() {
+        const targetLectureId = urlParams.get('lectureId');
+        document.getElementById("backBtn").href = `course-structure.html?id=${courseId}`;
+        document.getElementById("chapterNameDisplay").innerText = "CHAPTER: " + chapter;
+
         try {
             const [lecRes, progRes] = await Promise.all([
                 fetch(`${BASE_URL}/api/purchase/course-content/${courseId}/${encodeURIComponent(chapter)}`, {
@@ -280,15 +278,23 @@
                     headers: { "Authorization": "Bearer " + token }
                 })
             ]);
+
             const lectures = await lecRes.json();
             studentProgress = await progRes.json();
+            
             renderLectureList(lectures);
 
             if (lectures.length > 0) {
-                const targetId = urlParams.get('lectureId');
-                const lectureToPlay = (targetId && lectures.find(l => l._id === targetId)) || lectures[0];
+                let lectureToPlay = lectures[0]; 
+                if (targetLectureId) {
+                    const found = lectures.find(l => l._id === targetLectureId);
+                    if (found) lectureToPlay = found;
+                }
                 playLecture(lectureToPlay);
+            } else {
+                document.getElementById("lectureList").innerHTML = "<p style='text-align:center; opacity:0.5;'>No lectures found.</p>";
             }
+            await fetchLeaderboard(); 
         } catch (err) { console.error(err); }
     }
 
@@ -300,8 +306,25 @@
                 <div class="lecture-item" id="lec-${l._id}" onclick='playLecture(${JSON.stringify(l).replace(/'/g, "&apos;")})'>
                     <span>${index + 1}. ${l.title}</span>
                     <span id="mark-${l._id}" class="complete-mark">${isFinished ? '✅' : ''}</span>
-                </div>`;
+                </div>
+            `;
         }).join('');
+    }
+
+    async function syncProgress() {
+        try {
+            const res = await fetch(`${BASE_URL}/api/progress/update-progress`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+                body: JSON.stringify({ courseId: courseId, lectureId: activeLectureId, isVideoCompleted: true })
+            });
+
+            if(res.ok) {
+                const mark = document.getElementById(`mark-${activeLectureId}`);
+                if(mark) mark.innerText = '✅';
+                await fetchLeaderboard();
+            }
+        } catch (err) { console.error("Progress sync error:", err); }
     }
 
     function playLecture(lec) {
@@ -317,108 +340,150 @@
         document.getElementById("topicDisplay").innerText = "TOPIC: " + (lec.topicName || "General");
 
         const videoId = extractVideoId(lec.videoUrl);
-        if (typeof YT === 'undefined' || typeof YT.Player === 'undefined') {
-            window.onYouTubeIframeAPIReady = () => loadVideo(videoId);
-        } else {
-            loadVideo(videoId);
-        }
-
-        const pBtn = document.getElementById("pdfBtn");
-        if(lec.pdfNotes) { pBtn.style.display = "block"; pBtn.dataset.url = lec.pdfNotes; } 
-        else { pBtn.style.display = "none"; }
-        document.getElementById("mcqBtn").style.display = "block"; 
-    }
-
-    function loadVideo(videoId) {
         if (!ytPlayer) {
             ytPlayer = new YT.Player('mainIframe', {
                 height: '100%', width: '100%', videoId: videoId,
-                playerVars: { 'playsinline': 0, 'rel': 0, 'modestbranding': 1, 'fs': 1 },
-                events: { 'onStateChange': (e) => { if(e.data === YT.PlayerState.PLAYING) startWatchdog(); } }
+                playerVars: { 
+                    'playsinline': 1, 
+                    'rel': 0, 
+                    'modestbranding': 1, 
+                    'origin': window.location.origin 
+                },
+                events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange }
             });
         } else {
             ytPlayer.loadVideoById(videoId);
         }
-    }
 
-    function extractVideoId(url) {
-        if (!url) return "";
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-        const match = url.match(regExp);
-        return (match && match[2].length === 11) ? match[2] : null;
+        const pBtn = document.getElementById("pdfBtn");
+        const mBtn = document.getElementById("mcqBtn");
+        if(lec.pdfNotes) { pBtn.style.display = "block"; pBtn.dataset.url = lec.pdfNotes; } 
+        else { pBtn.style.display = "none"; }
+        mBtn.style.display = "block"; 
     }
 
     function startWatchdog() {
         if (watchTimer) clearInterval(watchTimer);
         watchTimer = setInterval(async () => {
             if (ytPlayer && ytPlayer.getCurrentTime && !isVideoFlaggedComplete) {
-                const progress = ytPlayer.getCurrentTime() / ytPlayer.getDuration();
-                if (progress >= 0.85) {
+                const currentTime = ytPlayer.getCurrentTime();
+                const duration = ytPlayer.getDuration();
+                if (duration > 0 && (currentTime / duration) >= 0.85) {
                     isVideoFlaggedComplete = true;
                     clearInterval(watchTimer);
-                    syncProgress();
+                    await syncProgress();
                 }
             }
-        }, 5000);
+        }, 5000); 
     }
 
-    async function syncProgress() {
+    function onYouTubeIframeAPIReady() { console.log("YouTube API Ready"); }
+    function extractVideoId(url) {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    }
+    function onPlayerReady(event) { startWatchdog(); }
+    function onPlayerStateChange(event) { if (event.data === YT.PlayerState.PLAYING) startWatchdog(); }
+    function openResourceModal(url) { document.getElementById("resourceIframe").src = url; document.getElementById("resourceModal").style.display = "flex"; }
+    function closeModal() { document.getElementById("resourceModal").style.display = "none"; document.getElementById("resourceIframe").src = ""; }
+
+    async function submitDoubt() {
+        const question = document.getElementById("doubtText").value;
+        if(!question.trim()) {
+            Swal.fire('Input Error', 'Please type your question.', 'warning');
+            return;
+        }
         try {
-            await fetch(`${BASE_URL}/api/progress/update-progress`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-                body: JSON.stringify({ courseId, lectureId: activeLectureId, isVideoCompleted: true })
+            const res = await fetch(`${BASE_URL}/api/purchase/ask-doubt`, {
+                method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+                body: JSON.stringify({ lectureId: activeLectureId, question: question })
             });
-            const mark = document.getElementById(`mark-${activeLectureId}`);
-            if(mark) mark.innerText = '✅';
-        } catch (e) { console.error(e); }
+            if(res.ok) {
+                document.getElementById("doubtText").value = "";
+                Swal.fire('Sent!', 'Doubt transmitted successfully! 🚀', 'success');
+            }
+        } catch (err) { console.error(err); }
     }
 
-    // --- 4. QUIZ LOGIC (FIXED REVIEW & SPACING) ---
     async function openQuiz() {
         try {
             const res = await fetch(`${BASE_URL}/api/purchase/quiz/fetch/${activeLectureId}`, {
                 headers: { "Authorization": "Bearer " + token }
             });
             const data = await res.json();
-            if (!data?.questions?.length) return Swal.fire('Notice', 'No quiz available yet.', 'info');
-            
+            if (!data || !data.questions || data.questions.length === 0) {
+                Swal.fire('Notice', 'No quiz available for this lecture yet.', 'info');
+                return;
+            }
             currentQuizData = data.questions;
-            renderQuizQuestions(currentQuizData);
+            renderQuizQuestions(data.questions);
             document.getElementById("quizModal").style.display = "flex";
             document.getElementById("quizContainer").style.display = "block";
             document.getElementById("quizResult").style.display = "none";
-        } catch (e) { Swal.fire('Error', 'Quiz fetch failed.', 'error'); }
-    }
-
-    // Fixed spacing: We only wrap strings that contain math symbols, keeping regular text with normal spacing.
-    function smartMath(str) {
-        if (!str) return "";
-        let clean = str.replace(/\$/g, '');
-        // If it looks like pure LaTeX (contains \, ^, _, {), wrap it. 
-        // If it's normal text, return as is.
-        if (/[\\]|[_]|[\^]/.test(clean)) {
-            return `$${clean}$`;
+        } catch (err) { 
+            Swal.fire('Error', 'Error connecting to quiz database.', 'error');
         }
-        return clean;
     }
 
     function renderQuizQuestions(questions) {
         const area = document.getElementById("questionArea");
-        area.innerHTML = questions.map((q, i) => `
-            <div style="margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 20px;">
-                <p style="font-weight:bold; margin-bottom:15px; font-size: 1.05rem;">${i+1}. ${smartMath(q.questionText)}</p>
-                ${q.options.map((opt, oi) => `
-                    <label style="display:block; background:rgba(255,255,255,0.03); padding:12px; border-radius:10px; margin-bottom:8px; cursor:pointer; border: 1px solid rgba(255,255,255,0.05);">
-                        <input type="radio" name="q${i}" value="${oi}" style="margin-right:10px; accent-color: var(--accent);"> ${smartMath(opt)}
-                    </label>`).join('')}
-            </div>`).join('');
-        MathJax.typesetPromise([area]);
+        
+        const healLaTeX = (str) => {
+            if (!str) return "";
+            let fixed = str
+                .replace(/ext\{/g, '\\text{')
+                .replace(/et\s*\(/g, '\\det(')
+                .replace(/race\s*\(/g, '\\text{trace}(')
+                .replace(/\\+/g, '\\') 
+                .replace(/\$/g, '');   
+
+            return fixed.split(' ').map(word => {
+                const isMath = /[\\]|[_]|[\^]|[=]/.test(word);
+                return isMath ? `$${word}$` : word;
+            }).join(' ');
+        };
+
+        area.innerHTML = questions.map((q, i) => {
+            const repairedQ = healLaTeX(q.questionText);
+            return `
+                <div class="quiz-q-box" style="margin-bottom: 35px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
+                    <p style="font-weight:bold; margin-bottom:18px; font-size: 1.1rem; line-height: 1.6;">
+                        ${i + 1}. ${repairedQ}
+                    </p>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        ${q.options.map((opt, oi) => {
+                            const repairedO = healLaTeX(opt);
+                            return `
+                                <label style="display:block; cursor:pointer; background: rgba(255,255,255,0.05); padding: 14px; border-radius: 12px; transition: 0.3s;">
+                                    <input type="radio" name="q${i}" value="${oi}" style="margin-right: 10px; accent-color: var(--accent);"> 
+                                    <span>${repairedO}</span>
+                                </label>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>`;
+        }).join('');
+
+        if (window.MathJax && window.MathJax.typesetPromise) {
+            setTimeout(() => {
+                MathJax.typesetPromise([area]).catch((err) => console.log('MathJax Error:', err));
+            }, 200);
+        }
     }
 
     async function calculateScore() {
         let score = 0;
-        let reviewHtml = '<h3 style="color:var(--accent); margin-bottom:20px; text-align:left;">Review Performance:</h3>';
+        let reviewHtml = '<h3 style="color:var(--accent); margin-bottom:15px;">Review Answers:</h3>';
+
+        const formatForReview = (str) => {
+            if (!str) return "";
+            let fixed = str.replace(/\\+/g, '\\').replace(/\$/g, '');
+            return fixed.split(' ').map(word => {
+                const isMath = /[\\]|[_]|[\^]|[=]/.test(word);
+                return isMath ? `$${word}$` : word;
+            }).join(' ');
+        };
 
         currentQuizData.forEach((q, i) => {
             const selectedOption = document.querySelector(`input[name="q${i}"]:checked`);
@@ -427,29 +492,60 @@
             
             if (isCorrect) score++;
 
+            const cleanText = formatForReview(q.questionText);
+            const correctText = formatForReview(q.options[q.correctAnswerIndex]);
+            const chosenText = selectedIndex !== null 
+                ? formatForReview(q.options[selectedIndex])
+                : "No option selected";
+
             reviewHtml += `
-                <div style="margin-bottom: 15px; padding: 15px; background: rgba(255,255,255,0.02); border-radius: 12px; text-align: left; border-left: 4px solid ${isCorrect ? '#2ecc71' : '#ff4d4d'};">
-                    <p style="font-weight:700; margin-bottom:8px;">${i + 1}. ${smartMath(q.questionText)}</p>
-                    <p style="font-size:0.85rem; color: #2ecc71;">✅ Correct Answer: ${smartMath(q.options[q.correctAnswerIndex])}</p>
-                    ${!isCorrect ? `<p style="font-size:0.85rem; color: #ff4d4d;">❌ Your Choice: ${selectedIndex !== null ? smartMath(q.options[selectedIndex]) : 'Skipped'}</p>` : ''}
+                <div style="margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 12px; border-left: 4px solid ${isCorrect ? '#2ecc71' : '#ff4d4d'};">
+                    <p style="font-weight:bold; margin-bottom:8px; line-height:1.6;">${i + 1}. ${cleanText}</p>
+                    <p style="font-size:0.9rem; color: #2ecc71; margin-bottom: 4px;">✅ Correct: ${correctText}</p>
+                    ${!isCorrect ? 
+                        `<p style="font-size:0.9rem; color: #ff4d4d;">❌ Your Answer: ${chosenText}</p>` : 
+                        `<p style="font-size:0.9rem; color: #2ecc71;">✨ Correct Answer!</p>`
+                    }
                 </div>`;
         });
 
         document.getElementById("quizContainer").style.display = "none";
-        document.getElementById("quizResult").style.display = "block";
+        const resultDiv = document.getElementById("quizResult");
+        resultDiv.style.display = "block";
+        
         document.getElementById("resultScore").innerText = `${score} / ${currentQuizData.length}`;
         document.getElementById("quizReview").innerHTML = reviewHtml;
+        
+        const feedback = document.getElementById("resultFeedback");
+        const percentage = (score / currentQuizData.length) * 100;
+        if (percentage === 100) feedback.innerText = "Perfect Score! You are a Master! 🏆";
+        else if (percentage >= 70) feedback.innerText = "Great job! Almost perfect. 🌟";
+        else feedback.innerText = "Good effort! Review the notes and try again. 📖";
 
-        MathJax.typesetPromise([document.getElementById("quizReview")]);
+        if (window.MathJax && window.MathJax.typesetPromise) {
+            setTimeout(() => {
+                MathJax.typesetPromise([document.getElementById("quizReview")])
+                    .catch((err) => console.log('MathJax Review Error:', err));
+            }, 100);
+        }
 
         try {
             await fetch(`${BASE_URL}/api/progress/submit-quiz`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-                body: JSON.stringify({ courseId, lectureId: activeLectureId, score })
+                headers: { 
+                    "Content-Type": "application/json", 
+                    "Authorization": "Bearer " + token 
+                },
+                body: JSON.stringify({ 
+                    courseId: courseId, 
+                    lectureId: activeLectureId, 
+                    score: score 
+                })
             });
-            fetchLeaderboard();
-        } catch (e) { console.error(e); }
+            await fetchLeaderboard();
+        } catch (err) {
+            console.error("Failed to sync score:", err);
+        }
     }
 
     async function fetchLeaderboard() {
@@ -459,23 +555,39 @@
             });
             const data = await res.json();
             const list = document.getElementById("leaderboardList");
-            if (data && data.length > 0) {
+            
+            if (data.length > 0) {
                 list.innerHTML = data.map((user, index) => `
                     <div style="display:flex; justify-content:space-between; align-items:center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <span style="font-size: 0.85rem;"><b style="color:var(--accent); margin-right: 8px;">#${index+1}</b>${user.name.split(' ')[0]}</span>
-                        <span style="background:var(--accent); color:white; padding:2px 10px; border-radius:12px; font-size:0.75rem; font-weight:800;">${user.score}%</span>
+                        <span style="font-size: 0.85rem;">
+                            <b style="color:var(--accent); margin-right: 8px;">#${index + 1}</b> 
+                            ${user.name.split(' ')[0]}
+                        </span>
+                        <span style="background: var(--accent); color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 800;">
+                            ${user.score}%
+                        </span>
                     </div>`).join('');
             } else {
-                list.innerHTML = "<p style='font-size:0.8rem; opacity:0.5; text-align:center;'>Start learning to rank!</p>";
+                list.innerHTML = "<p style='font-size:0.8rem; opacity:0.5; text-align:center;'>Start learning to appear here!</p>";
             }
-        } catch (e) { console.error(e); }
+        } catch (err) { console.error(err); }
     }
 
-    function closeQuizModal() { document.getElementById("quizModal").style.display = "none"; }
-    function openResourceModal(url) { document.getElementById("resourceIframe").src = url; document.getElementById("resourceModal").style.display = "flex"; }
-    function closeModal() { document.getElementById("resourceModal").style.display = "none"; }
+    document.addEventListener("DOMContentLoaded", initPlayer);
 
-    document.addEventListener("DOMContentLoaded", initPage);
+    function closeQuizModal() {
+        const modal = document.getElementById("quizModal");
+        if (modal) {
+            modal.style.display = "none";
+            document.getElementById("quizContainer").style.display = "block";
+            document.getElementById("quizResult").style.display = "none";
+            document.getElementById("quizReview").innerHTML = "";
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === "Escape") closeQuizModal();
+    });
 </script>
 </body>
 </html>
