@@ -229,7 +229,7 @@
         themeToggle.checked = theme === 'dark';
     };
 
-    const savedTheme = localStorage.getItem('pimentor-theme') || 'dark';
+    const savedTheme = localStorage.getItem('pimentor-theme') || 'light';
     setTheme(savedTheme);
 
     themeToggle.addEventListener('change', () => {
