@@ -311,6 +311,12 @@
             <input id="className" placeholder="Target Class / Grade">
             <input id="price" type="number" placeholder="Offer Price (₹)">
             <input id="oldPrice" type="number" placeholder="Original Price (Strikethrough ₹)">
+            
+            <span class="hint">Course Type (Free Enrollment)</span>
+            <select id="isFreeCourse">
+                <option value="no">Paid Course (Razorpay Active)</option>
+                <option value="yes">Free Course (Direct Enrollment)</option>
+            </select>
         </div>
         <div class="col">
             <span class="hint">Media Assets & Validity</span>
@@ -525,7 +531,6 @@ Ensure all quotes inside the text are escaped or replaced with single quotes to 
         applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
     }
 
-    // --- FIX: UPDATED TO POPULATE INPUTS WITH DATA ---
     function addTeacherField(data = null) {
         const container = document.getElementById('teachersContainer');
         const teacherDiv = document.createElement('div');
@@ -579,21 +584,19 @@ Ensure all quotes inside the text are escaped or replaced with single quotes to 
         } catch (error) { console.error("Course Load Error:", error); }
     }
 
-    // --- FIX: UPDATED TO CLEAR AND REFILL TEACHERS ---
     async function loadCourseDetails() {
         const selectedId = document.getElementById("courseConfigDropdown").value;
         if (!selectedId) {
-            const fields = ["courseId", "title", "className", "description", "course_roadmap", "price", "oldPrice", "thumbnail", "demo1", "demo2", "learningPoints", "liveValidityDate"];
-            fields.forEach(id => { const el = document.getElementById(id); if(el) el.value = ""; });
+            const fields = ["courseId", "title", "className", "description", "course_roadmap", "price", "oldPrice", "thumbnail", "demo1", "demo2", "learningPoints", "liveValidityDate", "isFreeCourse"];
+            fields.forEach(id => { const el = document.getElementById(id); if(el) el.value = id === "isFreeCourse" ? "no" : ""; });
             document.getElementById("recordedDurationDays").value = 365;
             document.getElementById("teachersContainer").innerHTML = "";
             addTeacherField();
             return;
         }
         try {
-// admin.html inside loadCourseDetails function
-        const response = await fetch(`${BASE_URL}/api/admin/course/${selectedId.trim()}`, { 
-        headers: { "Authorization": "Bearer " + token } 
+            const response = await fetch(`${BASE_URL}/api/admin/course/${selectedId.trim()}`, { 
+                headers: { "Authorization": "Bearer " + token } 
             });
             const course = await response.json();
             document.getElementById("courseId").value = course.courseId || "";
@@ -607,6 +610,10 @@ Ensure all quotes inside the text are escaped or replaced with single quotes to 
             document.getElementById("demo1").value = course.demo1 || "";
             document.getElementById("demo2").value = course.demo2 || "";
             document.getElementById("learningPoints").value = course.learningPoints || "";
+            
+            // NEW: Set Free/Paid value
+            document.getElementById("isFreeCourse").value = course.free === "yes" ? "yes" : "no";
+
             if (course.liveValidityDate) document.getElementById("liveValidityDate").value = course.liveValidityDate.split("T")[0];
             document.getElementById("recordedDurationDays").value = course.recordedDurationDays || 365;
 
@@ -654,6 +661,7 @@ Ensure all quotes inside the text are escaped or replaced with single quotes to 
             course_roadmap: document.getElementById("course_roadmap").value,
             price: Number(document.getElementById("price").value),
             oldPrice: Number(document.getElementById("oldPrice").value),
+            free: document.getElementById("isFreeCourse").value, // NEW: Free flag
             thumbnail: document.getElementById("thumbnail").value,
             demo1: document.getElementById("demo1").value,
             demo2: document.getElementById("demo2").value,
@@ -870,104 +878,91 @@ Ensure all quotes inside the text are escaped or replaced with single quotes to 
         await fetch(`${BASE_URL}/api/shorts/delete/${shotId}`, { method: "DELETE", headers: { "Authorization": "Bearer " + token } });
         refreshPishotDeleteList(); loadPishotCategories();
     }
-    // --- MISSING HEALER FUNCTION ---
-function healLaTeX(str) {
-    if (!str) return "";
-    let fixed = str
-        .replace(/ext\{/g, '\\text{')
-        .replace(/et\s*\(/g, '\\det(')
-        .replace(/race\s*\(/g, '\\text{trace}(')
-        .replace(/\\+/g, '\\') 
-        .replace(/\$/g, '');
 
-    return fixed.split(' ').map(word => {
-        const isMath = /[\\]|[_]|[\^]|[=]/.test(word);
-        return isMath ? `$${word}$` : word;
-    }).join(' ');
-}
-async function deployManualQuiz() {
-    let rawInput = document.getElementById("manualJsonInput").value;
-    const btn = document.getElementById("injectBtn");
+    function healLaTeX(str) {
+        if (!str) return "";
+        let fixed = str
+            .replace(/ext\{/g, '\\text{')
+            .replace(/et\s*\(/g, '\\det(')
+            .replace(/race\s*\(/g, '\\text{trace}(')
+            .replace(/\\+/g, '\\') 
+            .replace(/\$/g, '');
 
-    if (!selectedLecId) return alert("❌ Error: Select a Lecture in Step 2 first!");
-    if (!rawInput.trim()) return alert("❌ Error: Paste the JSON array.");
+        return fixed.split(' ').map(word => {
+            const isMath = /[\\]|[_]|[\^]|[=]/.test(word);
+            return isMath ? `$${word}$` : word;
+        }).join(' ');
+    }
 
-    try {
-        // 1. Extract the array portion
-        const start = rawInput.indexOf('[');
-        const end = rawInput.lastIndexOf(']');
-        if (start === -1 || end === -1) throw new Error("JSON must start with [ and end with ]");
-        
-        let cleanText = rawInput.substring(start, end + 1);
+    async function deployManualQuiz() {
+        let rawInput = document.getElementById("manualJsonInput").value;
+        const btn = document.getElementById("injectBtn");
 
-        // 2. Fix smart quotes first (they always break JSON)
-        cleanText = cleanText.replace(/[\u201C\u201D]/g, '"');
+        if (!selectedLecId) return alert("❌ Error: Select a Lecture in Step 2 first!");
+        if (!rawInput.trim()) return alert("❌ Error: Paste the JSON array.");
 
-        let questionsArray;
-        
-        // 3. THE SMART TOGGLE: Try raw parse, then heal only if it fails
         try {
-            questionsArray = JSON.parse(cleanText);
+            const start = rawInput.indexOf('[');
+            const end = rawInput.lastIndexOf(']');
+            if (start === -1 || end === -1) throw new Error("JSON must start with [ and end with ]");
+            
+            let cleanText = rawInput.substring(start, end + 1);
+            cleanText = cleanText.replace(/[\u201C\u201D]/g, '"');
+
+            let questionsArray;
+            try {
+                questionsArray = JSON.parse(cleanText);
+            } catch (e) {
+                const healedText = cleanText.replace(/\\(?![\\"\/bfnrtu]|u[0-9a-fA-F]{4})/g, "\\\\");
+                questionsArray = JSON.parse(healedText);
+            }
+
+            btn.innerText = "⏳ Deploying..."; btn.disabled = true;
+
+            const res = await fetch(`${BASE_URL}/api/admin/save-quiz`, {
+                method: "POST", 
+                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+                body: JSON.stringify({ courseId: selectedCourseId, lectureId: selectedLecId, questions: questionsArray })
+            });
+
+            if (res.ok) { 
+                alert("✅ Success: Quiz is live!"); 
+                document.getElementById("manualJsonInput").value = "";
+                document.getElementById("quizPreviewBox").style.display = "none";
+            } else { 
+                const errData = await res.json(); 
+                alert("❌ Server Error: " + errData.message); 
+            }
+        } catch (err) { 
+            alert("⚠️ JSON Error: " + err.message); 
+        } finally { 
+            btn.innerText = "🚀 Deploy Quiz to Cloud"; btn.disabled = false; 
+        }
+    }
+
+    document.getElementById("manualJsonInput").addEventListener("input", function() {
+        const previewBox = document.getElementById("quizPreviewBox");
+        const display = document.getElementById("mathLivePreview");
+        let rawValue = this.value.trim();
+
+        if (rawValue.length < 10) {
+            previewBox.style.display = "none";
+            return;
+        }
+
+        previewBox.style.display = "block";
+        try {
+            let jsonStr = rawValue.replace(/```json|```/g, "").trim();
+            const data = JSON.parse(jsonStr);
+            let sampleText = data[0].questionText || "JSON parsed, but no questionText found.";
+            display.innerHTML = healLaTeX(sampleText);
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                MathJax.typesetPromise([display]);
+            }
         } catch (e) {
-            console.log("Raw JSON parse failed, applying backslash healing...");
-            // Only double the backslashes if the raw input is invalid JSON
-            const healedText = cleanText.replace(/\\(?![\\"\/bfnrtu]|u[0-9a-fA-F]{4})/g, "\\\\");
-            questionsArray = JSON.parse(healedText);
+            display.innerHTML = `<span style="color: #ff4d4d;">❌ Invalid JSON structure... awaiting completion.</span>`;
         }
-
-        btn.innerText = "⏳ Deploying..."; btn.disabled = true;
-
-        const res = await fetch(`${BASE_URL}/api/admin/save-quiz`, {
-            method: "POST", 
-            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-            body: JSON.stringify({ courseId: selectedCourseId, lectureId: selectedLecId, questions: questionsArray })
-        });
-
-        if (res.ok) { 
-            alert("✅ Success: Quiz is live!"); 
-            document.getElementById("manualJsonInput").value = "";
-            document.getElementById("quizPreviewBox").style.display = "none";
-        } else { 
-            const errData = await res.json(); 
-            alert("❌ Server Error: " + errData.message); 
-        }
-    } catch (err) { 
-        console.error("Deploy Error:", err);
-        alert("⚠️ JSON Error: " + err.message); 
-    } finally { 
-        btn.innerText = "🚀 Deploy Quiz to Cloud"; btn.disabled = false; 
-    }
-}
-document.getElementById("manualJsonInput").addEventListener("input", function() {
-    const previewBox = document.getElementById("quizPreviewBox");
-    const display = document.getElementById("mathLivePreview");
-    let rawValue = this.value.trim();
-
-    if (rawValue.length < 10) {
-        previewBox.style.display = "none";
-        return;
-    }
-
-    previewBox.style.display = "block";
-    try {
-        // Clean markdown backticks
-        let jsonStr = rawValue.replace(/```json|```/g, "").trim();
-        const data = JSON.parse(jsonStr);
-        
-        // Grab the first question text as a sample
-        let sampleText = data[0].questionText || "JSON parsed, but no questionText found.";
-        
-        // Use your Healer logic here
-        display.innerHTML = healLaTeX(sampleText);
-        
-        // Trigger MathJax to render the preview
-        if (window.MathJax && window.MathJax.typesetPromise) {
-            MathJax.typesetPromise([display]);
-        }
-    } catch (e) {
-        display.innerHTML = `<span style="color: #ff4d4d;">❌ Invalid JSON structure... awaiting completion.</span>`;
-    }
-});
+    });
 </script>
 </body>
 </html>
