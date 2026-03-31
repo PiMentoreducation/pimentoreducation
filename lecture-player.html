@@ -166,7 +166,7 @@
 
         <div class="sidebar-card">
             <h3 style="font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Resources</h3>
-            <button id="pdfBtn" class="btn-res btn-pdf" style="display:none;" onclick="openResourceModal(this.dataset.url)">📄 View PDF Notes</button>
+            <button id="pdfBtn" class="btn-res btn-pdf" style="display:none;" onclick="handlePdfOpen(this.dataset.url)">📄 Download PDF Notes</button>
             <button id="mcqBtn" class="btn-res btn-mcq" style="display:none;" onclick="openQuiz()">📝 Take Quiz</button>
         </div>
 
@@ -214,7 +214,14 @@
     const chapter = urlParams.get('chapter');
     const token = localStorage.getItem("token");
     const BASE_URL = "https://pimentor-project.onrender.com";
-    
+    // Inside playLecture function
+const pBtn = document.getElementById("pdfBtn");
+if(lec.pdfNotes) { 
+    pBtn.style.display = "block"; 
+    pBtn.dataset.url = lec.pdfNotes; // Store the URL here
+} else { 
+    pBtn.style.display = "none"; 
+}
     let activeLectureId = null;
     let ytPlayer = null;
     let studentProgress = [];
@@ -324,7 +331,41 @@
             MathJax.typesetPromise([area]).catch(e => console.log(e));
         }
     }
+function handlePdfOpen(url) {
+    if (!url) return;
 
+    let finalUrl = url;
+
+    // --- GOOGLE DRIVE DIRECT DOWNLOAD CONVERTER ---
+    if (url.includes("drive.google.com")) {
+        let fileId = "";
+
+        // Case 1: Standard URL format (/file/d/FILE_ID/view)
+        if (url.includes("/file/d/")) {
+            fileId = url.split("/file/d/")[1].split("/")[0];
+        } 
+        // Case 2: Query parameter format (id=FILE_ID)
+        else if (url.includes("id=")) {
+            const matches = url.match(/id=([^&]+)/);
+            if (matches) fileId = matches[1];
+        }
+
+        if (fileId) {
+            // This endpoint bypasses the viewer and triggers a direct download
+            finalUrl = `https://docs.google.com/uc?export=download&id=${fileId}`;
+        }
+    }
+
+    // --- EXECUTE DOWNLOAD ---
+    // Create a temporary hidden anchor to trigger download across all browsers/webviews
+    const link = document.createElement('a');
+    link.href = finalUrl;
+    link.target = '_blank';
+    link.download = ''; // Encourages download behavior
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
     async function calculateScore() {
         let score = 0;
         let reviewHtml = '<h3 style="color:var(--accent); margin-bottom:20px;">Quiz Review:</h3>';
