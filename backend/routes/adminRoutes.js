@@ -75,7 +75,9 @@ router.delete("/course/:courseId", auth, admin, async (req, res) => {
         const { courseId } = req.params;
         await Course.findOneAndDelete({ courseId });
         await Lecture.deleteMany({ courseId });
-        res.json({ message: "Course and all associated lectures wiped." });
+        await Purchase.deleteMany({ courseId });
+        await Progress.deleteMany({ courseId });
+        res.json({ message: "Surgical Wipe Complete: Course, Lectures, Purchases, and Progress cleared from Galaxy." });
     } catch (error) {
         res.status(500).json({ message: "Failed to delete course" });
     }

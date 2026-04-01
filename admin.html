@@ -804,9 +804,26 @@ Ensure all quotes inside the text are escaped or replaced with single quotes to 
 
     async function deleteCourse() {
         const deleteId = document.getElementById("deleteCourseId").value;
-        if (!deleteId || !confirm("Wipe course?")) return;
-        const response = await fetch(`${BASE_URL}/api/admin/course/${deleteId}`, { method: "DELETE", headers: { "Authorization": "Bearer " + token } });
-        const result = await response.json(); alert(result.message); loadOngoingCourses();
+        if (!deleteId) return alert("Please select a course to delete.");
+        
+        const confirmMsg = "⚠️ SURGICAL WIPE DETECTED!\n\nThis will permanently delete:\n1. The Course\n2. All Lectures\n3. ALL student purchase records\n4. ALL student progress metrics\n\nThis cannot be undone. Proceed?";
+        
+        if (!confirm(confirmMsg)) return;
+        
+        try {
+            const response = await fetch(`${BASE_URL}/api/admin/course/${deleteId}`, { 
+                method: "DELETE", 
+                headers: { "Authorization": "Bearer " + token } 
+            });
+            const result = await response.json();
+            alert(result.message);
+            
+            // Reset UI and Refresh
+            document.getElementById("deleteCourseId").value = "";
+            loadOngoingCourses();
+        } catch (error) { 
+            alert("Network Error during surgical wipe."); 
+        }
     }
 
     function downloadEmails() {
@@ -957,7 +974,7 @@ Ensure all quotes inside the text are escaped or replaced with single quotes to 
             let sampleText = data[0].questionText || "JSON parsed, but no questionText found.";
             display.innerHTML = healLaTeX(sampleText);
             if (window.MathJax && window.MathJax.typesetPromise) {
-                MathJax.typesetPromise([display]);
+                window.MathJax.typesetPromise([display]);
             }
         } catch (e) {
             display.innerHTML = `<span style="color: #ff4d4d;">❌ Invalid JSON structure... awaiting completion.</span>`;
