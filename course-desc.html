@@ -5,18 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Course Details | PiMentor</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700;800&display=swap" rel="stylesheet">
-    
-    <script>
-        window.MathJax = {
-            tex: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']]
-            },
-            svg: { fontCache: 'global' }
-        };
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
     <style>
         :root {
             --space-bg: radial-gradient(circle at top, #0d1117 0%, #010409 100%);
@@ -40,6 +28,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { background: var(--space-bg); color: var(--text); overflow-x: hidden; transition: 0.5s; background-attachment: fixed; }
 
+        /* --- NAVBAR --- */
         .navbar {
             position: fixed; top: 0; width: 100%; height: 80px; z-index: 1000;
             display: flex; align-items: center; padding: 0 5%;
@@ -62,6 +51,7 @@
             .brand { margin-left: auto; }
         }
 
+        /* --- SIDEBAR --- */
         .sidebar {
             position: fixed; top: 0; left: -320px; width: 300px; height: 100%;
             background: var(--glass); backdrop-filter: blur(25px); z-index: 2000;
@@ -71,6 +61,7 @@
         .sidebar-links { display: flex; flex-direction: column; gap: 20px; margin-top: 30px; }
         .sidebar-links a { color: var(--text); text-decoration: none; font-size: 1.1rem; font-weight: 700; }
 
+        /* --- LAYOUT GRID --- */
         .desc-container { 
             max-width: 1300px; margin: 120px auto 40px; padding: 0 5%; 
             display: flex; flex-direction: row; gap: 40px; 
@@ -91,6 +82,21 @@
         .grid-list { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .list-item { display: flex; gap: 10px; font-size: 0.95rem; opacity: 0.9; }
 
+        .success-slider {
+            display: flex; overflow-x: auto; gap: 20px; padding: 10px 5px 25px;
+            scroll-snap-type: x mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch;
+        }
+        .success-slider::-webkit-scrollbar { height: 6px; }
+        .success-slider::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+
+        .success-card {
+            flex: 0 0 100%; background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border); border-radius: 20px; padding: 25px;
+            scroll-snap-align: start; text-align: center;
+        }
+        .student-img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent); margin-bottom: 15px; }
+
+        /* --- STICKY SIDEBAR --- */
         .sticky-sidebar { width: 400px; flex-shrink: 0; position: sticky; top: 100px; height: fit-content; }
         .pricing-card { background: var(--glass); border: 2px solid var(--accent); border-radius: 30px; padding: 30px; backdrop-filter: blur(20px); text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
         .thumbnail-img { width: 100%; border-radius: 20px; margin-bottom: 20px; border: 1px solid var(--card-border); }
@@ -113,7 +119,8 @@
             .desc-container { flex-direction: column; }
             .sticky-sidebar { width: 100%; order: -1; position: relative; top: 0; }
         }
-
+        
+        /* FAQ Style */
         .faq-card { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--card-border); border-radius: 15px; margin-bottom: 12px; overflow: hidden; }
         .faq-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: 800; color: var(--accent); }
         .faq-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; background: rgba(0, 0, 0, 0.1); }
@@ -202,6 +209,7 @@
 <script>
     const BASE_URL = "https://pimentor-project.onrender.com";
     const courseId = new URLSearchParams(window.location.search).get('id');
+    let currentCourseData = null;
 
     function setupUI() {
         const token = localStorage.getItem("token");
@@ -227,25 +235,28 @@
                 token ? fetch(`${BASE_URL}/api/purchase/my-courses`, { headers: { "Authorization": "Bearer " + token } }) : Promise.resolve(null)
             ]);
 
-            if (!courseRes.ok) throw new Error("Course data missing.");
+            if (!courseRes.ok) throw new Error("Galaxy data missing.");
             const d = await courseRes.json();
+            currentCourseData = d;
 
+            // Purchase Check Logic
             let isStillActive = false;
             if (purchaseRes && purchaseRes.ok) {
                 const myPurchases = await purchaseRes.json();
                 const nowMs = Date.now();
-                myPurchases.forEach(p => {
-                    if (String(p.courseId).trim() === String(courseId).trim() && p.expiryDate && new Date(p.expiryDate).getTime() > nowMs) {
-                        isStillActive = true;
-                    }
+                const matching = myPurchases.filter(p => String(p.courseId).trim() === String(courseId).trim());
+                matching.forEach(p => {
+                    if (p.expiryDate && new Date(p.expiryDate).getTime() > nowMs) isStillActive = true;
                 });
             }
 
+            // Update UI with Course Data
             document.getElementById("title").innerText = d.title || "Course Details";
             document.getElementById("oldPrice").innerText = `₹${d.oldPrice || Number(d.price) + 500}`;
             document.getElementById("newPrice").innerText = `₹${d.price}`;
             document.getElementById("thumb").src = d.thumbnail || "/images/course-default.png";
             
+            // Buttons Logic
             const actionContainer = document.getElementById("enrollmentActions");
             const mainBtn = document.getElementById("mainEnrollBtn");
 
@@ -253,6 +264,7 @@
                 mainBtn.innerText = "ALREADY ENROLLED";
                 mainBtn.disabled = true;
             } else {
+                // If course is marked free, add the green button
                 if (d.free === "yes") {
                     const freeBtn = document.createElement("button");
                     freeBtn.className = "btn-free";
@@ -262,6 +274,7 @@
                 }
             }
 
+            // YouTube Formatting
             const formatYT = (url) => {
                 if (!url) return "";
                 let id = url.split('v=')[1] || url.split('/').pop();
@@ -276,8 +289,8 @@
                 document.getElementById("learningList").innerHTML = lp.map(x => `<div class="list-item">✨ ${x.trim()}</div>`).join('');
             }
 
-            document.getElementById("course_roadmap").innerHTML = `<div>${d.course_roadmap || 'Roadmap coming soon.'}</div>`;
-            document.getElementById("description").innerHTML = `<div>${d.description || 'Description coming soon.'}</div>`;
+            document.getElementById("course_roadmap").innerHTML = `<p>${d.course_roadmap || 'Roadmap coming soon.'}</p>`;
+            document.getElementById("description").innerHTML = `<p>${d.description || 'Description coming soon.'}</p>`;
             
             if (d.teachers) {
                 document.getElementById("teachersListContainer").innerHTML = d.teachers.map(t => `
@@ -292,12 +305,6 @@
             }
 
             renderFAQs();
-            
-            // Trigger MathJax to re-scan for equations after dynamic content injection
-            if (window.MathJax && window.MathJax.typeset) {
-                window.MathJax.typeset();
-            }
-
         } catch (err) { 
             console.error(err);
             document.getElementById("title").innerText = "Orbit Not Found";
