@@ -14,7 +14,6 @@
             --text: #ffffff;
             --card-border: rgba(255, 255, 255, 0.1);
             --transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-            --success: #2ecc71;
         }
 
         [data-theme="light"] {
@@ -67,6 +66,7 @@
             display: flex; flex-direction: row; gap: 40px; 
         }
 
+        /* --- LEFT COLUMN --- */
         .main-content { flex: 1; min-width: 0; }
         .main-content h1 { font-size: 3rem; font-weight: 800; line-height: 1.2; margin-bottom: 20px; }
         .badge-row { display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; }
@@ -82,6 +82,7 @@
         .grid-list { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .list-item { display: flex; gap: 10px; font-size: 0.95rem; opacity: 0.9; }
 
+        /* --- SUCCESS STORIES (ONE BY ONE SCROLL) --- */
         .success-slider {
             display: flex; overflow-x: auto; gap: 20px; padding: 10px 5px 25px;
             scroll-snap-type: x mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch;
@@ -90,41 +91,45 @@
         .success-slider::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
 
         .success-card {
-            flex: 0 0 100%; background: rgba(255, 255, 255, 0.03);
+            flex: 0 0 100%; /* Snap one card at a time */
+            background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--card-border); border-radius: 20px; padding: 25px;
             scroll-snap-align: start; text-align: center;
         }
         .student-img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent); margin-bottom: 15px; }
+        .student-name { font-weight: 800; font-size: 1.1rem; color: var(--text); margin-bottom: 5px; }
+        .student-saying { font-size: 0.85rem; opacity: 0.8; font-style: italic; line-height: 1.5; }
 
-        /* --- STICKY SIDEBAR --- */
+        /* --- FAQ --- */
+        .faq-card { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--card-border); border-radius: 15px; margin-bottom: 12px; overflow: hidden; transition: var(--transition); }
+        .faq-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: 800; color: var(--accent); }
+        .faq-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; background: rgba(0, 0, 0, 0.1); }
+        .faq-content { padding: 20px; font-size: 0.9rem; opacity: 0.8; line-height: 1.6; }
+        .faq-card.active .faq-body { max-height: 300px; }
+        .faq-card.active .faq-icon { transform: rotate(45deg); }
+
+        /* --- RIGHT SIDEBAR --- */
         .sticky-sidebar { width: 400px; flex-shrink: 0; position: sticky; top: 100px; height: fit-content; }
         .pricing-card { background: var(--glass); border: 2px solid var(--accent); border-radius: 30px; padding: 30px; backdrop-filter: blur(20px); text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
         .thumbnail-img { width: 100%; border-radius: 20px; margin-bottom: 20px; border: 1px solid var(--card-border); }
         .original-price { text-decoration: line-through; opacity: 0.5; font-size: 1.2rem; }
-        .current-price { font-size: 2.8rem; font-weight: 800; color: var(--success); margin-bottom: 5px; }
+        .current-price { font-size: 2.8rem; font-weight: 800; color: #2ecc71; margin-bottom: 5px; }
+        .discount-tag { color: var(--accent); font-weight: 800; margin-bottom: 20px; display: block; }
         
-        .buy-now-btn { width: 100%; padding: 20px; background: var(--accent); border: none; border-radius: 18px; color: white; font-weight: 800; font-size: 1.2rem; cursor: pointer; transition: 0.3s; margin-bottom: 10px; box-shadow: 0 10px 30px var(--accent-glow); }
-        .buy-now-btn:disabled { background: #6c757d; cursor: not-allowed; box-shadow: none; }
-        
-        .btn-free { 
-            width: 100%; padding: 16px; border: none; border-radius: 15px; font-weight: 800; cursor: pointer; transition: 0.3s; 
-            background: linear-gradient(90deg, #2ecc71, #27ae60); color: white; 
-            box-shadow: 0 8px 20px rgba(46, 204, 113, 0.3); margin-top: 10px; font-size: 1rem;
-        }
+        .buy-now-btn { width: 100%; padding: 20px; background: var(--accent); border: none; border-radius: 18px; color: white; font-weight: 800; font-size: 1.2rem; cursor: pointer; transition: 0.3s; margin-bottom: 20px; box-shadow: 0 10px 30px var(--accent-glow); }
+        .buy-now-btn:hover { transform: scale(1.02); filter: brightness(1.1); }
 
+        /* MULTI-TEACHER CSS */
         .instructor-card { display: flex; align-items: center; gap: 20px; text-align: left; margin-top: 20px; border-top: 1px solid var(--card-border); padding-top: 20px; }
         .instructor-img { width: 75px; height: 75px; border-radius: 50%; border: 2px solid var(--accent); object-fit: cover; }
 
         @media (max-width: 1100px) {
             .desc-container { flex-direction: column; }
             .sticky-sidebar { width: 100%; order: -1; position: relative; top: 0; }
+            .main-content h1 { font-size: 2.2rem; }
+            .demo-grid { grid-template-columns: 1fr; }
+            .grid-list { grid-template-columns: 1fr; }
         }
-        
-        /* FAQ Style */
-        .faq-card { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--card-border); border-radius: 15px; margin-bottom: 12px; overflow: hidden; }
-        .faq-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: 800; color: var(--accent); }
-        .faq-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; background: rgba(0, 0, 0, 0.1); }
-        .faq-card.active .faq-body { max-height: 300px; }
     </style>
 </head>
 <body>
@@ -160,12 +165,10 @@
             <div class="video-wrapper"><iframe id="demo1" allowfullscreen></iframe></div>
             <div class="video-wrapper"><iframe id="demo2" allowfullscreen></iframe></div>
         </div>
-
-        <div class="content-section">
+                <div class="content-section">
             <h2 class="section-title">Course Description</h2>
-            <div id="description"></div>
+            <div class="grid-list" id="description"></div>
         </div>
-
         <div class="content-section">
             <h2 class="section-title">What You'll Master</h2>
             <div class="grid-list" id="learningList"></div>
@@ -174,6 +177,27 @@
         <div class="content-section">
             <h2 class="section-title">Course Roadmap</h2>
             <div id="course_roadmap"></div>
+        </div>
+
+        <div class="content-section">
+            <h2 class="section-title">Success Stories</h2>
+            <div class="success-slider" id="testimonialsSlider">
+                <div class="success-card">
+                    <img src="/images/student1.jpg" class="student-img" alt="S1">
+                    <div class="student-name">Aditya Verma</div>
+                    <div class="student-saying">"The mindmaps provided in this course helped me score 98 in Mathematics!"</div>
+                </div>
+                <div class="success-card">
+                    <img src="/images/student2.jpg" class="student-img" alt="S2">
+                    <div class="student-name">Sneha Kapoor</div>
+                    <div class="student-saying">"I was struggling with Physics, but spontaneous demos made it easy."</div>
+                </div>
+                <div class="success-card">
+                    <img src="/images/student3.jpg" class="student-img" alt="S3">
+                    <div class="student-name">Rahul Singh</div>
+                    <div class="student-saying">"The 24/7 doubt support is amazing. I never felt lost."</div>
+                </div>
+            </div>
         </div>
 
         <div class="content-section">
@@ -189,27 +213,26 @@
             <div class="current-price" id="newPrice">₹--</div>
             <span class="discount-tag" id="discountTxt">SAVE --% TODAY</span>
             
-            <div id="enrollmentActions">
-                <button class="buy-now-btn" id="mainEnrollBtn" onclick="handleEnrollment()">ENROLL NOW</button>
-            </div>
+            <button class="buy-now-btn" onclick="handleEnrollment()">ENROLL NOW</button>
             
-            <div id="featuresList" style="text-align: left; font-size: 0.85rem; line-height: 2; margin-top: 15px;">
+            <div style="text-align: left; font-size: 0.85rem; line-height: 2;">
                 <p>🚀 100+ Lectures (Recorded + Live)</p>
                 <p>📄 Downloadable PDF Mindmaps</p>
                 <p>🎯 Daily Practice MCQ & DPPs</p>
                 <p>♾️ Unlimited Access</p>
+                <p>💻 Multi-device Support</p>
             </div>
 
-            <div id="teachersListContainer"></div>
+            <div id="teachersListContainer">
+                </div>
         </div>
-        <a href="courses.html" style="display: block; text-align: center; margin-top: 20px; color: inherit; text-decoration: none; font-weight: 700;">Explore Other Courses →</a>
+        <a href="courses.html" style="display: block; text-align: center; margin-top: 20px; color: inherit; text-decoration: none; font-weight: 700; font-size: 0.9rem;">Explore Other Courses →</a>
     </div>
 </main>
 
 <script>
     const BASE_URL = "https://pimentor-project.onrender.com";
     const courseId = new URLSearchParams(window.location.search).get('id');
-    let currentCourseData = null;
 
     function setupUI() {
         const token = localStorage.getItem("token");
@@ -218,6 +241,7 @@
             <a href="dashboard.html">Dashboard</a>
             <a href="courses.html">All Courses</a>
             <a href="pishot_hub.html">PiShot</a>
+            <a href="#">Community</a>
             ${token ? '' : '<a href="login.html">Login</a><a href="register.html" class="btn-cta">Get Started</a>'}
             <button onclick="toggleTheme()" style="background:none; border:none; color:inherit; cursor:pointer; font-size:1.2rem;">🌙</button>
         `;
@@ -227,54 +251,16 @@
 
     async function loadData() {
         if (!courseId) return window.location.href = "courses.html";
-        const token = localStorage.getItem("token");
-
         try {
-            const [courseRes, purchaseRes] = await Promise.all([
-                fetch(`${BASE_URL}/api/admin/course/${courseId}`),
-                token ? fetch(`${BASE_URL}/api/purchase/my-courses`, { headers: { "Authorization": "Bearer " + token } }) : Promise.resolve(null)
-            ]);
+            const res = await fetch(`${BASE_URL}/api/admin/course/${courseId}`);
+            if (!res.ok) throw new Error("Galaxy data missing.");
+            const d = await res.json();
 
-            if (!courseRes.ok) throw new Error("Galaxy data missing.");
-            const d = await courseRes.json();
-            currentCourseData = d;
-
-            // Purchase Check Logic
-            let isStillActive = false;
-            if (purchaseRes && purchaseRes.ok) {
-                const myPurchases = await purchaseRes.json();
-                const nowMs = Date.now();
-                const matching = myPurchases.filter(p => String(p.courseId).trim() === String(courseId).trim());
-                matching.forEach(p => {
-                    if (p.expiryDate && new Date(p.expiryDate).getTime() > nowMs) isStillActive = true;
-                });
-            }
-
-            // Update UI with Course Data
             document.getElementById("title").innerText = d.title || "Course Details";
             document.getElementById("oldPrice").innerText = `₹${d.oldPrice || Number(d.price) + 500}`;
             document.getElementById("newPrice").innerText = `₹${d.price}`;
             document.getElementById("thumb").src = d.thumbnail || "/images/course-default.png";
             
-            // Buttons Logic
-            const actionContainer = document.getElementById("enrollmentActions");
-            const mainBtn = document.getElementById("mainEnrollBtn");
-
-            if (isStillActive) {
-                mainBtn.innerText = "ALREADY ENROLLED";
-                mainBtn.disabled = true;
-            } else {
-                // If course is marked free, add the green button
-                if (d.free === "yes") {
-                    const freeBtn = document.createElement("button");
-                    freeBtn.className = "btn-free";
-                    freeBtn.innerText = "GET IT FOR FREE TODAY";
-                    freeBtn.onclick = () => getFreeCourse(d);
-                    actionContainer.appendChild(freeBtn);
-                }
-            }
-
-            // YouTube Formatting
             const formatYT = (url) => {
                 if (!url) return "";
                 let id = url.split('v=')[1] || url.split('/').pop();
@@ -289,66 +275,46 @@
                 document.getElementById("learningList").innerHTML = lp.map(x => `<div class="list-item">✨ ${x.trim()}</div>`).join('');
             }
 
-            document.getElementById("course_roadmap").innerHTML = `<p>${d.course_roadmap || 'Roadmap coming soon.'}</p>`;
-            document.getElementById("description").innerHTML = `<p>${d.description || 'Description coming soon.'}</p>`;
-            
-            if (d.teachers) {
-                document.getElementById("teachersListContainer").innerHTML = d.teachers.map(t => `
+            // --- TEACHER LOOP LOGIC ---
+            const teachersContainer = document.getElementById("teachersListContainer");
+            if (d.teachers && d.teachers.length > 0) {
+                teachersContainer.innerHTML = d.teachers.map(t => `
                     <div class="instructor-card">
                         <img src="${t.image || '/images/teacher-default.png'}" class="instructor-img">
                         <div>
-                            <h4 style="font-size:0.95rem;">${t.name}</h4>
-                            <p style="font-size: 0.75rem; color: var(--accent);">${t.qual}</p>
+                            <h4 style="margin-bottom: 2px; font-size:0.95rem;">${t.name}</h4>
+                            <p style="font-size: 0.75rem; font-weight: 700; color: var(--accent);">${t.qual}</p>
+                            <p style="font-size: 0.7rem; opacity: 0.7; margin-top: 4px;">${t.achieve}</p>
                         </div>
                     </div>
                 `).join('');
             }
 
+            const discount = Math.round(((Number(d.oldPrice || d.price + 500) - d.price) / Number(d.oldPrice || d.price + 500)) * 100);
+            if(discount > 0) document.getElementById("discountTxt").innerText = `SAVE ${discount}% TODAY`;
+
+            document.getElementById("course_roadmap").innerHTML = `<p>${d.course_roadmap || 'Roadmap coming soon.'}</p>`;
+            document.getElementById("description").innerHTML = `<p>${d.description || 'Roadmap coming soon.'}</p>`;
             renderFAQs();
+
         } catch (err) { 
             console.error(err);
             document.getElementById("title").innerText = "Orbit Not Found";
         }
     }
 
-    async function getFreeCourse(course) {
-        const token = localStorage.getItem("token");
-        if (!token) { window.location.href = "login.html"; return; }
-        if (!confirm(`Enroll in "${course.title}" for free?`)) return;
-
-        try {
-            const res = await fetch(`${BASE_URL}/api/payment/verify`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-                body: JSON.stringify({ isFreePurchase: true, course: { courseId: course.courseId } })
-            });
-
-            if (res.ok) {
-                alert("Enrolled Successfully!");
-                window.location.href = "dashboard.html";
-            } else {
-                const result = await res.json();
-                throw new Error(result.message || "Failed to enroll.");
-            }
-        } catch (error) { alert("Error: " + error.message); }
-    }
-
-    function handleEnrollment() {
-        const token = localStorage.getItem("token");
-        if (!token) { window.location.href = "login.html"; return; }
-        window.location.href = `courses.html?renew=${courseId}`;
-    }
-
     function renderFAQs() {
         const faqs = [
             { q: "🚀 How long will I have access?", a: "Unlimited access till the course validity." },
             { q: "📱 Can I watch on my mobile?", a: "Yes, fully optimized for all devices." },
-            { q: "📄 Are the notes downloadable?", a: "Yes, PDF Mindmaps can be downloaded." }
+            { q: "❓ How do I clear my doubts?", a: "Dedicated 'Ask Doubt' section below every video." },
+            { q: "📄 Are the notes downloadable?", a: "Yes, PDF Mindmaps can be downloaded for offline use." },
+            { q: "💳 Is the payment secure?", a: "Transactions via Razorpay with encrypted UPI/Card support." }
         ];
         document.getElementById("faqList").innerHTML = faqs.map((f, i) => `
             <div class="faq-card" id="faq-${i}">
                 <div class="faq-header" onclick="toggleFaq(${i})">
-                    <span>${f.q}</span><span>+</span>
+                    <span>${f.q}</span><span class="faq-icon">+</span>
                 </div>
                 <div class="faq-body"><div class="faq-content">${f.a}</div></div>
             </div>
@@ -357,7 +323,15 @@
 
     function toggleFaq(i) {
         const card = document.getElementById(`faq-${i}`);
-        card.classList.toggle('active');
+        const isActive = card.classList.contains('active');
+        document.querySelectorAll('.faq-card').forEach(c => c.classList.remove('active'));
+        if (!isActive) card.classList.add('active');
+    }
+
+    function handleEnrollment() {
+        const token = localStorage.getItem("token");
+        if (!token) { window.location.href = "login.html"; return; }
+        window.location.href = `courses.html?renew=${courseId}`;
     }
 
     function toggleTheme() {
@@ -366,8 +340,9 @@
         localStorage.setItem("pimentor-theme", t);
     }
 
-    document.getElementById('hamburger').onclick = () => document.getElementById('sidebar').classList.add('open');
-    document.getElementById('closeSidebar').onclick = () => document.getElementById('sidebar').classList.remove('open');
+    const h = document.getElementById('hamburger'), s = document.getElementById('sidebar');
+    h.onclick = () => s.classList.add('open');
+    document.getElementById('closeSidebar').onclick = () => s.classList.remove('open');
 
     document.addEventListener("DOMContentLoaded", () => {
         document.documentElement.setAttribute("data-theme", localStorage.getItem("pimentor-theme") || "dark");
