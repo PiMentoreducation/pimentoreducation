@@ -90,11 +90,41 @@
         .video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; border-radius: 15px; overflow: hidden; background: #000; border: 1px solid var(--card-border); }
         .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
 
-        .content-section { background: var(--glass); border: 1px solid var(--card-border); border-radius: 24px; padding: 35px; margin-top: 30px; backdrop-filter: blur(10px); }
+        /* --- CONTENT SECTION IMPROVEMENTS --- */
+        .content-section { 
+            background: var(--glass); 
+            border: 1px solid var(--card-border); 
+            border-radius: 24px; 
+            padding: 35px; 
+            margin-top: 30px; 
+            backdrop-filter: blur(10px); 
+            overflow: hidden; /* Fixes box overflow */
+        }
         .section-title { font-size: 1.5rem; font-weight: 800; color: var(--accent); margin-bottom: 25px; border-left: 5px solid var(--accent); padding-left: 15px; }
 
-        .grid-list { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .list-item { display: flex; gap: 10px; font-size: 0.95rem; opacity: 0.9; }
+        /* Fixed Alignment for Description/Roadmap */
+        #description, #course_roadmap {
+            line-height: 1.8;
+            font-size: 1rem;
+            opacity: 0.9;
+            word-wrap: break-word;
+            text-align: justify; /* Aligns text neatly within the box */
+        }
+
+        /* Fixed Grid for Learning Points */
+        .grid-list { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Responsive columns */
+            gap: 20px; 
+        }
+        .list-item { 
+            display: flex; 
+            align-items: flex-start; /* Aligns emoji with top of text */
+            gap: 12px; 
+            font-size: 0.95rem; 
+            opacity: 0.9; 
+            line-height: 1.4;
+        }
 
         /* --- SUCCESS STORIES --- */
         .success-slider {
@@ -254,7 +284,13 @@
 <script>
     const BASE_URL = "https://pimentor-project.onrender.com";
     const courseId = new URLSearchParams(window.location.search).get('id');
-    let currentCourseData = null; // Store fetched course details for payment
+    let currentCourseData = null; 
+
+    // Utility to convert text Newlines to HTML line breaks
+    function formatLineBreaks(str) {
+        if (!str) return "";
+        return str.replace(/\n/g, '<br>');
+    }
 
     function setupUI() {
         const token = localStorage.getItem("token");
@@ -283,9 +319,8 @@
 
             if (!courseRes.ok) throw new Error("Galaxy data missing.");
             const d = await courseRes.json();
-            currentCourseData = d; // Save to global variable
+            currentCourseData = d; 
 
-            // Enrollment Status Logic
             let isStillActive = false;
             if (purchaseRes && purchaseRes.ok) {
                 const myPurchases = await purchaseRes.json();
@@ -302,7 +337,6 @@
             document.getElementById("newPrice").innerText = `₹${d.price}`;
             document.getElementById("thumb").src = d.thumbnail || "/images/course-default.png";
             
-            // Buttons Logic
             const actionContainer = document.getElementById("enrollmentActions");
             const mainBtn = document.getElementById("enrollBtn");
 
@@ -326,12 +360,12 @@
             document.getElementById("demo1").src = formatYT(d.demo1);
             document.getElementById("demo2").src = formatYT(d.demo2);
             
+            // Format What You'll Master
             if (d.learningPoints) {
                 const lp = d.learningPoints.split(',');
-                document.getElementById("learningList").innerHTML = lp.map(x => `<div class="list-item">✨ ${x.trim()}</div>`).join('');
+                document.getElementById("learningList").innerHTML = lp.map(x => `<div class="list-item"><span>✨</span> <span>${x.trim()}</span></div>`).join('');
             }
 
-            // Teachers Logic
             const teachersContainer = document.getElementById("teachersListContainer");
             if (d.teachers && d.teachers.length > 0) {
                 teachersContainer.innerHTML = d.teachers.map(t => `
@@ -349,8 +383,10 @@
             const discount = Math.round(((Number(d.oldPrice || d.price + 500) - d.price) / Number(d.oldPrice || d.price + 500)) * 100);
             if(discount > 0) document.getElementById("discountTxt").innerText = `SAVE ${discount}% TODAY`;
 
-            document.getElementById("course_roadmap").innerHTML = `<div>${d.course_roadmap || 'Roadmap coming soon.'}</div>`;
-            document.getElementById("description").innerHTML = `<div>${d.description || 'Description coming soon.'}</div>`;
+            // Updated Formatting for Description & Roadmap
+            document.getElementById("course_roadmap").innerHTML = `<div>${formatLineBreaks(d.course_roadmap) || 'Roadmap coming soon.'}</div>`;
+            document.getElementById("description").innerHTML = `<div>${formatLineBreaks(d.description) || 'Description coming soon.'}</div>`;
+            
             renderFAQs();
 
             if (window.MathJax && window.MathJax.typeset) {
@@ -413,8 +449,6 @@
     async function handleEnrollment() {
         const token = localStorage.getItem("token");
         if (!token) { window.location.href = "login.html"; return; }
-        
-        // Direct Payment Integration
         if (!currentCourseData) return alert("Course details not loaded yet.");
 
         const isWebView = /WebView|wv|pimentor-app/i.test(navigator.userAgent);
