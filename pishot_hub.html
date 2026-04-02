@@ -71,19 +71,22 @@
         .hub-header h1 { font-size: 3rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -1px; }
         .hub-header p { opacity: 0.6; font-size: 1.1rem; }
 
-        /* --- SEARCH SECTION --- */
+        /* --- SEARCH & DROPDOWN SECTION --- */
         .search-container {
-            max-width: 600px;
+            max-width: 800px;
             margin: 40px auto 0;
             padding: 0 20px;
-            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
+
         .search-wrapper {
             position: relative;
-            display: flex;
-            align-items: center;
+            flex: 1;
         }
-        #shortsSearch {
+
+        #shortsSearch, #shortsDropdown {
             width: 100%;
             padding: 15px 25px;
             border-radius: 30px;
@@ -95,7 +98,21 @@
             backdrop-filter: blur(10px);
             transition: var(--transition);
         }
-        #shortsSearch:focus {
+
+        #shortsDropdown {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 20px center;
+            background-size: 15px;
+        }
+
+        [data-theme="light"] #shortsDropdown {
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%231b4332' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        }
+
+        #shortsSearch:focus, #shortsDropdown:focus {
             border-color: var(--accent);
             box-shadow: 0 0 15px var(--accent-glow);
         }
@@ -130,6 +147,7 @@
             .hamburger { display: flex; margin-right: auto; }
             .brand { margin-left: auto; }
             .hub-header h1 { font-size: 2.2rem; }
+            .search-container { flex-direction: column; }
         }
     </style>
 </head>
@@ -179,7 +197,12 @@
 
 <section class="search-container">
     <div class="search-wrapper">
-        <input type="text" id="shortsSearch" placeholder="Search dimensions (e.g. Physics, Class 10)..." onkeyup="filterCategories()">
+        <input type="text" id="shortsSearch" placeholder="Type to filter categories..." onkeyup="filterCategories()">
+    </div>
+    <div class="search-wrapper">
+        <select id="shortsDropdown" onchange="if(this.value) window.location.href=this.value">
+            <option value="">Quick Jump to a Dimension...</option>
+        </select>
     </div>
 </section>
 
@@ -215,17 +238,15 @@
         
         for (let i = 0; i < cards.length; i++) {
             const title = cards[i].querySelector('.cat-title').innerText.toLowerCase();
-            if (title.includes(input)) {
-                cards[i].style.display = "";
-            } else {
-                cards[i].style.display = "none";
-            }
+            cards[i].style.display = title.includes(input) ? "" : "none";
         }
     }
 
     /* --- DATA FETCHING --- */
     async function loadCategories() {
         const grid = document.getElementById('categoryGrid');
+        const dropdown = document.getElementById('shortsDropdown');
+        
         try {
             const response = await fetch(`${BASE_URL}/api/shorts/categories`);
             const categories = await response.json();
@@ -235,6 +256,7 @@
                 return;
             }
 
+            // Populate Grid
             grid.innerHTML = categories.map(cat => `
                 <div class="category-card" onclick="window.location.href='pishot_player.html?cat=${encodeURIComponent(cat.name)}'">
                     <div class="cat-icon">${cat.icon || '🚀'}</div>
@@ -242,6 +264,14 @@
                     <div class="cat-count">${cat.videoCount} Pi-Shots Available</div>
                 </div>
             `).join('');
+
+            // Populate Dropdown
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = `pishot_player.html?cat=${encodeURIComponent(cat.name)}`;
+                opt.textContent = `${cat.icon || '🚀'} ${cat.name}`;
+                dropdown.appendChild(opt);
+            });
 
         } catch (error) {
             console.error("Hub Error:", error);
@@ -257,13 +287,24 @@
             { name: "Sanskrit", icon: "📜", count: "20+" },
             { name: "SSC Prep", icon: "🏛️", count: "50+" }
         ];
-        document.getElementById('categoryGrid').innerHTML = fallback.map(cat => `
-            <div class="category-card" onclick="window.location.href='pishot-player.html?cat=${encodeURIComponent(cat.name)}'">
+        
+        const grid = document.getElementById('categoryGrid');
+        const dropdown = document.getElementById('shortsDropdown');
+
+        grid.innerHTML = fallback.map(cat => `
+            <div class="category-card" onclick="window.location.href='pishot_player.html?cat=${encodeURIComponent(cat.name)}'">
                 <div class="cat-icon">${cat.icon}</div>
                 <div class="cat-title">${cat.name}</div>
                 <div class="cat-count">${cat.count} Pi-Shots Available</div>
             </div>
         `).join('');
+
+        fallback.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = `pishot_player.html?cat=${encodeURIComponent(cat.name)}`;
+            opt.textContent = `${cat.icon} ${cat.name}`;
+            dropdown.appendChild(opt);
+        });
     }
 
     document.addEventListener("DOMContentLoaded", () => {
