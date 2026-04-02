@@ -71,6 +71,35 @@
         .hub-header h1 { font-size: 3rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -1px; }
         .hub-header p { opacity: 0.6; font-size: 1.1rem; }
 
+        /* --- SEARCH SECTION --- */
+        .search-container {
+            max-width: 600px;
+            margin: 40px auto 0;
+            padding: 0 20px;
+            position: relative;
+        }
+        .search-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        #shortsSearch {
+            width: 100%;
+            padding: 15px 25px;
+            border-radius: 30px;
+            border: 1px solid var(--card-border);
+            background: var(--glass);
+            color: var(--text);
+            font-size: 1rem;
+            outline: none;
+            backdrop-filter: blur(10px);
+            transition: var(--transition);
+        }
+        #shortsSearch:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
         .category-grid {
             max-width: 1200px; margin: 60px auto; padding: 0 20px;
             display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px;
@@ -148,6 +177,12 @@
     <p>Select a dimension to start your spontaneous learning journey</p>
 </main>
 
+<section class="search-container">
+    <div class="search-wrapper">
+        <input type="text" id="shortsSearch" placeholder="Search dimensions (e.g. Physics, Class 10)..." onkeyup="filterCategories()">
+    </div>
+</section>
+
 <div class="category-grid" id="categoryGrid">
     <p style="grid-column: 1/-1; text-align: center; opacity: 0.5;">Aligning the stars...</p>
 </div>
@@ -173,12 +208,25 @@
     document.getElementById('openDrawer').onclick = () => sidebar.classList.add('open');
     document.getElementById('closeDrawer').onclick = () => sidebar.classList.remove('open');
 
+    /* --- SEARCH LOGIC --- */
+    function filterCategories() {
+        const input = document.getElementById('shortsSearch').value.toLowerCase();
+        const cards = document.getElementsByClassName('category-card');
+        
+        for (let i = 0; i < cards.length; i++) {
+            const title = cards[i].querySelector('.cat-title').innerText.toLowerCase();
+            if (title.includes(input)) {
+                cards[i].style.display = "";
+            } else {
+                cards[i].style.display = "none";
+            }
+        }
+    }
+
     /* --- DATA FETCHING --- */
-    // This is designed to be populated by your Admin Panel
     async function loadCategories() {
         const grid = document.getElementById('categoryGrid');
         try {
-            // Assuming your backend has a route to get unique categories of shorts
             const response = await fetch(`${BASE_URL}/api/shorts/categories`);
             const categories = await response.json();
 
@@ -187,8 +235,6 @@
                 return;
             }
 
-            // Map categories to UI cards
-            // Each card takes you to 'pishot-player.html?cat=CategoryName'
             grid.innerHTML = categories.map(cat => `
                 <div class="category-card" onclick="window.location.href='pishot_player.html?cat=${encodeURIComponent(cat.name)}'">
                     <div class="cat-icon">${cat.icon || '🚀'}</div>
@@ -199,7 +245,6 @@
 
         } catch (error) {
             console.error("Hub Error:", error);
-            // Fallback static categories if API fails or while you're setting up backend
             renderFallback();
         }
     }
