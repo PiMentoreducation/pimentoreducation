@@ -345,5 +345,68 @@ router.post("/trigger-reports/:courseId", adminMiddleware, async (req, res) => {
         res.json({ message: "All reports dispatched!" });
     } catch (err) { res.status(500).send(err.message); }
 });
+// @route   GET /api/admin/download-student-report
+// @desc    Generate and Download PDF Progress Report for a student
+router.get("/download-student-report", auth, admin, async (req, res) => {
+    try {
+        const { courseId, studentEmail, chapterName } = req.query;
 
+        // 1. Fetch Data (Same logic as fetch route)
+        let lectureQuery = { courseId };
+        if (chapterName) lectureQuery.chapterName = chapterName;
+        
+        const [course, lectures, progressRecords, student] = await Promise.all([
+            Course.findOne({ courseId }),
+            Lecture.find(lectureQuery).sort({ order: 1 }),
+            Progress.find({ courseId, studentEmail }),
+            User.findOne({ email: studentEmail })
+        ]);
+
+        if (!course || !student) return res.status(404).json({ message: "Course or Student not found" });
+
+        // 2. Format data for PDF Service
+        let vCompleted = 0;
+        let totalScore = 0;
+        let quizzesTaken = 0;
+
+        const reportData = lectures.map(lec => {
+            const p = progressRecords.find(prog => prog.lectureId === lec._id.toString());
+            const isWatched = p ? p.isVideoCompleted : false;
+            const score = p ? (p.highestQuizScore || 0) : 0;
+
+            if (isWatched) vCompleted++;
+            if (p && p.isQuizAttempted) {
+                totalScore += score;
+                quizzesTaken++;
+            }
+
+            return {
+                title: lec.title,
+                isVideoCompleted: isWatched,
+                highestQuizScore: p && p.isQuizAttempted ? score : -1 // -1 flag for 'Not Attempted'
+            };
+        });
+
+        // 3. Calculate Final Performance Score
+        const videoPerc = (vCompleted / lectures.length) * 100;
+        const quizPerc = quizzesTaken > 0 ? (totalScore / (quizzesTaken * 10)) * 100 : 0;
+        const finalScore = ((videoPerc + quizPerc) / 2).toFixed(1);
+
+        // 4. Set Headers and Stream PDF
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=Report_${student.name.replace(/\s+/g, '_')}.pdf`);
+
+        generateMonthlyPDF(
+            { name: student.name },
+            course.title + (chapterName ? ` - ${chapterName}` : ""),
+            reportData,
+            finalScore,
+            res
+        );
+
+    } catch (err) {
+        console.error("PDF Admin Error:", err);
+        res.status(500).send("Error generating report");
+    }
+});
 module.exports = router;

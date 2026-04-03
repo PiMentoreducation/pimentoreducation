@@ -461,7 +461,15 @@ Ensure all quotes inside the text are escaped or replaced with single quotes to 
             </select>
         </div>
     </div>
-    <button class="btn-create" style="background: var(--success);" onclick="fetchStudentDetailedProgress()">Generate Progress Report</button>
+    
+    <div class="row">
+        <div class="col">
+            <button class="btn-create" style="background: var(--success);" onclick="fetchStudentDetailedProgress()">View On-Screen Report</button>
+        </div>
+        <div class="col">
+            <button class="btn-create" style="background: #e67e22; border:none;" onclick="downloadStudentPDF()">📥 Download Official PDF Report</button>
+        </div>
+    </div>
 
     <div id="progressReportResult" style="margin-top: 25px; overflow-x: auto;">
         <p style="opacity:0.5; font-size:0.9rem;">Select student and filters above to see detailed records.</p>
@@ -1105,6 +1113,42 @@ Ensure all quotes inside the text are escaped or replaced with single quotes to 
             resultDiv.innerHTML = "<p>Error loading report.</p>";
         }
     }
+    async function downloadStudentPDF() {
+    const courseId = document.getElementById("courseDropdown").value;
+    const email = document.getElementById("progressStudentSelect").value;
+    const chapter = document.getElementById("progressChapterSelect").value;
+
+    if (!courseId || !email) return alert("Please select a Course and a Student first.");
+
+    const btn = event.target;
+    btn.innerText = "⌛ Generating PDF...";
+    btn.disabled = true;
+
+    try {
+        const url = `${BASE_URL}/api/admin/download-student-report?courseId=${courseId}&studentEmail=${email}&chapterName=${encodeURIComponent(chapter)}`;
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: { "Authorization": "Bearer " + token }
+        });
+
+        if (!response.ok) throw new Error("Failed to generate report");
+
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = downloadUrl;
+        a.download = `Progress_Report_${email}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    } catch (err) {
+        alert("Download Error: " + err.message);
+    } finally {
+        btn.innerText = "📥 Download Official PDF Report";
+        btn.disabled = false;
+    }
+}
 </script>
 </body>
 </html>
