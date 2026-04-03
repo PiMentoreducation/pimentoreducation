@@ -346,14 +346,18 @@ router.post("/trigger-reports/:courseId", adminMiddleware, async (req, res) => {
     } catch (err) { res.status(500).send(err.message); }
 });
 // @route   GET /api/admin/download-student-report
-// @desc    Generate and Download PDF Progress Report for a student
+// @desc    Generate and Download PDF Progress Report using existing pdfService
 router.get("/download-student-report", auth, admin, async (req, res) => {
     try {
         const { courseId, studentEmail, chapterName } = req.query;
 
-        // 1. Fetch Data (Same logic as fetch route)
+        if (!courseId || !studentEmail) {
+            return res.status(400).json({ message: "Course ID and Student Email are required" });
+        }
+
+        // 1. Fetch Data
         let lectureQuery = { courseId };
-        if (chapterName) lectureQuery.chapterName = chapterName;
+        if (chapterName && chapterName !== "") lectureQuery.chapterName = chapterName;
         
         const [course, lectures, progressRecords, student] = await Promise.all([
             Course.findOne({ courseId }),
@@ -362,51 +366,53 @@ router.get("/download-student-report", auth, admin, async (req, res) => {
             User.findOne({ email: studentEmail })
         ]);
 
-        if (!course || !student) return res.status(404).json({ message: "Course or Student not found" });
+        if (!course || !student) return res.status(404).json({ message: "Data not found" });
 
-        // 2. Format data for PDF Service
-        let vCompleted = 0;
-        let totalScore = 0;
-        let quizzesTaken = 0;
+        // 2. Format data for your specific pdfService.js
+        let videosCompletedCount = 0;
+        let totalQuizScore = 0;
+        let quizzesTakenCount = 0;
 
         const reportData = lectures.map(lec => {
             const p = progressRecords.find(prog => prog.lectureId === lec._id.toString());
+            
             const isWatched = p ? p.isVideoCompleted : false;
             const score = p ? (p.highestQuizScore || 0) : 0;
 
-            if (isWatched) vCompleted++;
+            if (isWatched) videosCompletedCount++;
             if (p && p.isQuizAttempted) {
-                totalScore += score;
-                quizzesTaken++;
+                totalQuizScore += score;
+                quizzesTakenCount++;
             }
 
             return {
                 title: lec.title,
                 isVideoCompleted: isWatched,
-                highestQuizScore: p && p.isQuizAttempted ? score : -1 // -1 flag for 'Not Attempted'
+                highestQuizScore: p && p.isQuizAttempted ? score : -1 // Your PDF service uses -1 for N/A
             };
         });
 
-        // 3. Calculate Final Performance Score
-        const videoPerc = (vCompleted / lectures.length) * 100;
-        const quizPerc = quizzesTaken > 0 ? (totalScore / (quizzesTaken * 10)) * 100 : 0;
-        const finalScore = ((videoPerc + quizPerc) / 2).toFixed(1);
+        // 3. Apply your Official Formula
+        const videoPerc = (videosCompletedCount / lectures.length) * 100;
+        const quizPerc = quizzesTakenCount > 0 ? (totalQuizScore / (quizzesTakenCount * 10)) * 100 : 0;
+        const overallScore = ((videoPerc + quizPerc) / 2).toFixed(1);
 
-        // 4. Set Headers and Stream PDF
+        // 4. Stream to PDF using your existing generateMonthlyPDF
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=Report_${student.name.replace(/\s+/g, '_')}.pdf`);
+        res.setHeader('Content-Disposition', `attachment; filename=PiMentor_Report_${student.name.replace(/\s+/g, '_')}.pdf`);
 
+        // Passing arguments exactly as defined in your pdfService.js
         generateMonthlyPDF(
-            { name: student.name },
-            course.title + (chapterName ? ` - ${chapterName}` : ""),
-            reportData,
-            finalScore,
-            res
+            { name: student.name }, // studentData
+            course.title + (chapterName ? ` - ${chapterName}` : ""), // courseTitle
+            reportData, // reportData
+            overallScore, // overallScore
+            res // res (for piping)
         );
 
     } catch (err) {
-        console.error("PDF Admin Error:", err);
-        res.status(500).send("Error generating report");
+        console.error("PDF GENERATION ERROR:", err);
+        res.status(500).send("Internal Server Error generating report");
     }
 });
 module.exports = router;

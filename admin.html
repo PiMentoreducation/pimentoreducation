@@ -467,7 +467,7 @@ Ensure all quotes inside the text are escaped or replaced with single quotes to 
             <button class="btn-create" style="background: var(--success);" onclick="fetchStudentDetailedProgress()">View On-Screen Report</button>
         </div>
         <div class="col">
-            <button class="btn-create" style="background: #e67e22; border:none;" onclick="downloadStudentPDF()">📥 Download Official PDF Report</button>
+        <button class="btn-create" style="background: #e67e22; border:none; margin-top:10px;" onclick="downloadStudentPDF()">📥 Download Official PDF Report</button>
         </div>
     </div>
 
@@ -1120,8 +1120,10 @@ Ensure all quotes inside the text are escaped or replaced with single quotes to 
 
     if (!courseId || !email) return alert("Please select a Course and a Student first.");
 
+    // Visual feedback
     const btn = event.target;
-    btn.innerText = "⌛ Generating PDF...";
+    const originalText = btn.innerText;
+    btn.innerText = "⏳ Generating Official Report...";
     btn.disabled = true;
 
     try {
@@ -1132,20 +1134,21 @@ Ensure all quotes inside the text are escaped or replaced with single quotes to 
             headers: { "Authorization": "Bearer " + token }
         });
 
-        if (!response.ok) throw new Error("Failed to generate report");
+        if (!response.ok) throw new Error("Could not generate PDF");
 
         const blob = await response.blob();
         const downloadUrl = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = downloadUrl;
-        a.download = `Progress_Report_${email}.pdf`;
+        a.download = `PiMentor_Report_${email}.pdf`;
         document.body.appendChild(a);
         a.click();
-        a.remove();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(downloadUrl);
     } catch (err) {
-        alert("Download Error: " + err.message);
+        alert("Download Failed: " + err.message);
     } finally {
-        btn.innerText = "📥 Download Official PDF Report";
+        btn.innerText = originalText;
         btn.disabled = false;
     }
 }
