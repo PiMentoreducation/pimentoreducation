@@ -19,7 +19,7 @@ const generateMonthlyPDF = (studentData, courseTitle, reportData, overallScore, 
     doc.moveTo(50, 110).lineTo(550, 110).strokeColor('#eeeeee').stroke();
 
     // Watermark (Placed in background)
-    doc.save().opacity(0.05).fontSize(60).fillColor('black').text('PIMENTOR OFFICIAL', 100, 350, { rotation: 45 });
+    doc.save().opacity(0.05).fontSize(60).fillColor('black').text('PIMENTOR OFFICIAL', 185, 740, { rotation: 45 });
     doc.restore();
 
     // --- Student & Course Info (Fixed position to stay on Page 1) ---
