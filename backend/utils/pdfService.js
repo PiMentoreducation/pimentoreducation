@@ -15,11 +15,11 @@ const generateMonthlyPDF = (studentData, courseTitle, reportData, overallScore, 
     }
     
     doc.fillColor('#7c4dff').fontSize(25).font('Helvetica-Bold').text('PiMentor', 110, 57);
-    doc.fontSize(10).fillColor('#666666').font('Helvetica').text('The Galaxy of Mathematical Excellence', 110, 85);
+    doc.fontSize(10).fillColor('#666666').font('Helvetica').text('The Galaxy of Excellence in Mathematical-Sciences', 110, 85);
     doc.moveTo(50, 110).lineTo(550, 110).strokeColor('#eeeeee').stroke();
 
     // Watermark (Placed in background)
-    doc.save().opacity(0.05).fontSize(60).fillColor('black').text('PIMENTOR ORIGINAL', 100, 350, { rotation: 45 });
+    doc.save().opacity(0.05).fontSize(60).fillColor('black').text('PIMENTOR OFFICIAL', 100, 350, { rotation: 45 });
     doc.restore();
 
     // --- Student & Course Info (Fixed position to stay on Page 1) ---
@@ -77,7 +77,7 @@ const generateMonthlyPDF = (studentData, courseTitle, reportData, overallScore, 
 
     // --- Signature Footer ---
     const footerY = 750;
-    const signPath = path.join(__dirname, '../public/images/hodsign.jpg');
+    const signPath = path.join(__dirname, '../public/images/HOD_sign.jpg');
     if (fs.existsSync(signPath)) {
         doc.image(signPath, 440, footerY - 45, { width: 70 });
     }
