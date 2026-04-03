@@ -439,6 +439,35 @@ Ensure all quotes inside the text are escaped or replaced with single quotes to 
     </div>
 </section>
 
+<section style="border-left: 5px solid var(--success);">
+    <h2 style="color: var(--success);">📊 Student Progress Command Center</h2>
+    <div class="row">
+        <div class="col">
+            <span class="hint">1. Select Student</span>
+            <select id="progressStudentSelect">
+                <option value="">-- Select Student --</option>
+            </select>
+        </div>
+        <div class="col">
+            <span class="hint">2. Filter by Chapter (Optional)</span>
+            <select id="progressChapterSelect" onchange="syncProgressTopics()">
+                <option value="">-- All Chapters --</option>
+            </select>
+        </div>
+        <div class="col">
+            <span class="hint">3. Filter by Topic (Optional)</span>
+            <select id="progressTopicSelect">
+                <option value="">-- All Topics --</option>
+            </select>
+        </div>
+    </div>
+    <button class="btn-create" style="background: var(--success);" onclick="fetchStudentDetailedProgress()">Generate Progress Report</button>
+
+    <div id="progressReportResult" style="margin-top: 25px; overflow-x: auto;">
+        <p style="opacity:0.5; font-size:0.9rem;">Select student and filters above to see detailed records.</p>
+    </div>
+</section>
+
 <section>
     <h2>Step 3: Doubt Resolution Command</h2>
     <div id="doubtsContainer">
@@ -579,6 +608,7 @@ Ensure all quotes inside the text are escaped or replaced with single quotes to 
                 const optionHtml = `<option value="${course.courseId}">${course.title} (${course.courseId})</option>`;
                 mainDropdown.innerHTML += optionHtml;
                 notifDropdown.innerHTML += optionHtml;
+                notifDropdown.innerHTML += optionHtml;
                 configDropdown.innerHTML += optionHtml;
             });
         } catch (error) { console.error("Course Load Error:", error); }
@@ -638,8 +668,16 @@ Ensure all quotes inside the text are escaped or replaced with single quotes to 
             const chapRes = await fetch(`${BASE_URL}/api/purchase/course-chapters/${selectedId}`, { headers: { "Authorization": "Bearer " + token } });
             const chapters = await chapRes.json();
             const chapDrop = document.getElementById('chapterDropdown');
+            const progChapDrop = document.getElementById('progressChapterSelect'); // NEW Progress Reference
+            
             chapDrop.innerHTML = '<option value="">-- Select Existing Chapter --</option>';
-            chapters.forEach(ch => { chapDrop.innerHTML += `<option value="${ch}">${ch}</option>`; });
+            progChapDrop.innerHTML = '<option value="">-- All Chapters --</option>'; // Reset Progress Dropdown
+            
+            chapters.forEach(ch => { 
+                chapDrop.innerHTML += `<option value="${ch}">${ch}</option>`;
+                progChapDrop.innerHTML += `<option value="${ch}">${ch}</option>`; // Populate Progress Dropdown
+            });
+
             const lecRes = await fetch(`${BASE_URL}/api/purchase/all-lectures-admin/${selectedId}`, { headers: { "Authorization": "Bearer " + token } });
             const lectures = await lecRes.json();
             const delDrop = document.getElementById("deleteLectureDropdown");
@@ -769,10 +807,17 @@ Ensure all quotes inside the text are escaped or replaced with single quotes to 
     async function loadEnrollments(courseId) {
         const body = document.getElementById("enrollmentBody");
         const countSpan = document.getElementById("enrollmentCount");
+        const progressStudentSelect = document.getElementById("progressStudentSelect"); // NEW Progress Reference
+        
         try {
             const response = await fetch(`${BASE_URL}/api/admin/course-enrollments/${courseId}`, { headers: { "Authorization": "Bearer " + token } });
             const students = await response.json();
             countSpan.innerText = students.length;
+            
+            // Populate Progress Center Student List
+            progressStudentSelect.innerHTML = '<option value="">-- Select Student --</option>' + 
+                students.map(s => `<option value="${s.email}">${s.name} (${s.email})</option>`).join('');
+
             if (students.length === 0) { body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:30px;">No explorers found.</td></tr>'; return; }
             body.innerHTML = students.map(s => `<tr><td>${s.name}</td><td>${s.email}</td><td>${s.studentClass}</td><td>${new Date(s.enrolledAt).toLocaleDateString()}</td></tr>`).join('');
         } catch (error) { body.innerHTML = '<tr><td colspan="4">Error retrieving student registry.</td></tr>'; }
@@ -980,6 +1025,86 @@ Ensure all quotes inside the text are escaped or replaced with single quotes to 
             display.innerHTML = `<span style="color: #ff4d4d;">❌ Invalid JSON structure... awaiting completion.</span>`;
         }
     });
+
+    // --- NEW PROGRESS COMMAND CENTER FUNCTIONS ---
+
+    async function syncProgressTopics() {
+        const courseId = document.getElementById("courseDropdown").value;
+        const chapterName = document.getElementById("progressChapterSelect").value;
+        const topicDrop = document.getElementById("progressTopicSelect");
+        
+        if (!chapterName) {
+            topicDrop.innerHTML = '<option value="">-- All Topics --</option>';
+            return;
+        }
+
+        try {
+            const res = await fetch(`${BASE_URL}/api/purchase/all-lectures-admin/${courseId}`, { headers: { "Authorization": "Bearer " + token } });
+            const lectures = await res.json();
+            const filtered = lectures.filter(l => l.chapterName === chapterName);
+            
+            topicDrop.innerHTML = '<option value="">-- All Topics --</option>';
+            filtered.forEach(l => {
+                topicDrop.innerHTML += `<option value="${l._id}">${l.topicName} - ${l.lectureTitle}</option>`;
+            });
+        } catch (e) { console.error("Topic sync fail"); }
+    }
+
+    async function fetchStudentDetailedProgress() {
+        const courseId = document.getElementById("courseDropdown").value;
+        const email = document.getElementById("progressStudentSelect").value;
+        const chapter = document.getElementById("progressChapterSelect").value;
+        const lectureId = document.getElementById("progressTopicSelect").value;
+        const resultDiv = document.getElementById("progressReportResult");
+
+        if (!courseId || !email) return alert("Please select a Course and a Student first.");
+
+        resultDiv.innerHTML = "<p>Loading metrics...</p>";
+
+        try {
+            const url = `${BASE_URL}/api/admin/student-progress?courseId=${courseId}&studentEmail=${email}&chapterName=${encodeURIComponent(chapter)}&lectureId=${lectureId}`;
+            const res = await fetch(url, { headers: { "Authorization": "Bearer " + token } });
+            const data = await res.json();
+
+            if (!data || !data.length) {
+                resultDiv.innerHTML = "<p>No progress records found for this selection.</p>";
+                return;
+            }
+
+            let tableHtml = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Chapter / Topic</th>
+                            <th>Video Status</th>
+                            <th>Quiz Score</th>
+                            <th>Mastery</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            data.forEach(item => {
+                tableHtml += `
+                    <tr>
+                        <td>
+                            <small style="opacity:0.6">${item.chapterName}</small><br>
+                            <b>${item.topicName}</b>: ${item.lectureTitle}
+                        </td>
+                        <td>${item.isVideoCompleted ? '✅ Watched' : '❌ Not Seen'}</td>
+                        <td>${item.isQuizAttempted ? `⭐ ${item.score}/10` : '🚫 Not Attempted'}</td>
+                        <td>${item.isMastered ? '<span style="color:var(--success)">🏆 Mastered</span>' : '<span style="opacity:0.5">In Progress</span>'}</td>
+                    </tr>
+                `;
+            });
+
+            tableHtml += "</tbody></table>";
+            resultDiv.innerHTML = tableHtml;
+
+        } catch (e) {
+            resultDiv.innerHTML = "<p>Error loading report.</p>";
+        }
+    }
 </script>
 </body>
 </html>

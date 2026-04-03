@@ -148,4 +148,50 @@ router.get("/download-report/:courseId", authMiddleware, async (req, res) => {
         res.status(500).send("Internal Server Error");
     }
 });
+const Lecture = require("../models/Lecture"); // Ensure this model is imported
+
+// Admin: Fetch detailed student progress with multi-level filtering
+router.get("/admin/student-progress", auth, async (req, res) => {
+    try {
+        const { courseId, studentEmail, chapterName, lectureId } = req.query;
+
+        if (!courseId || !studentEmail) {
+            return res.status(400).json({ message: "Course ID and Student Email are required" });
+        }
+
+        // 1. Get all actual lectures for this course to establish a baseline
+        let lectureQuery = { courseId: courseId };
+        if (chapterName && chapterName !== "") lectureQuery.chapterName = chapterName;
+        if (lectureId && lectureId !== "") lectureQuery._id = lectureId;
+
+        const lectures = await Lecture.find(lectureQuery).sort({ order: 1 });
+
+        // 2. Get the student's progress records
+        const progressRecords = await Progress.find({ 
+            courseId: courseId, 
+            studentEmail: studentEmail 
+        });
+
+        // 3. Map lectures to progress (to show 'Not Seen' for missing records)
+        const detailedReport = lectures.map(lec => {
+            const p = progressRecords.find(prog => prog.lectureId === lec._id.toString());
+            
+            return {
+                chapterName: lec.chapterName,
+                topicName: lec.topicName,
+                lectureTitle: lec.lectureTitle,
+                lectureId: lec._id,
+                isVideoCompleted: p ? p.isVideoCompleted : false,
+                isQuizAttempted: p ? p.isQuizAttempted : false,
+                score: p ? p.highestQuizScore : 0,
+                isMastered: p ? p.isMastered : false
+            };
+        });
+
+        res.json(detailedReport);
+    } catch (err) {
+        console.error("Admin Progress Fetch Error:", err);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+});
 module.exports = router;
