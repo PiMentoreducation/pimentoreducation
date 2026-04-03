@@ -10,13 +10,63 @@ const Purchase = require("../models/Purchase");
 const Lecture = require("../models/Lecture"); 
 const Doubt = require("../models/Doubt");
 const Notification = require("../models/Notification");
-const Quiz = require("../models/Quiz"); // 🔥 Correctly imported Quiz model
+const Quiz = require("../models/Quiz");
+const Progress = require("../models/Progress"); // 🔥 Added Progress model import
 
 // Middlewares
 const auth = require("../middleware/authMiddleware");
 const adminMiddleware = require('../middleware/admin');
 const admin = require("../middleware/admin");
 const { generateMonthlyPDF } = require('../utils/pdfService');
+
+/* ================= STUDENT PROGRESS COMMAND CENTER (NEW) ================= */
+
+// @route   GET /api/admin/student-progress
+// @desc    Fetch detailed student progress with multi-level filtering
+router.get("/student-progress", auth, admin, async (req, res) => {
+    try {
+        const { courseId, studentEmail, chapterName, lectureId } = req.query;
+
+        if (!courseId || !studentEmail) {
+            return res.status(400).json({ message: "Course ID and Student Email are required" });
+        }
+
+        // 1. Define Lecture Query based on filters
+        let lectureQuery = { courseId: courseId };
+        if (chapterName && chapterName !== "") lectureQuery.chapterName = chapterName;
+        if (lectureId && lectureId !== "") lectureQuery._id = lectureId;
+
+        // Fetch official lectures
+        const lectures = await Lecture.find(lectureQuery).sort({ order: 1 });
+
+        // 2. Get the student's actual progress records
+        const progressRecords = await Progress.find({ 
+            courseId: courseId, 
+            studentEmail: studentEmail 
+        });
+
+        // 3. Map progress data onto the lecture list to show status
+        const detailedReport = lectures.map(lec => {
+            const p = progressRecords.find(prog => prog.lectureId === lec._id.toString());
+            
+            return {
+                chapterName: lec.chapterName,
+                topicName: lec.topicName,
+                lectureTitle: lec.title, // Maps to 'title' in your Lecture model
+                isVideoCompleted: p ? p.isVideoCompleted : false,
+                isQuizAttempted: p ? p.isQuizAttempted : false,
+                score: p ? p.highestQuizScore : 0,
+                isMastered: p ? p.isMastered : false
+            };
+        });
+
+        res.json(detailedReport);
+    } catch (err) {
+        console.error("Admin Progress Fetch Error:", err);
+        res.status(500).json({ message: "Server Error fetching student metrics" });
+    }
+});
+
 /* ================= COURSE MANAGEMENT ================= */
 
 // Fetch all courses for admin dropdowns/lists
@@ -130,7 +180,7 @@ router.post('/generate-quiz', auth, admin, async (req, res) => {
         return res.status(400).json({ message: "Context too short to generate quality questions." });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Using Flash for speed
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
 
     const prompt = `
         Analyze this lecture content: "${transcript}"
@@ -146,7 +196,6 @@ router.post('/generate-quiz', auth, admin, async (req, res) => {
         const result = await model.generateContent(prompt);
         const text = result.response.text();
         
-        // Surgical cleaning to find the array even if AI adds extra text
         const jsonMatch = text.match(/\[.*\]/s);
         if (!jsonMatch) throw new Error("AI failed to provide a valid JSON array.");
         
@@ -258,11 +307,9 @@ router.delete("/notification/:id", auth, admin, async (req, res) => {
 });
 /* ================= PUBLIC COURSE DATA ================= */
 
-// This route MUST be public so course-desc.html can load data for anyone
 router.get("/course/:courseId", async (req, res) => {
     try {
         const { courseId } = req.params;
-        // Find by your custom courseId string (e.g., 'math_10')
         const course = await Course.findOne({ courseId: courseId.trim() });
         
         if (!course) {
@@ -283,14 +330,8 @@ router.post("/trigger-reports/:courseId", adminMiddleware, async (req, res) => {
         const lectures = await Lecture.find({ courseId }).sort({ order: 1 });
         const course = await Course.findOne({ courseId });
 
-        // Loop through all students
         for (let student of students) {
             const progress = await Progress.find({ courseId, studentEmail: student.email });
-            
-            // Prepare data and calculate score...
-            // (Use the formula logic we discussed earlier)
-            
-            // Instead of piping to 'res', we get the buffer for email attachment
             const doc = new PDFDocument();
             let buffers = [];
             doc.on('data', buffers.push.bind(buffers));
@@ -304,5 +345,5 @@ router.post("/trigger-reports/:courseId", adminMiddleware, async (req, res) => {
         res.json({ message: "All reports dispatched!" });
     } catch (err) { res.status(500).send(err.message); }
 });
-// Final export
+
 module.exports = router;
