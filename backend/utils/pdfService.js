@@ -9,7 +9,7 @@ const generateMonthlyPDF = (studentData, courseTitle, reportData, overallScore, 
     if (res) doc.pipe(res);
 
     // --- Header Section ---
-    const logoPath = path.join(__dirname, 'images/OUR_LOGO.jpeg');
+    const logoPath = path.join(__dirname, '../../images/OUR_LOGO.jpeg');
     if (fs.existsSync(logoPath)) {
         doc.image(logoPath, 50, 45, { width: 50 });
     }
@@ -77,7 +77,7 @@ const generateMonthlyPDF = (studentData, courseTitle, reportData, overallScore, 
 
     // --- Signature Footer ---
     const footerY = 750;
-    const signPath = path.join(__dirname, 'images/HOD_sign.jpg');
+    const signPath = path.join(__dirname, '../../images/HOD_sign.jpg');
     if (fs.existsSync(signPath)) {
         doc.image(signPath, 440, footerY - 45, { width: 70 });
     }
