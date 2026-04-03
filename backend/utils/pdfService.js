@@ -9,7 +9,7 @@ const generateMonthlyPDF = (studentData, courseTitle, reportData, overallScore, 
     if (res) doc.pipe(res);
 
     // --- Header Section ---
-    const logoPath = path.join(__dirname, '../../images/OUR_LOGO.jpeg');
+    const logoPath = path.join(__dirname, '../../images/BWLOGO.jpeg');
     if (fs.existsSync(logoPath)) {
         doc.image(logoPath, 50, 45, { width: 50 });
     }
