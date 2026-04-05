@@ -25,7 +25,7 @@ const generateMonthlyPDF = (studentData, courseTitle, reportData, overallScore, 
     // --- Student & Course Info (Fixed position to stay on Page 1) ---
     const infoTop = 130;
     doc.fillColor('#333333').fontSize(12).font('Helvetica-Bold').text(`STUDENT: ${studentData.name.toUpperCase()}`, 50, infoTop);
-    doc.text(`COURSE: ${_id.toUpperCase()}`, 50, infoTop + 18);
+    doc.text(`Student Id: ${_id.toUpperCase()}`, 50, infoTop + 18);
     doc.text(`COURSE: ${courseTitle.toUpperCase()}`, 50, infoTop + 18);
     doc.fontSize(10).font('Helvetica').text(`Generated on: ${new Date().toLocaleDateString()}`, 50, infoTop + 36);
 
