@@ -24,16 +24,26 @@ const generateMonthlyPDF = (studentData, courseTitle, reportData, overallScore, 
 
     // --- Student & Course Info (Fixed position to stay on Page 1) ---
     const infoTop = 130;
-    doc.fillColor('#333333').fontSize(12).font('Helvetica-Bold').text(`STUDENT: ${studentData.name.toUpperCase()}`, 50, infoTop);
-    doc.text(`Student Email: ${studentEmail.toUpperCase()}`, 50, infoTop + 18);
-    doc.text(`COURSE: ${courseTitle.toUpperCase()}`, 50, infoTop + 18);
-    doc.fontSize(10).font('Helvetica').text(`Generated on: ${new Date().toLocaleDateString()}`, 50, infoTop + 36);
+    doc.fillColor('#333333').fontSize(12).font('Helvetica-Bold');
+    
+    // 1. Name
+    doc.text(`STUDENT: ${studentData.name.toUpperCase()}`, 50, infoTop);
+    
+    // 2. Email (Added logic to pull from studentData object and shifted Y coordinate)
+    const displayEmail = studentData.email || "N/A";
+    doc.text(`EMAIL: ${displayEmail.toUpperCase()}`, 50, infoTop + 18);
+    
+    // 3. Course (Shifted Y coordinate to prevent overlap)
+    doc.text(`COURSE: ${courseTitle.toUpperCase()}`, 50, infoTop + 36);
+    
+    // 4. Date (Shifted Y coordinate)
+    doc.fontSize(10).font('Helvetica').text(`Generated on: ${new Date().toLocaleDateString()}`, 50, infoTop + 54);
 
     // --- Table Alignment Logic ---
     const col1 = 60;  // Lecture Title
     const col2 = 380; // Status
     const col3 = 490; // Score
-    let y = 200;      // Start table high enough to stay on Page 1
+    let y = 220;      // Start table slightly lower to accommodate extra info line
 
     // Header Background
     doc.rect(50, y, 500, 25).fill('#7c4dff');
