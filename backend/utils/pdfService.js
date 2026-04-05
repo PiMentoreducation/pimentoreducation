@@ -31,7 +31,7 @@ const generateMonthlyPDF = (studentData, courseTitle, reportData, overallScore, 
     
     // 2. Email (Added logic to pull from studentData object and shifted Y coordinate)
     const displayEmail = studentData.email || "N/A";
-    doc.text(`EMAIL: ${displayEmail.toUpperCase()}`, 50, infoTop + 18);
+    doc.text(`EMAIL: ${displayEmail.toLowerCase()}`, 50, infoTop + 18);
     
     // 3. Course (Shifted Y coordinate to prevent overlap)
     doc.text(`COURSE: ${courseTitle.toUpperCase()}`, 50, infoTop + 36);
