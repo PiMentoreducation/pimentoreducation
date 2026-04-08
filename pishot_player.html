@@ -30,10 +30,9 @@
             overflow: hidden; 
             height: 100vh;
             width: 100vw;
-            position: fixed; /* Prevents bounce scrolling on iOS */
+            position: fixed; 
         }
 
-        /* --- MASTER SENSOR SPLASH --- */
         #unmute-splash {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -59,7 +58,6 @@
             100% { transform: scale(1); opacity: 0.8; }
         }
 
-        /* --- NAVBAR --- */
         .navbar {
             position: fixed; top: 0; width: 100%; height: 70px; z-index: 1000;
             display: flex; align-items: center; padding: 0 5%;
@@ -87,23 +85,22 @@
             #themeToggle { order: 3; margin-left: auto; }
         }
 
-        /* --- PLAYER ENGINE (SNAP-LOCK ENABLED) --- */
         #pishot-scroller {
             height: 100vh; 
             width: 100vw;
             overflow-y: scroll; 
-            scroll-snap-type: y mandatory; /* Forces 100% height snap */
+            scroll-snap-type: y mandatory; 
             scroll-behavior: smooth;
-            scrollbar-width: none; /* Hide scrollbar Firefox */
-            -ms-overflow-style: none; /* Hide scrollbar IE/Edge */
+            scrollbar-width: none; 
+            -ms-overflow-style: none; 
         }
-        #pishot-scroller::-webkit-scrollbar { display: none; } /* Hide scrollbar Chrome/Safari */
+        #pishot-scroller::-webkit-scrollbar { display: none; } 
 
         .video-card {
             height: 100vh; 
             width: 100vw;
             scroll-snap-align: start; 
-            scroll-snap-stop: always; /* Prevents skipping multiple videos */
+            scroll-snap-stop: always; 
             position: relative;
             background: #000; 
             display: flex;
@@ -111,7 +108,6 @@
             justify-content: center;
         }
 
-        /* Shield to prevent YT interactions */
         .interaction-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -152,7 +148,7 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     const category = urlParams.get('cat') || 'All';
-    const startOrder = urlParams.get('startOrder'); // Capturing the specific order ID
+    const startOrder = urlParams.get('startOrder'); 
 
     async function fetchShorts() {
         try {
@@ -166,14 +162,19 @@
 
     function renderShorts(shorts) {
         let displayShorts;
-        let targetIndex = 0;
 
         if (startOrder) {
-            // When jumping to a specific episode, we keep oldest-to-newest order
-            displayShorts = [...shorts].sort((a, b) => (a.order || 0) - (b.order || 0));
-            // Find where that specific episode is in the sorted array
-            const foundIndex = displayShorts.findIndex(s => String(s.order) === String(startOrder));
-            if (foundIndex !== -1) targetIndex = foundIndex;
+            // 1. Sort from oldest to newest
+            const sorted = [...shorts].sort((a, b) => (a.order || 0) - (b.order || 0));
+            // 2. Find the index of the requested short
+            const startIndex = sorted.findIndex(s => String(s.order) === String(startOrder));
+            
+            if (startIndex !== -1) {
+                // 3. Reorganize: Start with the chosen video, then everything that comes after it
+                displayShorts = sorted.slice(startIndex);
+            } else {
+                displayShorts = sorted;
+            }
         } else {
             // Default behavior: Newest to oldest
             displayShorts = [...shorts].reverse();
@@ -193,16 +194,6 @@
         }).join('');
 
         initYTPlayers(displayShorts);
-
-        // If we have a target index, scroll to it immediately after rendering
-        if (targetIndex > 0) {
-            setTimeout(() => {
-                const targetCard = document.getElementById(`card-${targetIndex}`);
-                if (targetCard) {
-                    targetCard.scrollIntoView({ behavior: 'instant' });
-                }
-            }, 100);
-        }
     }
 
     function initYTPlayers(shorts) {
@@ -232,7 +223,6 @@
                 const player = players[index];
                 
                 if (entry.isIntersecting) {
-                    console.log("Playing:", index);
                     if(player && player.playVideo) {
                         if(isUserInteracted) {
                             player.unMute();
@@ -240,7 +230,6 @@
                         }
                         player.playVideo();
                     }
-                    // Handle Nav visibility (Note: fixed ID reference check)
                     const nav = document.getElementById('mainNav');
                     if(nav) nav.classList.add('hidden');
                 } else {
