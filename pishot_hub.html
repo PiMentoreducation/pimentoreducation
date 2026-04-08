@@ -242,8 +242,9 @@
         }
     }
 
-    /* --- JUMP LOGIC (NEW) --- */
-    function jumpToShort(category, order) {
+    /* --- JUMP LOGIC (UPDATED) --- */
+    function jumpToShort(category, order, event) {
+        if (event) event.stopPropagation(); // Prevents clicking the dropdown from triggering card click
         if (!order) return;
         window.location.href = `pishot_player.html?cat=${encodeURIComponent(category)}&startOrder=${order}`;
     }
@@ -265,21 +266,25 @@
             grid.innerHTML = "";
 
             for (const cat of categories) {
-                // Fetch internal shorts list to build the episode jumper
                 const shortsRes = await fetch(`${BASE_URL}/api/shorts/list?category=${encodeURIComponent(cat.name)}`);
                 const shorts = await shortsRes.json();
+                // Sorting numerically by order
                 const sortedShorts = shorts.sort((a, b) => (a.order || 0) - (b.order || 0));
 
                 const card = document.createElement('div');
                 card.className = 'category-card';
+                // Main card click goes to the player (default latest)
+                card.onclick = () => window.location.href = `pishot_player.html?cat=${encodeURIComponent(cat.name)}`;
+                
                 card.innerHTML = `
-                    <div class="cat-icon" onclick="window.location.href='pishot_player.html?cat=${encodeURIComponent(cat.name)}'">${cat.icon || '🚀'}</div>
-                    <div class="cat-title" onclick="window.location.href='pishot_player.html?cat=${encodeURIComponent(cat.name)}'">${cat.name}</div>
+                    <div class="cat-icon">${cat.icon || '🚀'}</div>
+                    <div class="cat-title">${cat.name}</div>
                     <div class="cat-count">${cat.videoCount} Pi-Shots Available</div>
                     
                     <div style="width: 100%; margin-top: 20px; position: relative; z-index: 10;">
                         <span style="font-size: 0.7rem; font-weight: 800; opacity: 0.6; display: block; margin-bottom: 5px;">RESUME FROM:</span>
-                        <select onchange="jumpToShort('${cat.name}', this.value)" 
+                        <select onchange="jumpToShort('${cat.name}', this.value, event)" 
+                                onclick="event.stopPropagation()"
                                 style="width: 100%; padding: 10px; border-radius: 12px; background: rgba(255,255,255,0.1); color: var(--text); border: 1px solid var(--card-border); font-size: 0.85rem; outline: none; cursor: pointer;">
                             <option value="">-- Episode Number --</option>
                             ${sortedShorts.map(s => `<option value="${s.order}">#${s.order}: ${s.title}</option>`).join('')}
@@ -288,7 +293,6 @@
                 `;
                 grid.appendChild(card);
 
-                // Populate Dropdown
                 const opt = document.createElement('option');
                 opt.value = `pishot_player.html?cat=${encodeURIComponent(cat.name)}`;
                 opt.textContent = `${cat.icon || '🚀'} ${cat.name}`;

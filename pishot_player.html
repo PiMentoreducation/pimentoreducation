@@ -33,6 +33,7 @@
             position: fixed; 
         }
 
+        /* --- MASTER SENSOR SPLASH --- */
         #unmute-splash {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -58,6 +59,7 @@
             100% { transform: scale(1); opacity: 0.8; }
         }
 
+        /* --- NAVBAR --- */
         .navbar {
             position: fixed; top: 0; width: 100%; height: 70px; z-index: 1000;
             display: flex; align-items: center; padding: 0 5%;
@@ -85,6 +87,7 @@
             #themeToggle { order: 3; margin-left: auto; }
         }
 
+        /* --- PLAYER ENGINE --- */
         #pishot-scroller {
             height: 100vh; 
             width: 100vw;
@@ -170,13 +173,13 @@
             const startIndex = sorted.findIndex(s => String(s.order) === String(startOrder));
             
             if (startIndex !== -1) {
-                // 3. Reorganize: Start with the chosen video, then everything that comes after it
+                // 3. Start the list from the selected short so it appears first
                 displayShorts = sorted.slice(startIndex);
             } else {
                 displayShorts = sorted;
             }
         } else {
-            // Default behavior: Newest to oldest
+            // Default behavior: Newest to oldest (reverse order)
             displayShorts = [...shorts].reverse();
         }
         
@@ -230,8 +233,6 @@
                         }
                         player.playVideo();
                     }
-                    const nav = document.getElementById('mainNav');
-                    if(nav) nav.classList.add('hidden');
                 } else {
                     if(player && player.pauseVideo) {
                         player.pauseVideo();
@@ -270,17 +271,6 @@
         }
         document.querySelectorAll('iframe').forEach(el => el.style.pointerEvents = 'auto');
     }
-
-    let lastScroll = 0;
-    scroller.onscroll = () => {
-        let currentScroll = scroller.scrollTop;
-        const nav = document.getElementById('mainNav');
-        if (nav) {
-            if (lastScroll - currentScroll > 50) nav.classList.remove('hidden');
-            else if (currentScroll - lastScroll > 50) nav.classList.add('hidden');
-        }
-        lastScroll = currentScroll;
-    };
 
     document.addEventListener("DOMContentLoaded", () => {
         fetchShorts();
