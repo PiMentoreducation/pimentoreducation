@@ -247,13 +247,6 @@
             window.onYouTubeIframeAPIReady();
         }
     }
-
-    function setupObserver() {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                const index = entry.target.id.split('-')[1];
-                const player = players[index];
-
 function setupObserver() {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
