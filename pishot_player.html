@@ -162,14 +162,16 @@
 
     function renderShorts(shorts) {
         let displayShorts;
-        let targetIndex = 0; // NEW: Track target position
+        let targetIndex = -1;
 
         if (startOrder && startOrder !== "null" && startOrder !== "") {
+            // Sort chronologically so scrolling up goes to previous and down goes to next
             displayShorts = [...shorts].sort((a, b) => (a.order || 0) - (b.order || 0));
-            // NEW: Find specific index for the chosen episode
             targetIndex = displayShorts.findIndex(s => String(s.order) === String(startOrder));
         } else {
+            // Default: Newest first
             displayShorts = [...shorts].sort((a, b) => (b.order || 0) - (a.order || 0));
+            targetIndex = 0;
         }
         
         scroller.innerHTML = displayShorts.map((s, index) => {
@@ -187,15 +189,16 @@
 
         initYTPlayers(displayShorts);
 
-        // NEW: Scroll to the targeted episode card
+        // Crucial: Scroll to the target video after a short delay to allow DOM to render
         if (targetIndex !== -1) {
             setTimeout(() => {
                 const targetCard = document.getElementById(`card-${targetIndex}`);
                 if (targetCard) {
                     targetCard.scrollIntoView({ behavior: 'auto' });
+                    // Force a snap lock check
                     scroller.style.scrollBehavior = 'smooth'; 
                 }
-            }, 350);
+            }, 300);
         }
     }
 
@@ -210,7 +213,6 @@
 
     function createPlayers(shorts) {
         shorts.forEach((s, index) => {
-            // BACK TO YOUR ORIGINAL LOGIC
             const vidId = s.ytUrl.split('/').pop().split('?')[0];
             players[index] = new YT.Player(`player-${index}`, {
                 videoId: vidId,
