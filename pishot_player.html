@@ -1,308 +1,207 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pi-Shot Player | PiMentor</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --space-bg: #000000;
-            --accent: #7c4dff;
-            --glass: rgba(255, 255, 255, 0.05);
-            --text: #ffffff;
-            --card-border: rgba(255, 255, 255, 0.1);
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pi-Shot Player</title>
 
-        [data-theme="light"] {
-            --space-bg: #f0f2f5;
-            --text: #1b4332;
-            --accent: #2d6a4f;
-            --glass: rgba(255, 255, 255, 0.9);
-            --card-border: rgba(0, 0, 0, 0.1);
-        }
+<style>
+body {
+    margin: 0;
+    background: black;
+    overflow: hidden;
+}
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-        
-        body { 
-            background: var(--space-bg); 
-            color: var(--text); 
-            overflow: hidden; 
-            height: 100vh;
-            width: 100vw;
-            position: fixed; 
-        }
+/* SPLASH */
+#unmute-splash {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.85);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.5s;
+    pointer-events: auto;
+}
 
-        /* --- MASTER SENSOR SPLASH --- */
-        #unmute-splash {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            z-index: 9999; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 0.6s ease;
-            cursor: pointer;
-        }
+.splash-content {
+    text-align: center;
+    color: white;
+    pointer-events: none;
+}
 
-        .splash-content {
-            text-align: center;
-            animation: splashPulse 1.5s infinite;
-            pointer-events: none; 
-        }
+/* PLAYER */
+#pishot-scroller {
+    height: 100vh;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+}
 
-        @keyframes splashPulse {
-            0% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.05); opacity: 1; }
-            100% { transform: scale(1); opacity: 0.8; }
-        }
+.video-card {
+    height: 100vh;
+    scroll-snap-align: start;
+    position: relative;
+}
 
-        /* --- NAVBAR --- */
-        .navbar {
-            position: fixed; top: 0; width: 100%; height: 70px; z-index: 1000;
-            display: flex; align-items: center; padding: 0 5%;
-            background: rgba(0,0,0,0.4); backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--card-border);
-            transition: transform 0.3s ease;
-        }
-        .navbar.hidden { transform: translateY(-100%); }
-
-        .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-        .logo-img { height: 35px; width: 35px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); }
-        .logo-text { font-size: 1.2rem; font-weight: 800; color: #fff; }
-
-        .nav-links { display: flex; gap: 20px; align-items: center; margin-left: auto; }
-        .nav-links a { text-decoration: none; color: #fff; font-weight: 600; font-size: 0.8rem; opacity: 0.8; }
-
-        .hamburger { cursor: pointer; display: flex; flex-direction: column; gap: 5px; margin-right: 15px; }
-        .hamburger span { width: 25px; height: 2px; background: #fff; border-radius: 2px; }
-
-        @media (max-width: 768px) {
-            .nav-links a { display: none; }
-            .navbar { justify-content: space-between; }
-            .hamburger { order: 1; }
-            .brand { order: 2; margin-left: 10px; }
-            #themeToggle { order: 3; margin-left: auto; }
-        }
-
-        /* --- PLAYER ENGINE --- */
-        #pishot-scroller {
-            height: 100vh; 
-            width: 100vw;
-            overflow-y: scroll; 
-            scroll-snap-type: y mandatory; 
-            scroll-behavior: smooth;
-            scrollbar-width: none; 
-            -ms-overflow-style: none; 
-        }
-        #pishot-scroller::-webkit-scrollbar { display: none; } 
-
-        .video-card {
-            height: 100vh; 
-            width: 100vw;
-            scroll-snap-align: start; 
-            scroll-snap-stop: always; 
-            position: relative;
-            background: #000; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .interaction-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 10; pointer-events: none;
-        }
-
-        iframe { height: 100%; width: 100%; pointer-events: none; border: none; } 
-
-        .video-info {
-            position: absolute; bottom: 50px; left: 20px;
-            z-index: 20; max-width: 80%; pointer-events: none;
-        }
-        .video-info h3 { font-size: 1.1rem; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-        .video-info p { font-size: 0.8rem; color: var(--accent); font-weight: 800; }
-
-        @media (min-width: 900px) {
-            iframe { width: 450px; height: 85%; border-radius: 20px; border: 4px solid var(--card-border); }
-        }
-    </style>
+iframe {
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+</style>
 </head>
-<body onclick="handleMasterTap()"> 
 
-<div id="unmute-splash">
+<body>
+
+<!-- ✅ FIXED CLICK HANDLER -->
+<div id="unmute-splash" onclick="handleMasterTap()">
     <div class="splash-content">
-        <div style="font-size: 3.5rem; margin-bottom: 15px;">🔊</div>
-        <h2 style="color:white; font-size: 1.8rem; font-weight: 800;">TAP ANYWHERE</h2>
-        <p style="color:var(--accent); font-weight: 700; letter-spacing: 1.5px;">To Unmute & Enjoy</p>
+        <h1>🔊 Tap to Unmute</h1>
     </div>
 </div>
+
 <div id="pishot-scroller"></div>
 
 <script src="https://www.youtube.com/iframe_api"></script>
-<script src="https://www.youtube.com/iframe_api"></script>
+
 <script>
-    const BASE_URL = "https://pimentor-project.onrender.com";
-    const scroller = document.getElementById('pishot-scroller');
-    let players = [];
-    let isUserInteracted = false;
+const BASE_URL = "https://pimentor-project.onrender.com";
+const scroller = document.getElementById('pishot-scroller');
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const category = urlParams.get('cat') || 'All';
-    const startOrder = urlParams.get('startOrder');
+let players = [];
+let isUserInteracted = false;
 
-    // ✅ UNIVERSAL VIDEO ID EXTRACTOR (MAIN FIX)
-    function extractVideoId(url) {
-        try {
-            const u = new URL(url);
+const urlParams = new URLSearchParams(window.location.search);
+const category = urlParams.get('cat') || 'All';
+const startOrder = urlParams.get('startOrder');
 
-            if (u.searchParams.get("v")) {
-                return u.searchParams.get("v");
-            }
+/* ✅ UNIVERSAL VIDEO ID FIX */
+function extractVideoId(url) {
+    try {
+        const u = new URL(url);
 
-            const parts = u.pathname.split("/");
-            return parts.pop() || parts.pop();
-
-        } catch (e) {
-            return null;
-        }
-    }
-
-    async function fetchShorts() {
-        try {
-            const res = await fetch(`${BASE_URL}/api/shorts/list?category=${encodeURIComponent(category)}`);
-            const shorts = await res.json();
-            renderShorts(shorts);
-        } catch (e) {
-            renderShorts([{
-                ytUrl: "https://www.youtube.com/watch?v=50OQ-rJ4Hxw", // ✅ FIXED
-                title: "Explore PiMentor",
-                category: "Shorts"
-            }]);
-        }
-    }
-
-    function renderShorts(shorts) {
-        let displayShorts;
-
-        if (startOrder && startOrder !== "null" && startOrder !== "") {
-            const sorted = [...shorts].sort((a, b) => (a.order || 0) - (b.order || 0));
-            const startIndex = sorted.findIndex(s => String(s.order) === String(startOrder));
-
-            displayShorts = startIndex !== -1 ? sorted.slice(startIndex) : sorted;
-        } else {
-            displayShorts = [...shorts].sort((a, b) => (b.order || 0) - (a.order || 0));
+        if (u.searchParams.get("v")) {
+            return u.searchParams.get("v");
         }
 
-        scroller.innerHTML = displayShorts.map((s, index) => `
-            <div class="video-card" id="card-${index}">
-                <div class="interaction-overlay"></div>
-                <div id="player-${index}"></div>
-                <div class="video-info">
-                    <p>#${s.category}</p>
-                    <h3>${s.title}</h3>
-                </div>
-            </div>
-        `).join('');
+        const parts = u.pathname.split("/");
+        return parts.pop() || parts.pop();
 
-        initYTPlayers(displayShorts);
+    } catch {
+        return null;
     }
+}
 
-    function initYTPlayers(shorts) {
-        window.onYouTubeIframeAPIReady = () => createPlayers(shorts);
-
-        if (window.YT && window.YT.Player) {
-            createPlayers(shorts);
-        }
+async function fetchShorts() {
+    try {
+        const res = await fetch(`${BASE_URL}/api/shorts/list?category=${category}`);
+        const shorts = await res.json();
+        renderShorts(shorts);
+    } catch {
+        renderShorts([{
+            ytUrl: "https://www.youtube.com/watch?v=50OQ-rJ4Hxw",
+            title: "Fallback Video",
+            category: "Demo"
+        }]);
     }
+}
 
-    function createPlayers(shorts) {
-        shorts.forEach((s, index) => {
-            const vidId = extractVideoId(s.ytUrl);
+function renderShorts(shorts) {
+    scroller.innerHTML = shorts.map((s, i) => `
+        <div class="video-card" id="card-${i}">
+            <div id="player-${i}"></div>
+        </div>
+    `).join('');
 
-            if (!vidId) return;
+    initPlayers(shorts);
+}
 
-            players[index] = new YT.Player(`player-${index}`, {
-                videoId: vidId,
-                playerVars: {
-                    autoplay: 1,
-                    mute: 1,
-                    controls: 0,
-                    rel: 0,
-                    loop: 1,
-                    playlist: vidId,
-                    playsinline: 1,
-                    enablejsapi: 1,
-                    modestbranding: 1,
-                    origin: window.location.origin
-                },
-                events: {
-                    onReady: (e) => {
-                        e.target.mute();
-                        e.target.playVideo();
-                        if (index === 0) setupIntersectionObserver();
-                    }
+function initPlayers(shorts) {
+    window.onYouTubeIframeAPIReady = () => createPlayers(shorts);
+
+    if (window.YT && window.YT.Player) {
+        createPlayers(shorts);
+    }
+}
+
+function createPlayers(shorts) {
+    shorts.forEach((s, i) => {
+        const vidId = extractVideoId(s.ytUrl);
+        if (!vidId) return;
+
+        players[i] = new YT.Player(`player-${i}`, {
+            videoId: vidId,
+            playerVars: {
+                autoplay: 1,
+                mute: 1,
+                controls: 0,
+                loop: 1,
+                playlist: vidId,
+                playsinline: 1,
+                modestbranding: 1
+            },
+            events: {
+                onReady: (e) => {
+                    e.target.mute();
+                    e.target.playVideo();
+                    if (i === 0) observe();
                 }
-            });
-        });
-    }
-
-    function setupIntersectionObserver() {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                const index = entry.target.id.split('-')[1];
-                const player = players[index];
-
-                if (entry.isIntersecting) {
-                    if (player) {
-                        if (isUserInteracted) {
-                            player.unMute();
-                            player.setVolume(100);
-                        }
-                        player.playVideo();
-                    }
-                } else {
-                    if (player) {
-                        player.pauseVideo();
-                        player.seekTo(0);
-                    }
-                }
-            });
-        }, { threshold: 0.8 });
-
-        document.querySelectorAll('.video-card').forEach(card => observer.observe(card));
-    }
-
-    function handleMasterTap() {
-        if (isUserInteracted) return;
-        isUserInteracted = true;
-
-        const visibleCard = [...document.querySelectorAll('.video-card')].find(card => {
-            const rect = card.getBoundingClientRect();
-            return rect.top >= -50 && rect.top <= 50;
-        });
-
-        const index = visibleCard ? visibleCard.id.split('-')[1] : 0;
-
-        players.forEach((p, i) => {
-            if (p) {
-                p.unMute();
-                p.setVolume(100);
-                if (i == index) p.playVideo(); else p.pauseVideo();
             }
         });
+    });
+}
 
-        const splash = document.getElementById('unmute-splash');
+function observe() {
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            const index = entry.target.id.split('-')[1];
+            const player = players[index];
+
+            if (!player) return;
+
+            if (entry.isIntersecting) {
+                if (isUserInteracted) player.unMute();
+                player.playVideo();
+            } else {
+                player.pauseVideo();
+            }
+        });
+    }, { threshold: 0.8 });
+
+    document.querySelectorAll('.video-card').forEach(c => observer.observe(c));
+}
+
+/* ✅ FULLY FIXED TAP FUNCTION */
+function handleMasterTap() {
+    if (isUserInteracted) return;
+    isUserInteracted = true;
+
+    players.forEach(p => {
+        if (p) {
+            p.unMute();
+            p.setVolume(100);
+        }
+    });
+
+    const splash = document.getElementById('unmute-splash');
+
+    if (splash) {
         splash.style.opacity = '0';
-        setTimeout(() => splash.style.display = 'none', 600);
-
-        document.querySelectorAll('iframe').forEach(el => el.style.pointerEvents = 'auto');
+        splash.style.pointerEvents = 'none';
+        setTimeout(() => splash.remove(), 500);
     }
 
-    document.addEventListener("DOMContentLoaded", fetchShorts);
+    document.querySelectorAll('iframe').forEach(el => {
+        el.style.pointerEvents = 'auto';
+    });
+}
+
+document.addEventListener("DOMContentLoaded", fetchShorts);
 </script>
+
 </body>
 </html>
