@@ -250,28 +250,35 @@
     }
 
     /* --- DATA FETCHING --- */
-    async function loadCategories() {
+async function loadCategories() {
         const grid = document.getElementById('categoryGrid');
         const dropdown = document.getElementById('shortsDropdown');
         
         try {
+            // 1. Get the category overview (name, icon, count)
             const response = await fetch(`${BASE_URL}/api/shorts/categories`);
             const categories = await response.json();
 
             if (categories.length === 0) {
-                grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; opacity: 0.5;">No dimensions discovered yet. Check back soon!</p>`;
+                grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; opacity: 0.5;">No dimensions discovered yet.</p>`;
                 return;
             }
 
             grid.innerHTML = "";
+            dropdown.innerHTML = '<option value="">Quick Jump to a Dimension...</option>';
 
+            // 2. Process categories
             for (const cat of categories) {
+                // Fetch the shorts to populate the "Resume From" select
                 const shortsRes = await fetch(`${BASE_URL}/api/shorts/list?category=${encodeURIComponent(cat.name)}`);
                 const shorts = await shortsRes.json();
+                
+                // Ensure strictly ascending order for the episode list
                 const sortedShorts = shorts.sort((a, b) => (a.order || 0) - (b.order || 0));
 
                 const card = document.createElement('div');
                 card.className = 'category-card';
+                // Default click goes to the start of the category
                 card.onclick = () => window.location.href = `pishot_player.html?cat=${encodeURIComponent(cat.name)}`;
                 
                 card.innerHTML = `
@@ -291,6 +298,7 @@
                 `;
                 grid.appendChild(card);
 
+                // Add to the top "Quick Jump" dropdown
                 const opt = document.createElement('option');
                 opt.value = `pishot_player.html?cat=${encodeURIComponent(cat.name)}`;
                 opt.textContent = `${cat.icon || '🚀'} ${cat.name}`;

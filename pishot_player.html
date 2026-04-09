@@ -145,90 +145,91 @@
     const scroller = document.getElementById('pishot-scroller');
     let players = [];
     let isUserInteracted = false;
+    let shortsData = []; // Store fetched data globally for the API to access
 
     const urlParams = new URLSearchParams(window.location.search);
     const category = urlParams.get('cat') || 'All';
     const startOrder = urlParams.get('startOrder'); 
 
-    async function fetchShorts() {
+    // 1. Unified Initialization Logic
+    async function initGalaxy() {
         try {
             const res = await fetch(`${BASE_URL}/api/shorts/list?category=${encodeURIComponent(category)}`);
-            const shorts = await res.json();
-            renderShorts(shorts);
+            shortsData = await res.json();
+            
+            // Mathematical Sorting: Supremum logic
+            if (startOrder) {
+                shortsData.sort((a, b) => (a.order || 0) - (b.order || 0));
+            } else {
+                shortsData.sort((a, b) => (b.order || 0) - (a.order || 0));
+            }
+
+            renderShorts(shortsData);
         } catch (e) {
-            renderShorts([{ytUrl: "https://youtube.com/embed/50OQ-rJ4Hxw", title: "Explore PiMentor", category: "Shorts"}]);
+            console.error("Galaxy fetch failed:", e);
         }
     }
 
     function renderShorts(shorts) {
-        let displayShorts;
-        let targetIndex = -1;
+        let targetIndex = startOrder ? shorts.findIndex(s => String(s.order) === String(startOrder)) : 0;
+        if (targetIndex === -1) targetIndex = 0;
 
-        if (startOrder && startOrder !== "null" && startOrder !== "") {
-            // Sort chronologically so scrolling up goes to previous and down goes to next
-            displayShorts = [...shorts].sort((a, b) => (a.order || 0) - (b.order || 0));
-            targetIndex = displayShorts.findIndex(s => String(s.order) === String(startOrder));
-        } else {
-            // Default: Newest first
-            displayShorts = [...shorts].sort((a, b) => (b.order || 0) - (a.order || 0));
-            targetIndex = 0;
-        }
-        
-        scroller.innerHTML = displayShorts.map((s, index) => {
-            return `
-                <div class="video-card" id="card-${index}">
-                    <div class="interaction-overlay"></div>
-                    <div id="player-${index}"></div>
-                    <div class="video-info">
-                        <p>#${s.category}</p>
-                        <h3>${s.title}</h3>
-                    </div>
+        scroller.innerHTML = shorts.map((s, index) => `
+            <div class="video-card" id="card-${index}">
+                <div class="interaction-overlay"></div>
+                <div id="player-${index}"></div>
+                <div class="video-info">
+                    <p>#${s.category}</p>
+                    <h3>${s.title}</h3>
                 </div>
-            `;
-        }).join('');
+            </div>
+        `).join('');
 
-        initYTPlayers(displayShorts);
-
-        // Crucial: Scroll to the target video after a short delay to allow DOM to render
-        if (targetIndex !== -1) {
-            setTimeout(() => {
-                const targetCard = document.getElementById(`card-${targetIndex}`);
-                if (targetCard) {
-                    targetCard.scrollIntoView({ behavior: 'auto' });
-                    // Force a snap lock check
-                    scroller.style.scrollBehavior = 'smooth'; 
-                }
-            }, 300);
-        }
-    }
-
-    function initYTPlayers(shorts) {
-        window.onYouTubeIframeAPIReady = function() {
-            createPlayers(shorts);
-        };
+        // 2. Trigger Player creation ONLY after DOM is ready
         if (window.YT && window.YT.Player) {
-            createPlayers(shorts);
+            createPlayers(shorts, targetIndex);
+        } else {
+            window.onYouTubeIframeAPIReady = () => createPlayers(shorts, targetIndex);
         }
     }
 
-    function createPlayers(shorts) {
+    function createPlayers(shorts, targetIndex) {
+        let playersReady = 0;
+
         shorts.forEach((s, index) => {
             const vidId = s.ytUrl.split('/').pop().split('?')[0];
             players[index] = new YT.Player(`player-${index}`, {
                 videoId: vidId,
                 playerVars: { 
-                    'autoplay': 1, 'mute': 1, 'controls': 0, 'rel': 0, 'loop': 1, 
-                    'playlist': vidId, 'playsinline': 1, 'enablejsapi': 1 
+                    'autoplay': 1, 'mute': 1, 'controls': 0, 'rel': 0, 
+                    'loop': 1, 'playlist': vidId, 'playsinline': 1, 'enablejsapi': 1 
                 },
                 events: {
-                    'onReady': (e) => { 
-                        e.target.mute(); 
-                        e.target.playVideo(); 
-                        if(index === 0) setupIntersectionObserver(); 
+                    'onReady': (e) => {
+                        playersReady++;
+                        // Once the target player is ready, handle the jump
+                        if (index === targetIndex) {
+                            handleInitialJump(targetIndex);
+                        }
+                        // Start observer once all players are initialized
+                        if (playersReady === shorts.length) setupIntersectionObserver();
                     }
                 }
             });
         });
+    }
+
+    function handleInitialJump(index) {
+        const targetCard = document.getElementById(`card-${index}`);
+        if (targetCard) {
+            // Use 'auto' for initial jump to prevent visual "sliding" during load
+            targetCard.scrollIntoView({ behavior: 'auto' });
+            
+            // Re-enable smooth scrolling for user interaction
+            setTimeout(() => {
+                scroller.style.scrollBehavior = 'smooth';
+            }, 100);
+        }
     }
 
     function setupIntersectionObserver() {
@@ -252,9 +253,8 @@
                     }
                 }
             });
-        }, { 
-            threshold: 0.8 
-        });
+        }, { threshold: 0.7 }); // Lowered slightly for better mobile triggering
+
         document.querySelectorAll('.video-card').forEach(card => observer.observe(card));
     }
 
@@ -262,10 +262,12 @@
         if (isUserInteracted) return;
         isUserInteracted = true;
         
+        // Find current card in viewport
         const visibleCard = [...document.querySelectorAll('.video-card')].find(card => {
             const rect = card.getBoundingClientRect();
-            return rect.top >= -50 && rect.top <= 50;
+            return rect.top >= -window.innerHeight/2 && rect.top <= window.innerHeight/2;
         });
+
         const index = visibleCard ? visibleCard.id.split('-')[1] : 0;
 
         players.forEach((p, i) => {
@@ -284,9 +286,7 @@
         document.querySelectorAll('iframe').forEach(el => el.style.pointerEvents = 'auto');
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-        fetchShorts();
-    });
+    document.addEventListener("DOMContentLoaded", initGalaxy);
 </script>
 </body>
 </html>
