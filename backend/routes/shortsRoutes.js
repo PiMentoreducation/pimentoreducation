@@ -25,7 +25,8 @@ router.post("/upload", authMiddleware, async (req, res) => {
             category,
             title,
             ytUrl,
-            icon: icon || "🚀"
+            icon: icon || "🚀",
+            order: Number(order) || 1
         });
 
         await newShort.save();
