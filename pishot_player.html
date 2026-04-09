@@ -162,16 +162,13 @@
 
     function renderShorts(shorts) {
         let displayShorts;
-        let targetIndex = 0; // Default to first video
+        let targetIndex = 0; // NEW: Track target position
 
         if (startOrder && startOrder !== "null" && startOrder !== "") {
-            // 1. For "Resume From", we sort Ascending (1, 2, 3...)
             displayShorts = [...shorts].sort((a, b) => (a.order || 0) - (b.order || 0));
-            // 2. Find the index of the specific order chosen
-            const foundIndex = displayShorts.findIndex(s => String(s.order) === String(startOrder));
-            if (foundIndex !== -1) targetIndex = foundIndex;
+            // NEW: Find specific index for the chosen episode
+            targetIndex = displayShorts.findIndex(s => String(s.order) === String(startOrder));
         } else {
-            // Default: Newest first (Descending)
             displayShorts = [...shorts].sort((a, b) => (b.order || 0) - (a.order || 0));
         }
         
@@ -190,19 +187,15 @@
 
         initYTPlayers(displayShorts);
 
-        // 3. Perform the scroll precisely to the card index
+        // NEW: Scroll to the targeted episode card
         if (targetIndex !== -1) {
             setTimeout(() => {
                 const targetCard = document.getElementById(`card-${targetIndex}`);
                 if (targetCard) {
-                    // Jump immediately to avoid the "sliding" effect during load
-                    targetCard.scrollIntoView({ behavior: 'auto', block: 'start' });
-                    // Restore smooth behavior for user scrolling
-                    setTimeout(() => {
-                        scroller.style.scrollBehavior = 'smooth'; 
-                    }, 50);
+                    targetCard.scrollIntoView({ behavior: 'auto' });
+                    scroller.style.scrollBehavior = 'smooth'; 
                 }
-            }, 400); // Slight delay to ensure DOM element 'card-X' is painted
+            }, 350);
         }
     }
 
@@ -215,33 +208,21 @@
         }
     }
 
-function createPlayers(shorts) {
+    function createPlayers(shorts) {
         shorts.forEach((s, index) => {
-            // Robust regex to extract Video ID from any YouTube URL format
-            const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/|youtube\.com\/shorts\/)([^"&?\/\s]{11})/;
-            const match = s.ytUrl.match(regex);
-            const vidId = match ? match[1] : s.ytUrl.split('/').pop().split('?')[0];
-
+            // BACK TO YOUR ORIGINAL LOGIC
+            const vidId = s.ytUrl.split('/').pop().split('?')[0];
             players[index] = new YT.Player(`player-${index}`, {
                 videoId: vidId,
                 playerVars: { 
-                    'autoplay': 1, 
-                    'mute': 1, 
-                    'controls': 0, 
-                    'rel': 0, 
-                    'loop': 1, 
-                    'playlist': vidId, // Required for loop to work
-                    'playsinline': 1, 
-                    'enablejsapi': 1 
+                    'autoplay': 1, 'mute': 1, 'controls': 0, 'rel': 0, 'loop': 1, 
+                    'playlist': vidId, 'playsinline': 1, 'enablejsapi': 1 
                 },
                 events: {
                     'onReady': (e) => { 
                         e.target.mute(); 
                         e.target.playVideo(); 
                         if(index === 0) setupIntersectionObserver(); 
-                    },
-                    'onError': (e) => {
-                        console.error(`Error loading video ${vidId}:`, e.data);
                     }
                 }
             });
@@ -281,10 +262,8 @@ function createPlayers(shorts) {
         
         const visibleCard = [...document.querySelectorAll('.video-card')].find(card => {
             const rect = card.getBoundingClientRect();
-            // Check for card covering the center of the viewport
-            return rect.top >= -window.innerHeight/2 && rect.top <= window.innerHeight/2;
+            return rect.top >= -50 && rect.top <= 50;
         });
-        
         const index = visibleCard ? visibleCard.id.split('-')[1] : 0;
 
         players.forEach((p, i) => {
