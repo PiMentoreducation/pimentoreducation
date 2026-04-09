@@ -143,6 +143,7 @@
 <div id="pishot-scroller"></div>
 
 <script src="https://www.youtube.com/iframe_api"></script>
+<script src="https://www.youtube.com/iframe_api"></script>
 <script>
     const BASE_URL = "https://pimentor-project.onrender.com";
     const scroller = document.getElementById('pishot-scroller');
@@ -151,7 +152,24 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     const category = urlParams.get('cat') || 'All';
-    const startOrder = urlParams.get('startOrder'); 
+    const startOrder = urlParams.get('startOrder');
+
+    // ✅ UNIVERSAL VIDEO ID EXTRACTOR (MAIN FIX)
+    function extractVideoId(url) {
+        try {
+            const u = new URL(url);
+
+            if (u.searchParams.get("v")) {
+                return u.searchParams.get("v");
+            }
+
+            const parts = u.pathname.split("/");
+            return parts.pop() || parts.pop();
+
+        } catch (e) {
+            return null;
+        }
+    }
 
     async function fetchShorts() {
         try {
@@ -159,7 +177,11 @@
             const shorts = await res.json();
             renderShorts(shorts);
         } catch (e) {
-            renderShorts([{ytUrl: "https://youtube.com/embed/50OQ-rJ4Hxw", title: "Explore PiMentor", category: "Shorts"}]);
+            renderShorts([{
+                ytUrl: "https://www.youtube.com/watch?v=50OQ-rJ4Hxw", // ✅ FIXED
+                title: "Explore PiMentor",
+                category: "Shorts"
+            }]);
         }
     }
 
@@ -167,45 +189,31 @@
         let displayShorts;
 
         if (startOrder && startOrder !== "null" && startOrder !== "") {
-            // 1. Sort from oldest to newest to find the logical start
             const sorted = [...shorts].sort((a, b) => (a.order || 0) - (b.order || 0));
-            // 2. Find the index
             const startIndex = sorted.findIndex(s => String(s.order) === String(startOrder));
-            
-            if (startIndex !== -1) {
-                // 3. Reorganize: Chosen one first
-                displayShorts = sorted.slice(startIndex);
-            } else {
-                displayShorts = sorted;
-            }
+
+            displayShorts = startIndex !== -1 ? sorted.slice(startIndex) : sorted;
         } else {
-            // Default behavior: Newest to oldest
             displayShorts = [...shorts].sort((a, b) => (b.order || 0) - (a.order || 0));
         }
-        
-        scroller.innerHTML = displayShorts.map((s, index) => {
-            return `
-                <div class="video-card" id="card-${index}">
-                    <div class="interaction-overlay"></div>
-                    <div id="player-${index}"></div>
-                    <div class="video-info">
-                        <p>#${s.category}</p>
-                        <h3>${s.title}</h3>
-                    </div>
+
+        scroller.innerHTML = displayShorts.map((s, index) => `
+            <div class="video-card" id="card-${index}">
+                <div class="interaction-overlay"></div>
+                <div id="player-${index}"></div>
+                <div class="video-info">
+                    <p>#${s.category}</p>
+                    <h3>${s.title}</h3>
                 </div>
-            `;
-        }).join('');
+            </div>
+        `).join('');
 
         initYTPlayers(displayShorts);
     }
 
     function initYTPlayers(shorts) {
-        // Global definition for YT API
-        window.onYouTubeIframeAPIReady = function() {
-            createPlayers(shorts);
-        };
-        
-        // If YT is already loaded, fire immediately
+        window.onYouTubeIframeAPIReady = () => createPlayers(shorts);
+
         if (window.YT && window.YT.Player) {
             createPlayers(shorts);
         }
@@ -213,24 +221,29 @@
 
     function createPlayers(shorts) {
         shorts.forEach((s, index) => {
-            const vidId = s.ytUrl.split('/').pop().split('?')[0];
+            const vidId = extractVideoId(s.ytUrl);
+
+            if (!vidId) return;
+
             players[index] = new YT.Player(`player-${index}`, {
                 videoId: vidId,
-                playerVars: { 
-                    'autoplay': 1, 
-                    'mute': 1, 
-                    'controls': 0, 
-                    'rel': 0, 
-                    'loop': 1, 
-                    'playlist': vidId, 
-                    'playsinline': 1, 
-                    'enablejsapi': 1 
+                playerVars: {
+                    autoplay: 1,
+                    mute: 1,
+                    controls: 0,
+                    rel: 0,
+                    loop: 1,
+                    playlist: vidId,
+                    playsinline: 1,
+                    enablejsapi: 1,
+                    modestbranding: 1,
+                    origin: window.location.origin
                 },
                 events: {
-                    'onReady': (e) => { 
-                        e.target.mute(); 
-                        e.target.playVideo(); 
-                        if(index === 0) setupIntersectionObserver(); 
+                    onReady: (e) => {
+                        e.target.mute();
+                        e.target.playVideo();
+                        if (index === 0) setupIntersectionObserver();
                     }
                 }
             });
@@ -242,57 +255,54 @@
             entries.forEach(entry => {
                 const index = entry.target.id.split('-')[1];
                 const player = players[index];
-                
+
                 if (entry.isIntersecting) {
-                    if(player && player.playVideo) {
-                        if(isUserInteracted) {
+                    if (player) {
+                        if (isUserInteracted) {
                             player.unMute();
                             player.setVolume(100);
                         }
                         player.playVideo();
                     }
                 } else {
-                    if(player && player.pauseVideo) {
+                    if (player) {
                         player.pauseVideo();
-                        player.seekTo(0); 
+                        player.seekTo(0);
                     }
                 }
             });
-        }, { 
-            threshold: 0.8 
-        });
+        }, { threshold: 0.8 });
+
         document.querySelectorAll('.video-card').forEach(card => observer.observe(card));
     }
 
     function handleMasterTap() {
         if (isUserInteracted) return;
         isUserInteracted = true;
-        
+
         const visibleCard = [...document.querySelectorAll('.video-card')].find(card => {
             const rect = card.getBoundingClientRect();
             return rect.top >= -50 && rect.top <= 50;
         });
+
         const index = visibleCard ? visibleCard.id.split('-')[1] : 0;
 
         players.forEach((p, i) => {
-            if (p && p.unMute) {
+            if (p) {
                 p.unMute();
                 p.setVolume(100);
-                if(i == index) p.playVideo(); else p.pauseVideo();
+                if (i == index) p.playVideo(); else p.pauseVideo();
             }
         });
 
         const splash = document.getElementById('unmute-splash');
-        if (splash) {
-            splash.style.opacity = '0';
-            setTimeout(() => { splash.style.display = 'none'; }, 600); 
-        }
+        splash.style.opacity = '0';
+        setTimeout(() => splash.style.display = 'none', 600);
+
         document.querySelectorAll('iframe').forEach(el => el.style.pointerEvents = 'auto');
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-        fetchShorts();
-    });
+    document.addEventListener("DOMContentLoaded", fetchShorts);
 </script>
 </body>
 </html>
