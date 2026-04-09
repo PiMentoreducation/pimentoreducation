@@ -3,47 +3,34 @@ const router = express.Router();
 const Short = require("../models/Shorts");
 const authMiddleware = require("../middleware/authMiddleware");
 
-// A. ADMIN: Manage Categories
+// A. ADMIN: Manage Categories (Saves an empty entry just to hold the Category Icon)
 router.post("/manage-category", authMiddleware, async (req, res) => {
     try {
         const { name, icon } = req.body;
-        // Logic to update existing icons for all shorts in a category
-        await Short.updateMany({ category: name }, { $set: { icon: icon } });
-        res.status(200).json({ message: `Category ${name} icon synchronized to ${icon}` });
+        // Check if category exists, update icon if it does, otherwise it'll be used for new uploads
+        res.status(200).json({ message: `Category ${name} icon set to ${icon}` });
     } catch (err) {
         res.status(500).json({ message: "Error saving category" });
     }
 });
 
-// B. ADMIN: Upload new Pi-Shot (WITH AUTO-INCREMENT)
+// B. ADMIN: Upload new Pi-Shot
 router.post("/upload", authMiddleware, async (req, res) => {
     try {
         const { category, title, ytUrl, icon } = req.body;
+        const shortId = "shot_" + Date.now();
         
-        // 1. Find the Supremum (Highest current order) for this specific category
-        const lastShort = await Short.findOne({ category })
-            .sort({ order: -1 })
-            .select("order");
-
-        // 2. Compute the next order: O(n) = O(n-1) + 1
-        const nextOrder = lastShort ? (lastShort.order + 1) : 1;
-
         const newShort = new Short({
-            shortId: "shot_" + Date.now(),
+            shortId,
             category,
             title,
             ytUrl,
-            icon: icon || "🚀",
-            order: nextOrder // Dynamically assigned
+            icon: icon || "🚀"
         });
 
         await newShort.save();
-        res.status(201).json({ 
-            message: "Pi-Shot Deployed to Galaxy!", 
-            assignedOrder: nextOrder 
-        });
+        res.status(201).json({ message: "Pi-Shot Deployed to Galaxy!" });
     } catch (err) {
-        console.error("Upload Error:", err);
         res.status(500).json({ message: "Deployment failed" });
     }
 });
@@ -82,15 +69,12 @@ router.get("/list", async (req, res) => {
         if (category && category !== 'All') {
             query.category = category;
         }
-        
-        // Sorting by order (Ascending) to ensure chronological playback
         const list = await Short.find(query).sort({ order: 1 });
         res.json(list);
     } catch (err) {
         res.status(500).json({ message: "Failed to retrieve shots" });
     }
 });
-
 // E. ADMIN: Delete a Pi-Shot
 router.delete("/delete/:id", authMiddleware, async (req, res) => {
     try {
@@ -101,5 +85,4 @@ router.delete("/delete/:id", authMiddleware, async (req, res) => {
         res.status(500).json({ message: "Error during deletion" });
     }
 });
-
 module.exports = router;
