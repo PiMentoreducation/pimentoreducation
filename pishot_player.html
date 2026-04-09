@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="referrer" content="no-referrer-when-downgrade">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Pi-Shot Player | PiMentor</title>
@@ -31,9 +30,10 @@
             overflow: hidden; 
             height: 100vh;
             width: 100vw;
-            position: fixed; 
+            position: fixed; /* Prevents bounce scrolling on iOS */
         }
 
+        /* --- MASTER SENSOR SPLASH --- */
         #unmute-splash {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -59,6 +59,7 @@
             100% { transform: scale(1); opacity: 0.8; }
         }
 
+        /* --- NAVBAR --- */
         .navbar {
             position: fixed; top: 0; width: 100%; height: 70px; z-index: 1000;
             display: flex; align-items: center; padding: 0 5%;
@@ -86,22 +87,23 @@
             #themeToggle { order: 3; margin-left: auto; }
         }
 
+        /* --- PLAYER ENGINE (SNAP-LOCK ENABLED) --- */
         #pishot-scroller {
             height: 100vh; 
             width: 100vw;
             overflow-y: scroll; 
-            scroll-snap-type: y mandatory; 
-            scroll-behavior: auto; /* Changed to auto for immediate jumping */
-            scrollbar-width: none; 
-            -ms-overflow-style: none; 
+            scroll-snap-type: y mandatory; /* Forces 100% height snap */
+            scroll-behavior: smooth;
+            scrollbar-width: none; /* Hide scrollbar Firefox */
+            -ms-overflow-style: none; /* Hide scrollbar IE/Edge */
         }
-        #pishot-scroller::-webkit-scrollbar { display: none; } 
+        #pishot-scroller::-webkit-scrollbar { display: none; } /* Hide scrollbar Chrome/Safari */
 
         .video-card {
             height: 100vh; 
             width: 100vw;
             scroll-snap-align: start; 
-            scroll-snap-stop: always; 
+            scroll-snap-stop: always; /* Prevents skipping multiple videos */
             position: relative;
             background: #000; 
             display: flex;
@@ -109,6 +111,7 @@
             justify-content: center;
         }
 
+        /* Shield to prevent YT interactions */
         .interaction-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -149,7 +152,7 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     const category = urlParams.get('cat') || 'All';
-    const startOrder = urlParams.get('startOrder'); 
+    const startOrder = urlParams.get('startOrder'); // Capturing the specific order ID
 
     async function fetchShorts() {
         try {
@@ -163,16 +166,17 @@
 
     function renderShorts(shorts) {
         let displayShorts;
-        let targetIndex = -1;
+        let targetIndex = 0;
 
-        if (startOrder && startOrder !== "null" && startOrder !== "") {
-            // Sort chronologically so scrolling up goes to previous and down goes to next
+        if (startOrder) {
+            // When jumping to a specific episode, we keep oldest-to-newest order
             displayShorts = [...shorts].sort((a, b) => (a.order || 0) - (b.order || 0));
-            targetIndex = displayShorts.findIndex(s => String(s.order) === String(startOrder));
+            // Find where that specific episode is in the sorted array
+            const foundIndex = displayShorts.findIndex(s => String(s.order) === String(startOrder));
+            if (foundIndex !== -1) targetIndex = foundIndex;
         } else {
-            // Default: Newest first
-            displayShorts = [...shorts].sort((a, b) => (b.order || 0) - (a.order || 0));
-            targetIndex = 0;
+            // Default behavior: Newest to oldest
+            displayShorts = [...shorts].reverse();
         }
         
         scroller.innerHTML = displayShorts.map((s, index) => {
@@ -190,59 +194,36 @@
 
         initYTPlayers(displayShorts);
 
-        // Crucial: Scroll to the target video after a short delay to allow DOM to render
-        if (targetIndex !== -1) {
+        // If we have a target index, scroll to it immediately after rendering
+        if (targetIndex > 0) {
             setTimeout(() => {
                 const targetCard = document.getElementById(`card-${targetIndex}`);
                 if (targetCard) {
-                    targetCard.scrollIntoView({ behavior: 'auto' });
-                    // Force a snap lock check
-                    scroller.style.scrollBehavior = 'smooth'; 
+                    targetCard.scrollIntoView({ behavior: 'instant' });
                 }
-            }, 300);
+            }, 100);
         }
     }
 
     function initYTPlayers(shorts) {
-        window.onYouTubeIframeAPIReady = function() {
-            createPlayers(shorts);
+        window.onYouTubeIframeAPIReady = () => {
+            shorts.forEach((s, index) => {
+                const vidId = s.ytUrl.split('/').pop().split('?')[0];
+                players[index] = new YT.Player(`player-${index}`, {
+                    videoId: vidId,
+                    playerVars: { 'autoplay': 1, 'mute': 1, 'controls': 0, 'rel': 0, 'loop': 1, 'playlist': vidId, 'playsinline': 1, 'enablejsapi': 1 },
+                    events: {
+                        'onReady': (e) => { 
+                            e.target.mute(); 
+                            e.target.playVideo(); 
+                            if(index === 0) setupIntersectionObserver(); 
+                        }
+                    }
+                });
+            });
         };
-        if (window.YT && window.YT.Player) {
-            createPlayers(shorts);
-        }
+        if (typeof YT !== 'undefined' && YT.loaded) window.onYouTubeIframeAPIReady();
     }
-
-function createPlayers(shorts) {
-    shorts.forEach((s, index) => {
-        // Extract ID correctly even if full embed URL is saved
-        const vidId = s.ytUrl.split('/').pop().split('?')[0];
-        
-        players[index] = new YT.Player(`player-${index}`, {
-            videoId: vidId,
-            playerVars: { 
-                'autoplay': 1, 
-                'mute': 1, 
-                'controls': 0, 
-                'rel': 0, 
-                'loop': 1, 
-                'playlist': vidId, 
-                'playsinline': 1, 
-                'enablejsapi': 1,
-                'origin': window.location.origin // CRITICAL FIX: Tells YT who is embedding the video
-            },
-            events: {
-                'onReady': (e) => { 
-                    e.target.mute(); 
-                    e.target.playVideo(); 
-                    if(index === 0) setupIntersectionObserver(); 
-                },
-                'onError': (e) => {
-                    console.error("YouTube Error for ID " + vidId + ": ", e.data);
-                }
-            }
-        });
-    });
-}
 
     function setupIntersectionObserver() {
         const observer = new IntersectionObserver((entries) => {
@@ -251,6 +232,7 @@ function createPlayers(shorts) {
                 const player = players[index];
                 
                 if (entry.isIntersecting) {
+                    console.log("Playing:", index);
                     if(player && player.playVideo) {
                         if(isUserInteracted) {
                             player.unMute();
@@ -258,6 +240,9 @@ function createPlayers(shorts) {
                         }
                         player.playVideo();
                     }
+                    // Handle Nav visibility (Note: fixed ID reference check)
+                    const nav = document.getElementById('mainNav');
+                    if(nav) nav.classList.add('hidden');
                 } else {
                     if(player && player.pauseVideo) {
                         player.pauseVideo();
@@ -296,6 +281,17 @@ function createPlayers(shorts) {
         }
         document.querySelectorAll('iframe').forEach(el => el.style.pointerEvents = 'auto');
     }
+
+    let lastScroll = 0;
+    scroller.onscroll = () => {
+        let currentScroll = scroller.scrollTop;
+        const nav = document.getElementById('mainNav');
+        if (nav) {
+            if (lastScroll - currentScroll > 50) nav.classList.remove('hidden');
+            else if (currentScroll - lastScroll > 50) nav.classList.add('hidden');
+        }
+        lastScroll = currentScroll;
+    };
 
     document.addEventListener("DOMContentLoaded", () => {
         fetchShorts();
